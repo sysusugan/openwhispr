@@ -36,11 +36,10 @@ import {
   selectIsCloudCleanupMode,
   getSettings,
 } from "../../stores/settingsStore";
+import { useUploadTranscriptionStore } from "../../stores/uploadTranscriptionStore";
 import { generateNoteTitle } from "../../utils/generateTitle";
 
 const TranscriptionModelPicker = React.lazy(() => import("../TranscriptionModelPicker"));
-
-type UploadState = "idle" | "selected" | "transcribing" | "complete" | "error";
 
 const SUPPORTED_EXTENSIONS = ["mp3", "wav", "m4a", "webm", "ogg", "oga", "flac", "aac"];
 
@@ -61,27 +60,9 @@ interface UploadAudioViewProps {
 
 export default function UploadAudioView({ onNoteCreated, onOpenSettings }: UploadAudioViewProps) {
   const { t } = useTranslation();
-  const [state, setState] = useState<UploadState>("idle");
-  const [file, setFile] = useState<{
-    name: string;
-    path: string;
-    size: string;
-    sizeBytes: number;
-  } | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [noteId, setNoteId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [chunkProgress, setChunkProgress] = useState<{
-    chunksTotal: number;
-    chunksCompleted: number;
-  } | null>(null);
-  const progressCleanupRef = useRef<(() => void) | null>(null);
 
   const [folders, setFolders] = useState<FolderItem[]>([]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string>("");
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
 
@@ -126,6 +107,21 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     selectIsCloudCleanupMode(s) ? "" : s.cleanupModel
   );
   const useCleanupModel = useSettingsStore((s) => s.useCleanupModel);
+  const {
+    state,
+    file,
+    result,
+    noteId,
+    error,
+    progress,
+    chunkProgress,
+    selectedFolderId,
+    selectFile,
+    setSelectedFolderId,
+    setDefaultFolderId,
+    reset: resetUploadState,
+    runTranscription,
+  } = useUploadTranscriptionStore();
 
   const isOpenWhisprCloud =
     isSignedIn && cloudTranscriptionMode === "openwhispr" && !useLocalWhisper;
@@ -167,18 +163,12 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   }
 
   useEffect(() => {
-    return () => {
-      if (progressRef.current) clearInterval(progressRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
     window.electronAPI.getFolders?.().then((f) => {
       setFolders(f);
       const personal = findDefaultFolder(f);
-      if (personal) setSelectedFolderId(String(personal.id));
+      if (personal) setDefaultFolderId(String(personal.id));
     });
-  }, []);
+  }, [setDefaultFolderId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -276,14 +266,12 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     if (!res.canceled && res.filePath) {
       const name = res.filePath.split(/[/\\]/).pop() || "audio";
       const sizeBytes = (await window.electronAPI.getFileSize?.(res.filePath)) ?? 0;
-      setFile({
+      selectFile({
         name,
         path: res.filePath,
         size: sizeBytes ? formatFileSize(sizeBytes) : "",
         sizeBytes,
       });
-      setState("selected");
-      setError(null);
     }
   };
 
@@ -296,130 +284,54 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     if (SUPPORTED_EXTENSIONS.includes(ext)) {
       const filePath = window.electronAPI.getPathForFile(f);
       if (!filePath) return;
-      setFile({ name: f.name, path: filePath, size: formatFileSize(f.size), sizeBytes: f.size });
-      setState("selected");
-      setError(null);
+      selectFile({ name: f.name, path: filePath, size: formatFileSize(f.size), sizeBytes: f.size });
     }
   };
 
   const reset = () => {
-    if (progressRef.current) clearInterval(progressRef.current);
-    if (progressCleanupRef.current) progressCleanupRef.current();
-    progressCleanupRef.current = null;
-    setState("idle");
-    setFile(null);
-    setResult(null);
-    setNoteId(null);
-    setError(null);
-    setProgress(0);
-    setChunkProgress(null);
     const personal = findDefaultFolder(folders);
-    if (personal) setSelectedFolderId(String(personal.id));
+    resetUploadState(personal ? String(personal.id) : "");
   };
 
-  const handleTranscribe = async () => {
+  const handleTranscribe = () => {
     if (!file) return;
-    setState("transcribing");
-    setError(null);
-    setProgress(0);
-    setChunkProgress(null);
 
     const useChunkProgress = isOpenWhisprCloud && isLargeFile;
 
-    if (useChunkProgress) {
-      progressCleanupRef.current =
-        window.electronAPI.onUploadTranscriptionProgress?.((data) => {
-          if (data.chunksTotal > 0) {
-            setChunkProgress({
-              chunksTotal: data.chunksTotal,
-              chunksCompleted: data.chunksCompleted,
-            });
-            setProgress((data.chunksCompleted / data.chunksTotal) * 90);
-          }
-        }) ?? null;
-    } else {
-      progressRef.current = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            if (progressRef.current) clearInterval(progressRef.current);
-            return prev;
-          }
-          return prev + Math.random() * 6;
-        });
-      }, 500);
-    }
-
-    try {
-      let res: { success: boolean; text?: string; error?: string; code?: string };
-
-      if (isOpenWhisprCloud) {
-        res = await withSessionRefresh(async () => {
-          const r = await window.electronAPI.transcribeAudioFileCloud!(file.path);
-          if (!r.success && r.code) {
-            throw Object.assign(new Error(r.error || "Cloud transcription failed"), {
-              code: r.code,
-            });
-          }
-          return r;
-        });
-      } else if (useLocalWhisper) {
-        res = await window.electronAPI.transcribeAudioFile(file.path, {
-          provider: localTranscriptionProvider as "whisper" | "nvidia",
-          model: localTranscriptionProvider === "nvidia" ? parakeetModel : whisperModel,
-        });
-      } else {
-        res = await window.electronAPI.transcribeAudioFileByok!({
+    runTranscription({
+      useChunkProgress,
+      registerProgress: (callback) => window.electronAPI.onUploadTranscriptionProgress?.(callback),
+      transcribe: async () => {
+        if (isOpenWhisprCloud) {
+          return withSessionRefresh(async () => {
+            const r = await window.electronAPI.transcribeAudioFileCloud!(file.path);
+            if (!r.success && r.code) {
+              throw Object.assign(new Error(r.error || "Cloud transcription failed"), {
+                code: r.code,
+              });
+            }
+            return r;
+          });
+        }
+        if (useLocalWhisper) {
+          return window.electronAPI.transcribeAudioFile(file.path, {
+            provider: localTranscriptionProvider as "whisper" | "nvidia",
+            model: localTranscriptionProvider === "nvidia" ? parakeetModel : whisperModel,
+          });
+        }
+        return window.electronAPI.transcribeAudioFileByok!({
           filePath: file.path,
           apiKey: getActiveApiKey(),
           baseUrl: cloudTranscriptionBaseUrl || "",
           model: cloudTranscriptionModel,
         });
-      }
-
-      if (progressRef.current) clearInterval(progressRef.current);
-      if (progressCleanupRef.current) progressCleanupRef.current();
-      progressCleanupRef.current = null;
-
-      if (res.success && res.text) {
-        setProgress(100);
-        setResult(res.text);
-
-        const textFallback = res.text.trim().split(/\s+/).slice(0, 6).join(" ");
-        const fallbackTitle =
-          textFallback.length > 0
-            ? textFallback + (res.text.trim().split(/\s+/).length > 6 ? "..." : "")
-            : file.name.replace(/\.[^.]+$/, "");
-        const aiTitle = await generateTitle(res.text);
-        const title = aiTitle || fallbackTitle;
-
-        const folderId = selectedFolderId ? Number(selectedFolderId) : null;
-        const noteRes = await window.electronAPI.saveNote(
-          title,
-          res.text,
-          "upload",
-          file.name,
-          null,
-          folderId
-        );
-        if (noteRes.success && noteRes.note) setNoteId(noteRes.note.id);
-        setState("complete");
-      } else {
-        setProgress(0);
-        setError(
-          res.code === "NO_SPEECH_DETECTED"
-            ? t("notes.upload.noSpeechDetected")
-            : res.error || t("notes.upload.transcriptionFailed")
-        );
-        setState("error");
-      }
-    } catch (err) {
-      if (progressRef.current) clearInterval(progressRef.current);
-      if (progressCleanupRef.current) progressCleanupRef.current();
-      progressCleanupRef.current = null;
-      setProgress(0);
-      setError(err instanceof Error ? err.message : t("notes.upload.errorOccurred"));
-      setState("error");
-    }
+      },
+      generateTitle,
+      saveNote: window.electronAPI.saveNote,
+      noSpeechMessage: t("notes.upload.noSpeechDetected"),
+      transcriptionFailedMessage: t("notes.upload.transcriptionFailed"),
+      errorOccurredMessage: t("notes.upload.errorOccurred"),
+    });
   };
 
   const dismissSetup = () => {
