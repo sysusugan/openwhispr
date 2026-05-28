@@ -1508,6 +1508,10 @@
         "dictation": "Dettatura",
         "noteRecording": "Registrazione note"
       },
+      "scopeHints": {
+        "dictation": "Affects: hotkey dictation and file transcription on the Upload page.",
+        "noteRecording": "Affects: note recordings; does not affect file transcription on the Upload page."
+      },
       "selfHostedStreamingNote": "Richiede un server che supporti la trascrizione in streaming."
     },
     "llms": {

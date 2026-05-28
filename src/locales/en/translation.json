@@ -1689,6 +1689,10 @@
         "dictation": "Dictation",
         "noteRecording": "Note Recording"
       },
+      "scopeHints": {
+        "dictation": "Affects: hotkey dictation and file transcription on the Upload page.",
+        "noteRecording": "Affects: note recordings; does not affect file transcription on the Upload page."
+      },
       "selfHostedStreamingNote": "Requires a server that supports streaming transcription."
     },
     "llms": {

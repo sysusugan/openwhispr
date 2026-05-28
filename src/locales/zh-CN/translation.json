@@ -1503,6 +1503,10 @@
         "dictation": "听写",
         "noteRecording": "笔记录音"
       },
+      "scopeHints": {
+        "dictation": "影响：快捷键听写、上传页文件转录。",
+        "noteRecording": "影响：笔记里的录音转写；不影响上传页文件转录。"
+      },
       "selfHostedStreamingNote": "需要支持流式转录的服务器。"
     },
     "llms": {

@@ -533,6 +533,9 @@ function SpeechToTextTabs({
           )
         }
       />
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {t(`settingsPage.speechToText.scopeHints.${tab}`)}
+      </p>
       <TabPanel active={tab === "dictation"}>{renderDictation()}</TabPanel>
       <TabPanel active={tab === "noteRecording"}>{renderNoteRecording()}</TabPanel>
     </div>
