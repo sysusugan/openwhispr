@@ -2320,7 +2320,8 @@
       "copied": "已複製！",
       "emptyState": "隨便問我",
       "errorPrefix": "錯誤",
-      "emptyResponse": "模型傳回了空回覆。請檢查所選模型和服務商相容性。"
+      "emptyResponse": "模型傳回了空回覆。請檢查所選模型和服務商相容性。",
+      "toolNoFinalAnswer": "工具已執行，但模型沒有根據工具結果產生最終回答。請檢查所選模型和服務商的工具呼叫相容性。"
     },
     "titleBar": {
       "label": "助手",

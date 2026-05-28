@@ -35,6 +35,7 @@ import type { ActionProcessingState } from "../../hooks/useActionProcessing";
 import ActionProcessingOverlay from "./ActionProcessingOverlay";
 import NoteBottomBar from "./NoteBottomBar";
 import EmbeddedChat, { type EmbeddedChatMode } from "./EmbeddedChat";
+import { selectEmbeddedChatTranscript } from "./embeddedChatTranscript";
 import { useEmbeddedChat } from "../../hooks/useEmbeddedChat";
 import { normalizeDbDate } from "../../utils/dateFormatting";
 import { parseTranscriptSegments } from "../../utils/parseTranscriptSegments";
@@ -161,13 +162,18 @@ export default function NoteEditor({
   >([]);
   const editorRef = useRef<Editor | null>(null);
   const displaySegmentsRef = useRef<TranscriptSegment[]>([]);
+  const effectiveTranscript = selectEmbeddedChatTranscript({
+    liveTranscript,
+    meetingTranscript,
+    savedTranscript: note.transcript,
+  });
 
   const embeddedChat = useEmbeddedChat({
     noteId: note.id,
     folderId: note.folder_id,
     noteTitle: note.title,
     noteContent: note.content,
-    noteTranscript: note.transcript ?? undefined,
+    noteTranscript: effectiveTranscript || undefined,
   });
   const titleRef = useRef<HTMLDivElement>(null);
   const prevNoteIdRef = useRef<number>(note.id);
@@ -180,7 +186,6 @@ export default function NoteEditor({
     return () => window.cancelAnimationFrame(frameId);
   }, []);
 
-  const effectiveTranscript = liveTranscript || meetingTranscript || note.transcript || "";
   const hasMeetingTranscript = !isRecording && !!effectiveTranscript;
 
   const filteredFolders = useMemo(

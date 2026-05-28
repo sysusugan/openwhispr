@@ -14,7 +14,8 @@ export function getAIModel(
   provider: string,
   model: string,
   apiKey: string,
-  baseURL?: string
+  baseURL?: string,
+  options?: { fetch?: typeof fetch }
 ): LanguageModel {
   switch (provider) {
     case "openai":
@@ -26,7 +27,7 @@ export function getAIModel(
     case "gemini":
       return createGoogleGenerativeAI({ apiKey })(model);
     case "custom":
-      return createOpenAI({ apiKey, baseURL }).chat(model);
+      return createOpenAI({ apiKey, baseURL, fetch: options?.fetch }).chat(model);
     case "local":
       return createOpenAI({ apiKey: "no-key", baseURL }).chat(model);
     default:

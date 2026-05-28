@@ -2325,7 +2325,8 @@
       "copied": "Copiato!",
       "emptyState": "Chiedimi qualsiasi cosa",
       "errorPrefix": "Errore",
-      "emptyResponse": "Il modello ha restituito una risposta vuota. Controlla il modello selezionato e la compatibilità del provider."
+      "emptyResponse": "Il modello ha restituito una risposta vuota. Controlla il modello selezionato e la compatibilità del provider.",
+      "toolNoFinalAnswer": "Lo strumento è stato eseguito, ma il modello non ha generato una risposta finale dal risultato. Controlla la compatibilità delle chiamate agli strumenti del modello e del provider selezionati."
     },
     "titleBar": {
       "label": "Agente",

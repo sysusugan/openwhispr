@@ -2373,7 +2373,8 @@
       "copied": "¡Copiado!",
       "emptyState": "Preguntame lo que sea",
       "errorPrefix": "Error",
-      "emptyResponse": "El modelo devolvió una respuesta vacía. Comprueba el modelo seleccionado y la compatibilidad del proveedor."
+      "emptyResponse": "El modelo devolvió una respuesta vacía. Comprueba el modelo seleccionado y la compatibilidad del proveedor.",
+      "toolNoFinalAnswer": "La herramienta se ejecutó, pero el modelo no generó una respuesta final a partir del resultado. Comprueba la compatibilidad de llamadas a herramientas del modelo y proveedor seleccionados."
     },
     "titleBar": {
       "label": "Agente",

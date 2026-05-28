@@ -2469,7 +2469,8 @@
       "copied": "Copied!",
       "emptyState": "Ask me anything",
       "errorPrefix": "Error",
-      "emptyResponse": "The model returned an empty response. Check the selected model and provider compatibility."
+      "emptyResponse": "The model returned an empty response. Check the selected model and provider compatibility.",
+      "toolNoFinalAnswer": "The tool ran, but the model did not generate a final answer from the result. Check the selected model and provider tool-calling compatibility."
     },
     "titleBar": {
       "label": "Agent",

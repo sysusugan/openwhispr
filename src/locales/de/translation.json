@@ -2325,7 +2325,8 @@
       "copied": "Kopiert!",
       "emptyState": "Frag mich alles",
       "errorPrefix": "Fehler",
-      "emptyResponse": "Das Modell hat eine leere Antwort zurückgegeben. Prüfe das ausgewählte Modell und die Anbieterkompatibilität."
+      "emptyResponse": "Das Modell hat eine leere Antwort zurückgegeben. Prüfe das ausgewählte Modell und die Anbieterkompatibilität.",
+      "toolNoFinalAnswer": "Das Tool wurde ausgeführt, aber das Modell hat keine abschließende Antwort aus dem Ergebnis erzeugt. Prüfe die Tool-Calling-Kompatibilität des ausgewählten Modells und Anbieters."
     },
     "titleBar": {
       "label": "Agent",

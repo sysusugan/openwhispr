@@ -2373,7 +2373,8 @@
       "copied": "Copié !",
       "emptyState": "Demandez-moi n'importe quoi",
       "errorPrefix": "Erreur",
-      "emptyResponse": "Le modèle a renvoyé une réponse vide. Vérifiez le modèle sélectionné et la compatibilité du fournisseur."
+      "emptyResponse": "Le modèle a renvoyé une réponse vide. Vérifiez le modèle sélectionné et la compatibilité du fournisseur.",
+      "toolNoFinalAnswer": "L'outil s'est exécuté, mais le modèle n'a pas généré de réponse finale à partir du résultat. Vérifiez la compatibilité des appels d'outils du modèle et du fournisseur sélectionnés."
     },
     "titleBar": {
       "label": "Agent",

@@ -6,6 +6,7 @@ import { getAgentSystemPrompt } from "../../config/prompts";
 import { createToolRegistry } from "../../services/tools";
 import type { ToolRegistry } from "../../services/tools/ToolRegistry";
 import type { Message, AgentState, ToolCallInfo } from "./types";
+import { isMissingFinalAnswerAfterToolResult } from "./chatCompletionGuard";
 import { isLocalChatProvider, shouldEnableChatTools } from "./toolSupportPolicy";
 
 const RAG_NOTE_LIMIT = 5;
@@ -136,6 +137,8 @@ export function useChatStreaming({
 
       try {
         let fullContent = "";
+        let contentAfterToolResult = "";
+        let sawToolResult = false;
         let stream: AsyncGenerator<AgentStreamChunk>;
 
         if (isCloudAgent) {
@@ -203,6 +206,7 @@ export function useChatStreaming({
           }
           if (chunk.type === "content") {
             fullContent += chunk.text;
+            if (sawToolResult) contentAfterToolResult += chunk.text;
             setMessages((prev) =>
               prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent } : m))
             );
@@ -233,6 +237,7 @@ export function useChatStreaming({
               );
             }
           } else if (chunk.type === "tool_result") {
+            sawToolResult = true;
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantId && m.toolCalls
@@ -242,7 +247,7 @@ export function useChatStreaming({
                         tc.id === chunk.callId
                           ? {
                               ...tc,
-                              status: "completed" as const,
+                              status: chunk.isError ? ("error" as const) : ("completed" as const),
                               result: chunk.displayText,
                               ...(chunk.metadata ? { metadata: chunk.metadata } : {}),
                             }
@@ -260,6 +265,15 @@ export function useChatStreaming({
 
         const finalMsg = messagesRef.current.find((m) => m.id === assistantId);
         const hasToolCalls = !!finalMsg?.toolCalls?.length;
+        if (
+          isMissingFinalAnswerAfterToolResult({
+            toolCalls: finalMsg?.toolCalls,
+            sawToolResult,
+            contentAfterToolResult,
+          })
+        ) {
+          throw new Error(t("agentMode.chat.toolNoFinalAnswer"));
+        }
         if (!fullContent.trim() && !hasToolCalls) {
           throw new Error(t("agentMode.chat.emptyResponse"));
         }

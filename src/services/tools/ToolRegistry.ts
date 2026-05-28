@@ -7,6 +7,13 @@ export interface ToolResult {
   displayText: string;
 }
 
+interface AisdkToolResult {
+  success: boolean;
+  data: unknown;
+  displayText: string;
+  error?: string;
+}
+
 export interface ToolDefinition {
   name: string;
   description: string;
@@ -39,9 +46,20 @@ export class ToolRegistry {
         execute: async (args: unknown) => {
           try {
             const toolResult = await def.execute(args as Record<string, unknown>);
-            return toolResult.success ? toolResult.data : { error: toolResult.displayText };
+            return {
+              success: toolResult.success,
+              data: toolResult.data,
+              displayText: toolResult.displayText,
+              ...(toolResult.success ? {} : { error: toolResult.displayText }),
+            } satisfies AisdkToolResult;
           } catch (error) {
-            return { error: (error as Error).message || "Tool execution failed" };
+            const message = (error as Error).message || "Tool execution failed";
+            return {
+              success: false,
+              data: null,
+              displayText: message,
+              error: message,
+            } satisfies AisdkToolResult;
           }
         },
       } as Tool;

@@ -12,10 +12,16 @@ import logger from "../utils/logger";
 import { getSettings, isCloudCleanupMode } from "../stores/settingsStore";
 import { streamText, stepCountIs } from "ai";
 import { getAIModel } from "./ai/providers";
+import { createCustomProviderFetch } from "./ai/customProviderFetch";
 import { PROVIDER_REGISTRY, type ProviderContext } from "./ai/inferenceProviders";
 import { getConfiguredOpenAIBase } from "./ai/openaiBase";
 import { applyThinkingSuppression } from "./ai/thinkingSuppression";
 import thinkingSuppressionPolicy from "./ai/thinkingSuppressionPolicy.js";
+import {
+  errorToMessage,
+  formatToolErrorStreamChunk,
+  formatToolResultStreamChunk,
+} from "./agentToolStream";
 
 const { getGroqProviderOptions } = thinkingSuppressionPolicy;
 
@@ -28,6 +34,7 @@ export type AgentStreamChunk =
       toolName: string;
       displayText: string;
       metadata?: Record<string, unknown>;
+      isError?: boolean;
     }
   | { type: "done"; finishReason?: string };
 
@@ -579,7 +586,16 @@ class ReasoningService extends BaseReasoningService {
     const apiConfig = getOpenAiApiConfig(model);
 
     const aiProvider = isLocalProvider || isLanCleanup ? "local" : provider;
-    const aiModel = getAIModel(aiProvider, model, apiKey, baseURL);
+    const aiModel = getAIModel(aiProvider, model, apiKey, baseURL, {
+      fetch:
+        provider === "custom"
+          ? createCustomProviderFetch({
+              baseURL,
+              model,
+              hasTools: !!tools,
+            })
+          : undefined,
+    });
 
     const modelDef = getCloudModel(model);
     const userSuppressesThinking = config.disableThinking === true && !!modelDef?.supportsThinking;
@@ -626,15 +642,11 @@ class ReasoningService extends BaseReasoningService {
           ],
         };
       } else if (chunk.type === "tool-result") {
-        const output = chunk.output;
-        const displayText =
-          typeof output === "string" ? output : output?.error ? String(output.error) : "Done";
-        yield {
-          type: "tool_result",
-          callId: chunk.toolCallId,
-          toolName: chunk.toolName,
-          displayText,
-        };
+        yield formatToolResultStreamChunk(chunk);
+      } else if (chunk.type === "tool-error") {
+        yield formatToolErrorStreamChunk(chunk);
+      } else if (chunk.type === "error") {
+        throw new Error(errorToMessage(chunk.error));
       } else if (chunk.type === "finish") {
         yield { type: "done", finishReason: chunk.finishReason };
       }

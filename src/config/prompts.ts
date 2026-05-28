@@ -1,4 +1,5 @@
 import { resolvePrompt } from "./prompts/index";
+import { getNoteContextInstruction } from "./agentPromptContext";
 
 export { resolvePrompt, getDefaultPromptText, appendDictionarySuffix } from "./prompts/index";
 export { PROMPT_KINDS, PROMPT_KIND_LIST, type PromptKind } from "./prompts/registry";
@@ -20,7 +21,7 @@ export function getWordBoost(customDictionary?: string[]): string[] {
 
 const TOOL_INSTRUCTIONS: Record<string, string> = {
   search_notes:
-    "Use search_notes to find information from the user's past meetings, discussions, or personal notes before answering from memory.",
+    "Use search_notes to find information from the user's past meetings, discussions, or personal notes before answering from memory. Do not use search_notes when the current note context already contains the relevant content.",
   get_note:
     "Use get_note to fetch the full content of a specific note by ID. If the current note's ID is provided in the context, use it directly. Otherwise, use search_notes first to find the note ID.",
   create_note:
@@ -48,10 +49,7 @@ export function getAgentSystemPrompt(availableTools?: string[], noteContext?: st
   }
 
   if (noteContext) {
-    prompt +=
-      "\n\nBelow are notes from the user's library that may be relevant. " +
-      "Reference them naturally if they help answer the question.\n\n" +
-      noteContext;
+    prompt += `\n\n${getNoteContextInstruction()}\n\n${noteContext}`;
   }
 
   return prompt;
