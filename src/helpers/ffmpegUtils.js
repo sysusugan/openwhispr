@@ -5,6 +5,29 @@ const debugLogger = require("./debugLogger");
 
 let cachedFFmpegPath = null;
 
+function createAbortError(signal, fallbackMessage = "Operation cancelled") {
+  const reason = signal?.reason;
+  if (reason instanceof Error) {
+    if (!reason.code) reason.code = "CANCELLED";
+    return reason;
+  }
+  return Object.assign(new Error(typeof reason === "string" ? reason : fallbackMessage), {
+    code: "CANCELLED",
+  });
+}
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) {
+    throw createAbortError(signal);
+  }
+}
+
+function onAbort(signal, callback) {
+  if (!signal) return () => {};
+  signal.addEventListener("abort", callback, { once: true });
+  return () => signal.removeEventListener("abort", callback);
+}
+
 function getFFmpegPath() {
   if (cachedFFmpegPath) return cachedFFmpegPath;
 
@@ -108,9 +131,16 @@ function isWavFormat(buffer) {
 }
 
 function convertToWav(inputPath, outputPath, options = {}) {
-  const { sampleRate = 16000, channels = 1 } = options;
+  const { sampleRate = 16000, channels = 1, signal } = options;
 
   return new Promise((resolve, reject) => {
+    try {
+      throwIfAborted(signal);
+    } catch (error) {
+      reject(error);
+      return;
+    }
+
     const ffmpegPath = getFFmpegPath();
     if (!ffmpegPath) {
       reject(new Error("FFmpeg not found - required for audio conversion"));
@@ -143,38 +173,58 @@ function convertToWav(inputPath, outputPath, options = {}) {
     });
 
     let stderr = "";
+    let settled = false;
+    const cleanupAbort = onAbort(signal, () => {
+      if (settled) return;
+      settled = true;
+      try {
+        proc.kill("SIGKILL");
+      } catch {
+        // ignore kill errors
+      }
+      reject(createAbortError(signal));
+    });
+
+    const settle = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      cleanupAbort();
+      fn(value);
+    };
 
     proc.stderr.on("data", (data) => {
       stderr += data.toString();
     });
 
     proc.on("error", (error) => {
-      reject(new Error(`FFmpeg process error: ${error.message}`));
+      settle(reject, new Error(`FFmpeg process error: ${error.message}`));
     });
 
     proc.on("close", (code) => {
+      if (settled) return;
       if (code !== 0) {
         const stderrPreview = stderr.slice(-500).trim();
         debugLogger.debug("FFmpeg conversion failed", { code, stderr: stderrPreview });
-        reject(
+        settle(
+          reject,
           new Error(`FFmpeg exited with code ${code}${stderrPreview ? `: ${stderrPreview}` : ""}`)
         );
         return;
       }
 
       if (!fs.existsSync(outputPath)) {
-        reject(new Error("FFmpeg conversion produced no output file"));
+        settle(reject, new Error("FFmpeg conversion produced no output file"));
         return;
       }
 
       const stats = fs.statSync(outputPath);
       if (stats.size === 0) {
-        reject(new Error("FFmpeg conversion produced empty output file"));
+        settle(reject, new Error("FFmpeg conversion produced empty output file"));
         return;
       }
 
       debugLogger.debug("FFmpeg conversion complete", { outputSize: stats.size });
-      resolve();
+      settle(resolve);
     });
   });
 }
@@ -238,9 +288,16 @@ function computeFloat32RMS(float32Buffer) {
 }
 
 function splitAudioFile(inputPath, outputDir, options = {}) {
-  const { segmentDuration = 600, audioBitrate = "128k" } = options;
+  const { segmentDuration = 600, audioBitrate = "128k", signal } = options;
 
   return new Promise((resolve, reject) => {
+    try {
+      throwIfAborted(signal);
+    } catch (error) {
+      reject(error);
+      return;
+    }
+
     const ffmpegPath = getFFmpegPath();
     if (!ffmpegPath) {
       reject(new Error("FFmpeg not found - required for audio splitting"));
@@ -281,20 +338,40 @@ function splitAudioFile(inputPath, outputDir, options = {}) {
     });
 
     let stderr = "";
+    let settled = false;
+    const cleanupAbort = onAbort(signal, () => {
+      if (settled) return;
+      settled = true;
+      try {
+        proc.kill("SIGKILL");
+      } catch {
+        // ignore kill errors
+      }
+      reject(createAbortError(signal));
+    });
+
+    const settle = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      cleanupAbort();
+      fn(value);
+    };
 
     proc.stderr.on("data", (data) => {
       stderr += data.toString();
     });
 
     proc.on("error", (error) => {
-      reject(new Error(`FFmpeg split error: ${error.message}`));
+      settle(reject, new Error(`FFmpeg split error: ${error.message}`));
     });
 
     proc.on("close", (code) => {
+      if (settled) return;
       if (code !== 0) {
         const stderrPreview = stderr.slice(-500).trim();
         debugLogger.debug("FFmpeg split failed", { code, stderr: stderrPreview });
-        reject(
+        settle(
+          reject,
           new Error(
             `FFmpeg split exited with code ${code}${stderrPreview ? `: ${stderrPreview}` : ""}`
           )
@@ -309,12 +386,12 @@ function splitAudioFile(inputPath, outputDir, options = {}) {
         .map((f) => path.join(outputDir, f));
 
       if (chunks.length === 0) {
-        reject(new Error("FFmpeg split produced no output files"));
+        settle(reject, new Error("FFmpeg split produced no output files"));
         return;
       }
 
       debugLogger.debug("FFmpeg split complete", { chunkCount: chunks.length });
-      resolve(chunks);
+      settle(resolve, chunks);
     });
   });
 }
@@ -330,5 +407,7 @@ module.exports = {
   splitAudioFile,
   wavToFloat32Samples,
   computeFloat32RMS,
+  createAbortError,
+  throwIfAborted,
   clearCache,
 };

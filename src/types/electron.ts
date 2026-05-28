@@ -673,7 +673,14 @@ declare global {
           language?: string;
           [key: string]: unknown;
         }
-      ) => Promise<{ success: boolean; text?: string; error?: string }>;
+      ) => Promise<{
+        success: boolean;
+        text?: string;
+        error?: string;
+        code?: string;
+        partial?: boolean;
+        warning?: string | null;
+      }>;
       getPathForFile: (file: File) => string;
 
       // Note event listeners
@@ -1213,11 +1220,27 @@ declare global {
         text?: string;
         error?: string;
         code?: string;
+        warning?: string | null;
       }>;
 
       onUploadTranscriptionProgress?: (
-        callback: (data: { stage: string; chunksTotal: number; chunksCompleted: number }) => void
+        callback: (data: {
+          jobId?: string;
+          stage: string;
+          chunksTotal: number;
+          chunksCompleted: number;
+          chunksFailed?: number;
+          currentChunk?: number;
+          message?: string;
+        }) => void
       ) => () => void;
+
+      cancelUploadTranscription?: (jobId?: string | null) => Promise<{
+        success: boolean;
+        jobId?: string;
+        error?: string;
+        code?: string;
+      }>;
 
       // BYOK audio file transcription
       transcribeAudioFileByok?: (options: {
@@ -1229,6 +1252,7 @@ declare global {
         success: boolean;
         text?: string;
         error?: string;
+        code?: string;
       }>;
 
       // Usage limit events

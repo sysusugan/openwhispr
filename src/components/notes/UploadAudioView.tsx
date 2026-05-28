@@ -121,6 +121,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     setDefaultFolderId,
     reset: resetUploadState,
     runTranscription,
+    cancelTranscription: cancelUploadTranscription,
   } = useUploadTranscriptionStore();
 
   const isOpenWhisprCloud =
@@ -297,11 +298,14 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   const handleTranscribe = () => {
     if (!file) return;
 
-    const useChunkProgress = isOpenWhisprCloud && isLargeFile;
+    const useChunkProgress = useLocalWhisper || (isOpenWhisprCloud && isLargeFile);
 
     runTranscription({
       useChunkProgress,
       registerProgress: (callback) => window.electronAPI.onUploadTranscriptionProgress?.(callback),
+      cancelTranscription: () =>
+        window.electronAPI.cancelUploadTranscription?.() ??
+        Promise.resolve({ success: false, error: "Cancel is unavailable" }),
       transcribe: async () => {
         if (isOpenWhisprCloud) {
           return withSessionRefresh(async () => {
@@ -530,6 +534,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
               getTranscribingLabel={getTranscribingLabel}
               file={file}
               chunkProgress={chunkProgress}
+              onCancel={cancelUploadTranscription}
             />
           )}
 
@@ -938,7 +943,8 @@ interface TranscribingViewProps {
   progress: number;
   getTranscribingLabel: () => string;
   file: { name: string; path: string; size: string; sizeBytes: number } | null;
-  chunkProgress: { chunksTotal: number; chunksCompleted: number } | null;
+  chunkProgress: { chunksTotal: number; chunksCompleted: number; chunksFailed?: number } | null;
+  onCancel: () => void;
 }
 
 function TranscribingView({
@@ -947,8 +953,13 @@ function TranscribingView({
   getTranscribingLabel,
   file,
   chunkProgress,
+  onCancel,
 }: TranscribingViewProps) {
   const hasChunkInfo = chunkProgress !== null && chunkProgress.chunksTotal > 0;
+  const processedChunks =
+    chunkProgress && chunkProgress.chunksTotal > 0
+      ? chunkProgress.chunksCompleted + (chunkProgress.chunksFailed || 0)
+      : 0;
 
   return (
     <div className="flex flex-col items-center" style={{ animation: "float-up 0.3s ease-out" }}>
@@ -977,7 +988,7 @@ function TranscribingView({
       {hasChunkInfo ? (
         <p className="text-xs text-foreground/20 mt-1">
           {t("notes.upload.chunkProgress", {
-            completed: chunkProgress.chunksCompleted,
+            completed: processedChunks,
             total: chunkProgress.chunksTotal,
           })}
         </p>
@@ -985,6 +996,14 @@ function TranscribingView({
       {!hasChunkInfo && file ? (
         <p className="text-xs text-foreground/20 mt-1 truncate max-w-50">{file.name}</p>
       ) : null}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onCancel}
+        className="h-7 text-xs text-foreground/35 mt-4"
+      >
+        {t("notes.upload.cancel")}
+      </Button>
     </div>
   );
 }

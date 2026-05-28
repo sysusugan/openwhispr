@@ -8,7 +8,7 @@ const debugLogger = require("./debugLogger");
 const { killProcess } = require("../utils/process");
 const { isPortAvailable } = require("../utils/serverUtils");
 const { getSafeTempDir } = require("./safeTempDir");
-const { convertToWav } = require("./ffmpegUtils");
+const { convertToWav, createAbortError, throwIfAborted } = require("./ffmpegUtils");
 const sidecarPidFile = require("./sidecarPidFile");
 const { sanitizeWhisperVadConfig, DEFAULT_WHISPER_VAD_CONFIG } = require("./whisperVadConfig");
 
@@ -505,6 +505,9 @@ class WhisperServerManager extends EventEmitter {
   }
 
   async transcribe(audioBuffer, options = {}) {
+    const { signal } = options;
+    throwIfAborted(signal);
+
     if (!this.ready || (!this.process && !this.isRemote)) {
       throw new Error("whisper-server is not running");
     }
@@ -528,7 +531,8 @@ class WhisperServerManager extends EventEmitter {
     if (!this.canConvert) {
       throw new Error("FFmpeg not found - required for audio conversion");
     }
-    finalBuffer = await this._convertToWav(audioBuffer);
+    finalBuffer = await this._convertToWav(audioBuffer, signal);
+    throwIfAborted(signal);
 
     const boundary = `----WhisperBoundary${Date.now()}`;
     const parts = [];
@@ -572,7 +576,34 @@ class WhisperServerManager extends EventEmitter {
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
 
-      const req = http.request(
+      let settled = false;
+      let req = null;
+      const cleanupAbort = signal
+        ? (() => {
+            const abortHandler = () => {
+              if (settled) return;
+              settled = true;
+              const abortError = createAbortError(signal);
+              try {
+                req?.destroy(abortError);
+              } catch {
+                // ignore destroy errors
+              }
+              reject(abortError);
+            };
+            signal.addEventListener("abort", abortHandler, { once: true });
+            return () => signal.removeEventListener("abort", abortHandler);
+          })()
+        : () => {};
+
+      const settle = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        cleanupAbort();
+        fn(value);
+      };
+
+      req = http.request(
         {
           hostname: this.hostname,
           port: this.port,
@@ -598,25 +629,34 @@ class WhisperServerManager extends EventEmitter {
             });
 
             if (res.statusCode !== 200) {
-              reject(new Error(`whisper-server returned status ${res.statusCode}: ${data}`));
+              settle(
+                reject,
+                new Error(`whisper-server returned status ${res.statusCode}: ${data}`)
+              );
               return;
             }
 
             try {
-              resolve(JSON.parse(data));
+              settle(resolve, JSON.parse(data));
             } catch (e) {
-              reject(new Error(`Failed to parse whisper-server response: ${e.message}`));
+              settle(reject, new Error(`Failed to parse whisper-server response: ${e.message}`));
             }
           });
         }
       );
 
       req.on("error", (error) => {
-        reject(new Error(`whisper-server request failed: ${error.message}`));
+        if (settled) return;
+        settle(reject, new Error(`whisper-server request failed: ${error.message}`));
       });
       req.on("timeout", () => {
-        req.destroy();
-        reject(new Error("whisper-server request timed out"));
+        if (settled) return;
+        try {
+          req.destroy();
+        } catch {
+          // ignore destroy errors
+        }
+        settle(reject, new Error("whisper-server request timed out"));
       });
 
       req.write(body);
@@ -624,7 +664,7 @@ class WhisperServerManager extends EventEmitter {
     });
   }
 
-  async _convertToWav(audioBuffer) {
+  async _convertToWav(audioBuffer, signal) {
     const tempDir = getSafeTempDir();
     const timestamp = Date.now();
     const tempInputPath = path.join(tempDir, `whisper-input-${timestamp}.webm`);
@@ -632,7 +672,11 @@ class WhisperServerManager extends EventEmitter {
 
     try {
       fs.writeFileSync(tempInputPath, audioBuffer);
-      await convertToWav(tempInputPath, tempWavPath, { sampleRate: 16000, channels: 1 });
+      await convertToWav(tempInputPath, tempWavPath, {
+        sampleRate: 16000,
+        channels: 1,
+        signal,
+      });
       return fs.readFileSync(tempWavPath);
     } finally {
       for (const f of [tempInputPath, tempWavPath]) {

@@ -22,17 +22,25 @@ export interface UploadTranscriptionResult {
   text?: string;
   error?: string;
   code?: string;
+  warning?: string | null;
+  partial?: boolean;
 }
 
 export interface UploadTranscriptionProgress {
+  jobId?: string;
+  stage?: string;
   chunksTotal: number;
   chunksCompleted: number;
+  chunksFailed?: number;
+  currentChunk?: number;
+  message?: string;
 }
 
 export interface RunUploadTranscriptionOptions {
   useChunkProgress: boolean;
   registerProgress?: (callback: (data: UploadTranscriptionProgress) => void) => (() => void) | null;
   transcribe: () => Promise<UploadTranscriptionResult>;
+  cancelTranscription?: () => Promise<{ success: boolean; error?: string; code?: string }>;
   generateTitle: (text: string) => Promise<string>;
   saveNote: (
     title: string,
@@ -62,11 +70,13 @@ interface UploadTranscriptionStoreState {
   setDefaultFolderId: (folderId: string) => void;
   reset: (defaultFolderId?: string) => void;
   runTranscription: (options: RunUploadTranscriptionOptions) => void;
+  cancelTranscription: () => void;
 }
 
 let nextTaskId = 1;
 let progressTimer: ReturnType<typeof setInterval> | null = null;
 let progressCleanup: (() => void) | null = null;
+let currentCancelTranscription: (() => Promise<{ success: boolean; error?: string }>) | null = null;
 
 function stopProgressTracking() {
   if (progressTimer) {
@@ -77,6 +87,7 @@ function stopProgressTracking() {
     progressCleanup();
     progressCleanup = null;
   }
+  currentCancelTranscription = null;
 }
 
 function fallbackTitleFromText(text: string, fileName: string) {
@@ -104,8 +115,28 @@ export const useUploadTranscriptionStore = create<UploadTranscriptionStoreState>
   },
 
   reset: (defaultFolderId = "") => {
+    const cancel = currentCancelTranscription;
     stopProgressTracking();
+    if (get().state === "transcribing" && cancel) {
+      void cancel().catch(() => {});
+    }
     set({ ...resetUploadTask(get(), { defaultFolderId }), activeTaskId: null });
+  },
+
+  cancelTranscription: () => {
+    const current = get();
+    if (current.state !== "transcribing") return;
+    const file = current.file;
+    const cancel = currentCancelTranscription;
+    stopProgressTracking();
+    if (cancel) {
+      void cancel().catch(() => {});
+    }
+    if (file) {
+      set({ ...selectUploadFile(get(), file), activeTaskId: null });
+    } else {
+      set({ ...resetUploadTask(get()), activeTaskId: null });
+    }
   },
 
   runTranscription: (options) => {
@@ -117,6 +148,7 @@ export const useUploadTranscriptionStore = create<UploadTranscriptionStoreState>
     const selectedFolderId = current.selectedFolderId;
 
     stopProgressTracking();
+    currentCancelTranscription = options.cancelTranscription || null;
     set({
       ...startUploadTask(current, file, { folderId: selectedFolderId }),
       activeTaskId: taskId,
@@ -128,7 +160,7 @@ export const useUploadTranscriptionStore = create<UploadTranscriptionStoreState>
           if (get().activeTaskId !== taskId || data.chunksTotal <= 0) return;
           set({
             chunkProgress: data,
-            progress: (data.chunksCompleted / data.chunksTotal) * 90,
+            progress: ((data.chunksCompleted + (data.chunksFailed || 0)) / data.chunksTotal) * 90,
           });
         }) ?? null;
     } else {

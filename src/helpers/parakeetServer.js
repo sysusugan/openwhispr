@@ -8,6 +8,7 @@ const {
   convertToWav,
   wavToFloat32Samples,
   computeFloat32RMS,
+  throwIfAborted,
 } = require("./ffmpegUtils");
 const { getSafeTempDir } = require("./safeTempDir");
 const ParakeetWsServer = require("./parakeetWsServer");
@@ -55,7 +56,10 @@ class ParakeetServerManager {
     return true;
   }
 
-  async _ensureWav(audioBuffer) {
+  async _ensureWav(audioBuffer, options = {}) {
+    const { signal } = options;
+    throwIfAborted(signal);
+
     const isWav = isWavFormat(audioBuffer);
     if (isWav) return { wavBuffer: audioBuffer, filesToCleanup: [] };
 
@@ -76,7 +80,7 @@ class ParakeetServerManager {
     const inputStats = fs.statSync(tempInputPath);
     debugLogger.debug("Converting audio to WAV", { inputSize: inputStats.size });
 
-    await convertToWav(tempInputPath, tempWavPath, { sampleRate: 16000, channels: 1 });
+    await convertToWav(tempInputPath, tempWavPath, { sampleRate: 16000, channels: 1, signal });
 
     const wavBuffer = fs.readFileSync(tempWavPath);
     return { wavBuffer, filesToCleanup: [tempInputPath, tempWavPath] };
@@ -84,6 +88,8 @@ class ParakeetServerManager {
 
   async transcribe(audioBuffer, options = {}) {
     const { modelName = "parakeet-tdt-0.6b-v3" } = options;
+    const { signal } = options;
+    throwIfAborted(signal);
 
     const modelDir = path.join(this.getModelsDir(), modelName);
     if (!this.isModelDownloaded(modelName)) {
@@ -96,11 +102,13 @@ class ParakeetServerManager {
       isWavFormat: isWavFormat(audioBuffer),
     });
 
-    const { wavBuffer, filesToCleanup } = await this._ensureWav(audioBuffer);
+    const { wavBuffer, filesToCleanup } = await this._ensureWav(audioBuffer, { signal });
     try {
+      throwIfAborted(signal);
       if (!this.wsServer.ready || this.wsServer.modelName !== modelName) {
         await this.wsServer.start(modelName, modelDir);
       }
+      throwIfAborted(signal);
 
       const samples = wavToFloat32Samples(wavBuffer);
       const durationSeconds = samples.length / BYTES_PER_SAMPLE / SAMPLE_RATE;
@@ -112,7 +120,7 @@ class ParakeetServerManager {
       }
 
       if (samples.length <= MAX_SEGMENT_BYTES) {
-        const result = await this.wsServer.transcribe(samples, SAMPLE_RATE);
+        const result = await this.wsServer.transcribe(samples, SAMPLE_RATE, { signal });
         if (!result.text?.trim()) {
           debugLogger.warn("Parakeet returned empty text for non-silent audio", {
             durationSeconds,
@@ -132,9 +140,10 @@ class ParakeetServerManager {
       let totalElapsed = 0;
 
       for (let offset = 0; offset < samples.length; offset += MAX_SEGMENT_BYTES) {
+        throwIfAborted(signal);
         const end = Math.min(offset + MAX_SEGMENT_BYTES, samples.length);
         const segment = samples.subarray(offset, end);
-        const result = await this.wsServer.transcribe(segment, SAMPLE_RATE);
+        const result = await this.wsServer.transcribe(segment, SAMPLE_RATE, { signal });
         totalElapsed += result.elapsed || 0;
         if (result.text) {
           texts.push(result.text);

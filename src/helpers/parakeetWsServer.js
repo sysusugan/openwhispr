@@ -11,6 +11,7 @@ const {
 } = require("../utils/serverUtils");
 const { getSafeTempDir } = require("./safeTempDir");
 const sidecarPidFile = require("./sidecarPidFile");
+const { createAbortError, throwIfAborted } = require("./ffmpegUtils");
 
 const PORT_RANGE_START = 6006;
 const PORT_RANGE_END = 6029;
@@ -205,7 +206,10 @@ class ParakeetWsServer {
     }
   }
 
-  transcribe(samplesBuffer, sampleRate) {
+  transcribe(samplesBuffer, sampleRate, options = {}) {
+    const { signal } = options;
+    throwIfAborted(signal);
+
     if (!this.ready || !this.process) {
       throw new Error("parakeet-ws server is not running");
     }
@@ -213,15 +217,44 @@ class ParakeetWsServer {
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
       let result = "";
+      let settled = false;
+      let ws = null;
 
       const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanupAbort();
         try {
-          ws.close();
+          ws?.close();
         } catch {}
         reject(new Error("parakeet-ws transcription timed out"));
       }, TRANSCRIPTION_TIMEOUT_MS);
 
-      const ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
+      const cleanupAbort = signal
+        ? (() => {
+            const abortHandler = () => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timeout);
+              try {
+                ws?.close();
+              } catch {}
+              reject(createAbortError(signal));
+            };
+            signal.addEventListener("abort", abortHandler, { once: true });
+            return () => signal.removeEventListener("abort", abortHandler);
+          })()
+        : () => {};
+
+      const settle = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        cleanupAbort();
+        fn(value);
+      };
+
+      ws = new WebSocket(`ws://127.0.0.1:${this.port}`);
 
       ws.on("open", () => {
         // sherpa-onnx offline WS binary protocol:
@@ -249,7 +282,7 @@ class ParakeetWsServer {
       });
 
       ws.on("close", (code) => {
-        clearTimeout(timeout);
+        if (settled) return;
         const elapsed = Date.now() - startTime;
 
         debugLogger.debug("parakeet-ws transcription completed", {
@@ -261,15 +294,14 @@ class ParakeetWsServer {
 
         try {
           const parsed = JSON.parse(result);
-          resolve({ text: (parsed.text || "").trim(), elapsed });
+          settle(resolve, { text: (parsed.text || "").trim(), elapsed });
         } catch {
-          resolve({ text: result.trim(), elapsed });
+          settle(resolve, { text: result.trim(), elapsed });
         }
       });
 
       ws.on("error", (error) => {
-        clearTimeout(timeout);
-        reject(new Error(`parakeet-ws transcription failed: ${error.message}`));
+        settle(reject, new Error(`parakeet-ws transcription failed: ${error.message}`));
       });
     });
   }

@@ -39,6 +39,13 @@ const {
   resolveContextSileroEnabled,
 } = require("./whisperVadConfig");
 const { resolveOpenWhisprApiUrl } = require("../config/openwhisprCloud");
+const { throwIfAborted } = require("./ffmpegUtils");
+const { LOCAL_STT_PRIORITY, LocalSttScheduler } = require("./localSttScheduler");
+const {
+  UploadTranscriptionCoordinator,
+  combineAbortSignals,
+  transcribeLocalUploadFileInChunks,
+} = require("./uploadLocalTranscriptionJob");
 
 const STREAMING_CLIENT_BY_PROVIDER = {
   "openai-realtime": OpenAIRealtimeStreaming,
@@ -111,7 +118,7 @@ function buildMultipartBody(fileBuffer, fileName, contentType, fields = {}) {
   return { body: Buffer.concat(bodyParts), boundary };
 }
 
-async function postMultipart(url, body, boundary, headers = {}) {
+async function postMultipart(url, body, boundary, headers = {}, options = {}) {
   const response = await net.fetch(url.toString(), {
     method: "POST",
     headers: {
@@ -119,6 +126,7 @@ async function postMultipart(url, body, boundary, headers = {}) {
       ...headers,
     },
     body,
+    signal: options.signal,
     useSessionCookies: false,
   });
   const text = await response.text();
@@ -162,10 +170,12 @@ async function chunkedCloudTranscribe({
   onProgress,
   concurrencyLimit = CLOUD_CHUNK_CONCURRENCY,
   segmentDuration = CLOUD_CHUNK_SEGMENT_SECONDS,
+  signal,
+  jobId: providedJobId,
 }) {
   const { splitAudioFile } = require("./ffmpegUtils");
 
-  const jobId = `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const jobId = providedJobId || `${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
   const chunkDir = path.join(os.tmpdir(), `ow-chunks-${jobId}`);
   let tmpInputPath = null;
 
@@ -179,18 +189,34 @@ async function chunkedCloudTranscribe({
   fs.mkdirSync(chunkDir, { recursive: true });
 
   try {
-    onProgress?.({ stage: "splitting", chunksTotal: 0, chunksCompleted: 0 });
+    throwIfAborted(signal);
+    onProgress?.({
+      jobId,
+      stage: "splitting",
+      chunksTotal: 0,
+      chunksCompleted: 0,
+      chunksFailed: 0,
+    });
 
-    const chunkPaths = await splitAudioFile(inputPath, chunkDir, { segmentDuration });
+    const chunkPaths = await splitAudioFile(inputPath, chunkDir, { segmentDuration, signal });
     const totalChunks = chunkPaths.length;
 
-    onProgress?.({ stage: "transcribing", chunksTotal: totalChunks, chunksCompleted: 0 });
+    onProgress?.({
+      jobId,
+      stage: "transcribing",
+      chunksTotal: totalChunks,
+      chunksCompleted: 0,
+      chunksFailed: 0,
+      currentChunk: 0,
+    });
 
     const results = new Array(totalChunks).fill(null);
     const failureCodes = new Set();
     let completedCount = 0;
+    let failedCount = 0;
 
     const transcribeChunk = async (index) => {
+      throwIfAborted(signal);
       const chunkBuffer = fs.readFileSync(chunkPaths[index]);
       const chunkName = path.basename(chunkPaths[index]);
       const { body, boundary } = buildMultipartBody(
@@ -200,14 +226,17 @@ async function chunkedCloudTranscribe({
         multipartFields
       );
       const url = new URL(`${apiUrl}/api/transcribe`);
-      const data = await postMultipart(url, body, boundary, authHeader);
+      const data = await postMultipart(url, body, boundary, authHeader, { signal });
 
       results[index] = interpretTranscribeResponse(data);
       completedCount++;
       onProgress?.({
+        jobId,
         stage: "transcribing",
         chunksTotal: totalChunks,
         chunksCompleted: completedCount,
+        chunksFailed: failedCount,
+        currentChunk: index + 1,
       });
     };
 
@@ -218,8 +247,18 @@ async function chunkedCloudTranscribe({
         (err) => {
           executing.delete(p);
           if (err.code === "AUTH_EXPIRED" || err.code === "LIMIT_REACHED") throw err;
+          if (err.code === "CANCELLED") throw err;
           if (err.code) failureCodes.add(err.code);
+          failedCount++;
           debugLogger.warn(`Chunk ${index} failed`, { error: err.message, code: err.code });
+          onProgress?.({
+            jobId,
+            stage: "transcribing",
+            chunksTotal: totalChunks,
+            chunksCompleted: completedCount,
+            chunksFailed: failedCount,
+            currentChunk: index + 1,
+          });
         }
       );
       executing.add(p);
@@ -305,6 +344,8 @@ class IPCHandlers {
     this._autoLearnLatestData = null;
     this._textEditHandler = null;
     this._activeRecordingPipeline = null;
+    this.localSttScheduler = new LocalSttScheduler();
+    this.uploadTranscriptionCoordinator = new UploadTranscriptionCoordinator();
     this.audioStorageManager = new AudioStorageManager();
     this._audioCleanupInterval = null;
     this._noteFilesEnabled = false;
@@ -356,6 +397,10 @@ class IPCHandlers {
       vadEnabled: resolveContextSileroEnabled(settings, context),
       vadConfig,
     };
+  }
+
+  _runLocalSttTask(options, worker) {
+    return this.localSttScheduler.run(options, worker);
   }
 
   _asyncVectorUpsert(note) {
@@ -1460,22 +1505,56 @@ class IPCHandlers {
     });
 
     ipcMain.handle("transcribe-audio-file", async (event, filePath, options = {}) => {
-      const fs = require("fs");
       try {
-        const audioBuffer = fs.readFileSync(filePath);
-        if (options.provider === "nvidia") {
-          const result = await this.parakeetManager.transcribeLocalParakeet(audioBuffer, options);
+        return await this.uploadTranscriptionCoordinator.run("local", async ({ jobId, signal }) => {
+          const provider = options.provider === "nvidia" ? "nvidia" : "whisper";
+          const model = options.model;
+          const language = options.language;
+          const { provider: _ignoredProvider, ...whisperOptions } = options;
+          const vadOptions =
+            provider === "whisper" ? this._resolveWhisperVadOptions("dictation") : {};
+
+          const result = await transcribeLocalUploadFileInChunks({
+            filePath,
+            provider,
+            model,
+            language,
+            jobId,
+            signal,
+            onProgress: (payload) => {
+              event.sender.send("upload-transcription-progress", payload);
+            },
+            transcribeChunk: async ({ chunkBuffer, signal: chunkSignal }) =>
+              this._runLocalSttTask(
+                {
+                  kind: "upload",
+                  priority: LOCAL_STT_PRIORITY.UPLOAD,
+                  interruptible: true,
+                  signal: chunkSignal,
+                },
+                async ({ signal: schedulerSignal }) => {
+                  const combinedSignal = combineAbortSignals([chunkSignal, schedulerSignal]);
+                  if (provider === "nvidia") {
+                    return this.parakeetManager.transcribeLocalParakeet(chunkBuffer, {
+                      model,
+                      signal: combinedSignal,
+                    });
+                  }
+                  return this.whisperManager.transcribeLocalWhisper(chunkBuffer, {
+                    ...whisperOptions,
+                    model,
+                    language,
+                    ...vadOptions,
+                    signal: combinedSignal,
+                  });
+                }
+              ),
+          });
           return result;
-        }
-        const vadOptions = this._resolveWhisperVadOptions("noteRecording");
-        const result = await this.whisperManager.transcribeLocalWhisper(audioBuffer, {
-          ...options,
-          ...vadOptions,
         });
-        return result;
       } catch (error) {
         debugLogger.error("Audio file transcription error", { error: error.message });
-        return { success: false, error: error.message };
+        return { success: false, error: error.message, code: error.code };
       }
     });
 
@@ -1555,10 +1634,19 @@ class IPCHandlers {
 
       try {
         const vadOptions = this._resolveWhisperVadOptions("dictation");
-        const result = await this.whisperManager.transcribeLocalWhisper(audioBlob, {
-          ...options,
-          ...vadOptions,
-        });
+        const result = await this._runLocalSttTask(
+          {
+            kind: "dictation",
+            priority: LOCAL_STT_PRIORITY.REALTIME,
+            interruptible: false,
+          },
+          async ({ signal }) =>
+            this.whisperManager.transcribeLocalWhisper(audioBlob, {
+              ...options,
+              ...vadOptions,
+              signal,
+            })
+        );
 
         debugLogger.log("Whisper result", {
           success: result.success,
@@ -1841,7 +1929,18 @@ class IPCHandlers {
       });
 
       try {
-        const result = await this.parakeetManager.transcribeLocalParakeet(audioBlob, options);
+        const result = await this._runLocalSttTask(
+          {
+            kind: "dictation",
+            priority: LOCAL_STT_PRIORITY.REALTIME,
+            interruptible: false,
+          },
+          async ({ signal }) =>
+            this.parakeetManager.transcribeLocalParakeet(audioBlob, {
+              ...options,
+              signal,
+            })
+        );
 
         debugLogger.log("Parakeet result", {
           success: result.success,
@@ -3617,14 +3716,31 @@ class IPCHandlers {
           if (settings.localTranscriptionProvider === "nvidia") {
             const model =
               settings.parakeetModel || process.env.PARAKEET_MODEL || "parakeet-tdt-0.6b-v3";
-            result = await this.parakeetManager.transcribeLocalParakeet(buffer, { model });
+            result = await this._runLocalSttTask(
+              {
+                kind: "history-retry",
+                priority: LOCAL_STT_PRIORITY.HISTORY,
+                interruptible: true,
+              },
+              async ({ signal }) =>
+                this.parakeetManager.transcribeLocalParakeet(buffer, { model, signal })
+            );
           } else if (this.whisperManager?.serverManager?.isAvailable?.()) {
             const vadOptions = this._resolveWhisperVadOptions("noteRecording");
-            result = await this.whisperManager.transcribeLocalWhisper(buffer, {
-              model: settings.whisperModel,
-              language,
-              ...vadOptions,
-            });
+            result = await this._runLocalSttTask(
+              {
+                kind: "history-retry",
+                priority: LOCAL_STT_PRIORITY.HISTORY,
+                interruptible: true,
+              },
+              async ({ signal }) =>
+                this.whisperManager.transcribeLocalWhisper(buffer, {
+                  model: settings.whisperModel,
+                  language,
+                  ...vadOptions,
+                  signal,
+                })
+            );
           }
         } else if (settings?.cloudTranscriptionMode === "openwhispr") {
           const win = BrowserWindow.fromWebContents(event.sender);
@@ -4810,16 +4926,34 @@ class IPCHandlers {
       try {
         let result;
         if (meetingLocalProvider === "nvidia") {
-          result = await this.parakeetManager.transcribeLocalParakeet(wav, {
-            model: meetingLocalModel,
-          });
+          result = await this._runLocalSttTask(
+            {
+              kind: "meeting",
+              priority: LOCAL_STT_PRIORITY.REALTIME,
+              interruptible: false,
+            },
+            async ({ signal }) =>
+              this.parakeetManager.transcribeLocalParakeet(wav, {
+                model: meetingLocalModel,
+                signal,
+              })
+          );
         } else {
           const vadOptions = this._resolveWhisperVadOptions("meeting");
-          result = await this.whisperManager.transcribeLocalWhisper(wav, {
-            model: meetingLocalModel,
-            language: meetingLocalLanguage,
-            ...vadOptions,
-          });
+          result = await this._runLocalSttTask(
+            {
+              kind: "meeting",
+              priority: LOCAL_STT_PRIORITY.REALTIME,
+              interruptible: false,
+            },
+            async ({ signal }) =>
+              this.whisperManager.transcribeLocalWhisper(wav, {
+                model: meetingLocalModel,
+                language: meetingLocalLanguage,
+                ...vadOptions,
+                signal,
+              })
+          );
         }
 
         if (result?.success && result.text?.trim()) {
@@ -5052,16 +5186,34 @@ class IPCHandlers {
 
         let result;
         if (dictationPreviewProvider === "nvidia") {
-          result = await this.parakeetManager.transcribeLocalParakeet(wav, {
-            model: dictationPreviewModel,
-          });
+          result = await this._runLocalSttTask(
+            {
+              kind: "dictation-preview",
+              priority: LOCAL_STT_PRIORITY.REALTIME,
+              interruptible: false,
+            },
+            async ({ signal }) =>
+              this.parakeetManager.transcribeLocalParakeet(wav, {
+                model: dictationPreviewModel,
+                signal,
+              })
+          );
         } else {
           const vadOptions = this._resolveWhisperVadOptions("dictation");
-          result = await this.whisperManager.transcribeLocalWhisper(wav, {
-            model: dictationPreviewModel,
-            language: dictationPreviewLanguage,
-            ...vadOptions,
-          });
+          result = await this._runLocalSttTask(
+            {
+              kind: "dictation-preview",
+              priority: LOCAL_STT_PRIORITY.REALTIME,
+              interruptible: false,
+            },
+            async ({ signal }) =>
+              this.whisperManager.transcribeLocalWhisper(wav, {
+                model: dictationPreviewModel,
+                language: dictationPreviewLanguage,
+                ...vadOptions,
+                signal,
+              })
+          );
         }
 
         if (result?.success && result.text?.trim()) {
@@ -6247,53 +6399,58 @@ class IPCHandlers {
 
     ipcMain.handle("transcribe-audio-file-cloud", async (event, filePath) => {
       try {
-        const apiUrl = getApiUrl();
-        if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
+        return await this.uploadTranscriptionCoordinator.run("cloud", async ({ jobId, signal }) => {
+          const apiUrl = getApiUrl();
+          if (!apiUrl) throw new Error("OpenWhispr API URL not configured");
 
-        const authHeader = await getAuthHeader(event);
-        if (!Object.keys(authHeader).length) throw new Error("Not authenticated");
+          const authHeader = await getAuthHeader(event);
+          if (!Object.keys(authHeader).length) throw new Error("Not authenticated");
 
-        const multipartFields = {
-          source: "file_upload",
-          clientType: "desktop",
-          appVersion: app.getVersion(),
-          clientVersion: app.getVersion(),
-          sessionId: this.sessionId,
-        };
+          const multipartFields = {
+            source: "file_upload",
+            clientType: "desktop",
+            appVersion: app.getVersion(),
+            clientVersion: app.getVersion(),
+            sessionId: this.sessionId,
+          };
 
-        const fileSize = fs.statSync(filePath).size;
+          const fileSize = fs.statSync(filePath).size;
 
-        if (fileSize > CLOUD_INLINE_LIMIT) {
-          debugLogger.debug("Large file detected, using client-side chunking", {
-            fileSize,
-            filePath: path.basename(filePath),
-          });
-          const { text, warning } = await chunkedCloudTranscribe({
-            filePath,
-            apiUrl,
-            authHeader,
-            multipartFields,
-            onProgress: (payload) => event.sender.send("upload-transcription-progress", payload),
-          });
-          return { success: true, text, ...(warning ? { warning } : {}) };
-        }
+          if (fileSize > CLOUD_INLINE_LIMIT) {
+            debugLogger.debug("Large file detected, using client-side chunking", {
+              fileSize,
+              filePath: path.basename(filePath),
+            });
+            const { text, warning } = await chunkedCloudTranscribe({
+              filePath,
+              apiUrl,
+              authHeader,
+              multipartFields,
+              signal,
+              jobId,
+              onProgress: (payload) => event.sender.send("upload-transcription-progress", payload),
+            });
+            return { success: true, text, ...(warning ? { warning } : {}) };
+          }
 
-        const audioBuffer = fs.readFileSync(filePath);
-        const ext = path.extname(filePath).toLowerCase().replace(".", "");
-        const contentType = AUDIO_MIME_TYPES[ext] || "audio/mpeg";
-        const fileName = path.basename(filePath);
+          throwIfAborted(signal);
+          const audioBuffer = fs.readFileSync(filePath);
+          const ext = path.extname(filePath).toLowerCase().replace(".", "");
+          const contentType = AUDIO_MIME_TYPES[ext] || "audio/mpeg";
+          const fileName = path.basename(filePath);
 
-        const { body, boundary } = buildMultipartBody(
-          audioBuffer,
-          fileName,
-          contentType,
-          multipartFields
-        );
-        const url = new URL(`${apiUrl}/api/transcribe`);
-        const data = await postMultipart(url, body, boundary, authHeader);
-        const result = interpretTranscribeResponse(data);
+          const { body, boundary } = buildMultipartBody(
+            audioBuffer,
+            fileName,
+            contentType,
+            multipartFields
+          );
+          const url = new URL(`${apiUrl}/api/transcribe`);
+          const data = await postMultipart(url, body, boundary, authHeader, { signal });
+          const result = interpretTranscribeResponse(data);
 
-        return { success: true, text: result.text };
+          return { success: true, text: result.text };
+        });
       } catch (error) {
         debugLogger.error("Cloud audio file transcription error", { error: error.message });
         if (error.code) {
@@ -6306,58 +6463,70 @@ class IPCHandlers {
     ipcMain.handle(
       "transcribe-audio-file-byok",
       async (event, { filePath, apiKey, baseUrl, model }) => {
-        const fs = require("fs");
         const BYOK_FILE_SIZE_LIMIT = 25 * 1024 * 1024; // 25 MB
         try {
-          if (!apiKey) throw new Error("No API key configured. Add your key in Settings.");
-          if (!baseUrl) throw new Error("No transcription endpoint configured.");
+          return await this.uploadTranscriptionCoordinator.run("byok", async ({ signal }) => {
+            if (!apiKey) throw new Error("No API key configured. Add your key in Settings.");
+            if (!baseUrl) throw new Error("No transcription endpoint configured.");
 
-          const fileSize = fs.statSync(filePath).size;
-          if (fileSize > BYOK_FILE_SIZE_LIMIT) {
-            return {
-              success: false,
-              error: "File too large. Maximum size for bring-your-own-key is 25 MB.",
-            };
-          }
+            const fileSize = fs.statSync(filePath).size;
+            if (fileSize > BYOK_FILE_SIZE_LIMIT) {
+              return {
+                success: false,
+                error: "File too large. Maximum size for bring-your-own-key is 25 MB.",
+              };
+            }
 
-          const audioBuffer = fs.readFileSync(filePath);
-          const ext = path.extname(filePath).toLowerCase().replace(".", "");
-          const contentType = AUDIO_MIME_TYPES[ext] || "audio/mpeg";
-          const fileName = path.basename(filePath);
+            throwIfAborted(signal);
+            const audioBuffer = fs.readFileSync(filePath);
+            const ext = path.extname(filePath).toLowerCase().replace(".", "");
+            const contentType = AUDIO_MIME_TYPES[ext] || "audio/mpeg";
+            const fileName = path.basename(filePath);
 
-          let transcriptionUrl = baseUrl.replace(/\/+$/, "");
-          if (!transcriptionUrl.endsWith("/audio/transcriptions")) {
-            transcriptionUrl += "/audio/transcriptions";
-          }
+            let transcriptionUrl = baseUrl.replace(/\/+$/, "");
+            if (!transcriptionUrl.endsWith("/audio/transcriptions")) {
+              transcriptionUrl += "/audio/transcriptions";
+            }
 
-          const { body, boundary } = buildMultipartBody(audioBuffer, fileName, contentType, {
-            model: model || "whisper-1",
-          });
+            const { body, boundary } = buildMultipartBody(audioBuffer, fileName, contentType, {
+              model: model || "whisper-1",
+            });
 
-          const url = new URL(transcriptionUrl);
-          const data = await postMultipart(url, body, boundary, {
-            Authorization: `Bearer ${apiKey}`,
-          });
-
-          if (data.statusCode === 401) {
-            return { success: false, error: "Invalid API key. Check your key in Settings." };
-          }
-          if (data.statusCode === 429) {
-            return { success: false, error: "Rate limit exceeded. Please try again later." };
-          }
-          if (data.statusCode !== 200) {
-            throw new Error(
-              data.data?.error?.message || data.data?.error || `API error: ${data.statusCode}`
+            const url = new URL(transcriptionUrl);
+            const data = await postMultipart(
+              url,
+              body,
+              boundary,
+              {
+                Authorization: `Bearer ${apiKey}`,
+              },
+              { signal }
             );
-          }
 
-          return { success: true, text: data.data.text };
+            if (data.statusCode === 401) {
+              return { success: false, error: "Invalid API key. Check your key in Settings." };
+            }
+            if (data.statusCode === 429) {
+              return { success: false, error: "Rate limit exceeded. Please try again later." };
+            }
+            if (data.statusCode !== 200) {
+              throw new Error(
+                data.data?.error?.message || data.data?.error || `API error: ${data.statusCode}`
+              );
+            }
+
+            return { success: true, text: data.data.text };
+          });
         } catch (error) {
           debugLogger.error("BYOK audio file transcription error", { error: error.message });
-          return { success: false, error: error.message };
+          return { success: false, error: error.message, code: error.code };
         }
       }
     );
+
+    ipcMain.handle("cancel-upload-transcription", async (_event, jobId = null) => {
+      return this.uploadTranscriptionCoordinator.cancel(jobId);
+    });
 
     ipcMain.handle("get-referral-stats", async (event) => {
       try {
