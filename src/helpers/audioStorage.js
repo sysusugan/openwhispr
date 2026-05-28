@@ -2,10 +2,16 @@ const fs = require("fs");
 const path = require("path");
 const { app } = require("electron");
 const debugLogger = require("./debugLogger");
+const {
+  buildDictationAudioFilename,
+  buildMeetingAudioFilename,
+  isDictationAudioFile,
+  isRetainedAudioFile,
+} = require("./audioStorageFiles");
 
 class AudioStorageManager {
-  constructor() {
-    this.audioDir = path.join(app.getPath("userData"), "audio");
+  constructor(options = {}) {
+    this.audioDir = options.audioDir || path.join(app.getPath("userData"), "audio");
     this.ensureAudioDir();
   }
 
@@ -22,16 +28,7 @@ class AudioStorageManager {
   }
 
   _buildFilename(transcriptionId, timestamp) {
-    if (timestamp) {
-      const d = new Date(timestamp);
-      if (!isNaN(d.getTime())) {
-        const pad = (n) => String(n).padStart(2, "0");
-        const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        const time = `${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
-        return `OpenWhispr-${date}-${time}-${transcriptionId}.webm`;
-      }
-    }
-    return `OpenWhispr-${transcriptionId}.webm`;
+    return buildDictationAudioFilename(transcriptionId, timestamp);
   }
 
   saveAudio(transcriptionId, audioBuffer, timestamp) {
@@ -52,6 +49,68 @@ class AudioStorageManager {
         "audio-storage"
       );
       return { success: false };
+    }
+  }
+
+  saveMeetingPcmAudio(noteId, pcmPath, timestamp, options = {}) {
+    const sampleRate = options.sampleRate || 24000;
+    const channels = options.channels || 1;
+    const bytesPerSample = 2;
+
+    try {
+      const stats = fs.statSync(pcmPath);
+      if (stats.size <= 0) {
+        return { success: false, error: "No meeting audio captured" };
+      }
+
+      const filename = buildMeetingAudioFilename(noteId, timestamp);
+      const filePath = path.join(this.audioDir, filename);
+      const header = Buffer.alloc(44);
+      header.write("RIFF", 0);
+      header.writeUInt32LE(36 + stats.size, 4);
+      header.write("WAVE", 8);
+      header.write("fmt ", 12);
+      header.writeUInt32LE(16, 16);
+      header.writeUInt16LE(1, 20);
+      header.writeUInt16LE(channels, 22);
+      header.writeUInt32LE(sampleRate, 24);
+      header.writeUInt32LE(sampleRate * channels * bytesPerSample, 28);
+      header.writeUInt16LE(channels * bytesPerSample, 32);
+      header.writeUInt16LE(16, 34);
+      header.write("data", 36);
+      header.writeUInt32LE(stats.size, 40);
+
+      const out = fs.openSync(filePath, "w");
+      try {
+        fs.writeSync(out, header);
+        const input = fs.openSync(pcmPath, "r");
+        try {
+          const buffer = Buffer.alloc(1024 * 1024);
+          let bytesRead = 0;
+          while ((bytesRead = fs.readSync(input, buffer, 0, buffer.length, null)) > 0) {
+            fs.writeSync(out, buffer, 0, bytesRead);
+          }
+        } finally {
+          fs.closeSync(input);
+        }
+      } finally {
+        fs.closeSync(out);
+      }
+
+      const durationSeconds = stats.size / (sampleRate * channels * bytesPerSample);
+      debugLogger.debug(
+        "Meeting audio saved",
+        { noteId, filename, size: stats.size, durationSeconds },
+        "audio-storage"
+      );
+      return { success: true, path: filePath, filename, durationSeconds };
+    } catch (error) {
+      debugLogger.error(
+        "Failed to save meeting audio",
+        { noteId, error: error.message },
+        "audio-storage"
+      );
+      return { success: false, error: error.message };
     }
   }
 
@@ -102,7 +161,7 @@ class AudioStorageManager {
   cleanupExpiredAudio(retentionDays, databaseManager) {
     try {
       const cutoffMs = Date.now() - retentionDays * 86400000;
-      const files = fs.readdirSync(this.audioDir).filter((f) => f.endsWith(".webm"));
+      const files = fs.readdirSync(this.audioDir).filter(isRetainedAudioFile);
       const expiredIds = [];
       let kept = 0;
 
@@ -113,10 +172,12 @@ class AudioStorageManager {
           if (stats.mtimeMs < cutoffMs) {
             fs.unlinkSync(filePath);
             // Extract ID from "OpenWhispr-...-{id}.webm" or legacy "{id}.webm"
-            const basename = path.basename(file, ".webm");
-            const lastDash = basename.lastIndexOf("-");
-            const id = lastDash !== -1 ? basename.slice(lastDash + 1) : basename;
-            expiredIds.push(id);
+            if (isDictationAudioFile(file)) {
+              const basename = path.basename(file, ".webm");
+              const lastDash = basename.lastIndexOf("-");
+              const id = lastDash !== -1 ? basename.slice(lastDash + 1) : basename;
+              expiredIds.push(id);
+            }
           } else {
             kept++;
           }
@@ -147,7 +208,7 @@ class AudioStorageManager {
 
   deleteAllAudio() {
     try {
-      const files = fs.readdirSync(this.audioDir).filter((f) => f.endsWith(".webm"));
+      const files = fs.readdirSync(this.audioDir).filter(isRetainedAudioFile);
       for (const file of files) {
         try {
           fs.unlinkSync(path.join(this.audioDir, file));
@@ -169,7 +230,7 @@ class AudioStorageManager {
 
   getStorageUsage() {
     try {
-      const files = fs.readdirSync(this.audioDir).filter((f) => f.endsWith(".webm"));
+      const files = fs.readdirSync(this.audioDir).filter(isRetainedAudioFile);
       let totalBytes = 0;
       for (const file of files) {
         try {

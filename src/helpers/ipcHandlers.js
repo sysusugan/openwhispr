@@ -3998,6 +3998,47 @@ class IPCHandlers {
       return { diarizationPcmPath, diarizationSegments, diarizationStartedAt };
     };
 
+    const persistMeetingAudioForNote = (noteId, rawPcmPath, audioStartedAt) => {
+      if (!meetingShouldRetainAudio || !noteId || !rawPcmPath) {
+        return null;
+      }
+
+      const result = this.audioStorageManager.saveMeetingPcmAudio(
+        noteId,
+        rawPcmPath,
+        audioStartedAt,
+        {
+          sampleRate: 24000,
+          channels: 1,
+        }
+      );
+      if (!result.success) {
+        debugLogger.warn("Meeting audio retention skipped", {
+          noteId,
+          error: result.error,
+        });
+        return null;
+      }
+
+      try {
+        const updateResult = this.databaseManager.updateNote(noteId, {
+          source_file: result.filename,
+          audio_duration_seconds: result.durationSeconds,
+        });
+        if (updateResult?.success && updateResult?.note) {
+          setImmediate(() => this.broadcastToWindows("note-updated", updateResult.note));
+          this._asyncMirrorWrite(updateResult.note);
+        }
+      } catch (error) {
+        debugLogger.warn("Failed to update meeting note audio metadata", {
+          noteId,
+          error: error.message,
+        });
+      }
+
+      return result;
+    };
+
     const attachMeetingStreamingHandlers = (streaming, win, source) => {
       const send = (channel, data) => {
         if (!win || win.isDestroyed()) {
@@ -4354,6 +4395,7 @@ class IPCHandlers {
     let meetingOneOnOneAttendee = null;
     let meetingOneOnOneProfileBound = false;
     let meetingNoteId = null;
+    let meetingShouldRetainAudio = true;
 
     const getLiveSpeakerProfiles = () => {
       const attendees = this._getNoteNonSelfParticipants(meetingNoteId);
@@ -4897,6 +4939,7 @@ class IPCHandlers {
       meetingOneOnOneAttendee = null;
       meetingOneOnOneProfileBound = false;
       meetingNoteId = null;
+      meetingShouldRetainAudio = true;
       meetingLocalMode = false;
       meetingLocalBuffers = { mic: [], system: [] };
       if (meetingDiarizationStream) {
@@ -5188,6 +5231,8 @@ class IPCHandlers {
         meetingOneOnOneAttendee = resolveOneOnOneAttendeeForNote(options.noteId);
         meetingOneOnOneProfileBound = false;
         meetingNoteId = options.noteId ?? null;
+        meetingShouldRetainAudio =
+          options.dataRetentionEnabled !== false && (options.audioRetentionDays ?? 30) > 0;
 
         if (systemAudioMode === "unsupported" && this._meetingSystemStreaming?.isConnected) {
           await this._meetingSystemStreaming.disconnect().catch(() => ({ text: "" }));
@@ -5456,6 +5501,11 @@ class IPCHandlers {
           flushPendingMicFinals(true);
           const { diarizationPcmPath, diarizationSegments, diarizationStartedAt } =
             await captureMeetingDiarizationState();
+          const savedAudio = persistMeetingAudioForNote(
+            meetingNoteId,
+            diarizationPcmPath,
+            diarizationStartedAt
+          );
           const transcript =
             diarizationSegments
               .map((segment) => segment.text)
@@ -5478,12 +5528,17 @@ class IPCHandlers {
             noteIdSnapshot
           );
 
-          return { success: true, transcript, diarizationSessionId };
+          return { success: true, transcript, diarizationSessionId, audioPath: savedAudio?.path };
         }
 
         const results = await disconnectMeetingStreaming({ flushPending: true });
         const { diarizationPcmPath, diarizationSegments, diarizationStartedAt } =
           await captureMeetingDiarizationState();
+        const savedAudio = persistMeetingAudioForNote(
+          meetingNoteId,
+          diarizationPcmPath,
+          diarizationStartedAt
+        );
         const transcript =
           diarizationSegments
             .map((segment) => segment.text)
@@ -5506,7 +5561,7 @@ class IPCHandlers {
           noteIdSnapshot
         );
 
-        return { success: true, transcript, diarizationSessionId };
+        return { success: true, transcript, diarizationSessionId, audioPath: savedAudio?.path };
       } catch (error) {
         debugLogger.error("Meeting transcription stop error", { error: error.message });
         return { success: false, error: error.message };

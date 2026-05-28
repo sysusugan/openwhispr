@@ -1540,24 +1540,30 @@ declare global {
         provider?: string;
         model?: string;
         language?: string;
+        dataRetentionEnabled?: boolean;
+        audioRetentionDays?: number;
       }) => Promise<{ success: boolean; alreadyPrepared?: boolean; error?: string }>;
       meetingTranscriptionStart?: (options: {
         provider?: string;
         model?: string;
         language?: string;
         noteId?: number | null;
+        dataRetentionEnabled?: boolean;
+        audioRetentionDays?: number;
       }) => Promise<{
         success: boolean;
         error?: string;
         systemAudioMode?: SystemAudioMode;
         systemAudioStrategy?: SystemAudioStrategy;
         oneOnOneAttendee?: { displayName: string; email: string | null } | null;
+        audioPath?: string;
       }>;
       meetingTranscriptionSend?: (buffer: ArrayBuffer, source: "mic" | "system") => void;
       meetingTranscriptionStop?: () => Promise<{
         success: boolean;
         transcript?: string;
         diarizationSessionId?: string;
+        audioPath?: string;
         error?: string;
       }>;
       meetingTranscriptionCancel?: () => Promise<{

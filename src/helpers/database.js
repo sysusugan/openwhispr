@@ -862,6 +862,8 @@ class DatabaseManager {
         "participants",
         "diarization_enabled",
         "expected_speaker_count",
+        "source_file",
+        "audio_duration_seconds",
         "sync_status",
         "deleted_at",
         "client_note_id",
