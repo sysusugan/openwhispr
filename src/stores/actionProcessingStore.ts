@@ -4,6 +4,7 @@ import { getSettings } from "./settingsStore";
 import { buildNoteActionSystemPrompt } from "./noteActionPrompt";
 import { generateNoteTitle } from "../utils/generateTitle";
 import type { ActionItem } from "../types/electron";
+import { shouldAutoGenerateActionTitle } from "./actionProcessingCore";
 
 export type ActionProcessingStatus = "idle" | "processing" | "success";
 
@@ -57,6 +58,7 @@ export interface RunActionOptions {
   isCloudMode: boolean;
   modelId: string;
   isMeetingNote?: boolean;
+  currentTitle?: string | null;
 }
 
 export interface RunActionLabels {
@@ -105,7 +107,10 @@ export function runBackgroundAction(
       if (cancelledFlags.get(noteId)) return;
 
       let title: string | undefined;
-      if (getSettings().autoGenerateNoteTitle) {
+      if (
+        getSettings().autoGenerateNoteTitle &&
+        shouldAutoGenerateActionTitle(options.currentTitle)
+      ) {
         const generated = await generateNoteTitle(
           enhanced,
           modelId,

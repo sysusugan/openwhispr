@@ -24,7 +24,12 @@ function parseStoredTranscriptSegments(raw: string): StoredTranscriptSegment[] {
 
 export interface NoteActionInput {
   content: string;
+  contentHash: string;
   isMeetingNote: boolean;
+}
+
+export function makeActionContentHash(content: string): string {
+  return String(content.length) + "-" + content.slice(0, 50);
 }
 
 export function buildNoteActionInput({
@@ -61,5 +66,5 @@ export function buildNoteActionInput({
     .filter(Boolean)
     .join("\n\n");
 
-  return { content, isMeetingNote };
+  return { content, contentHash: makeActionContentHash(content), isMeetingNote };
 }

@@ -13,6 +13,7 @@ test("treats any raw transcript as meeting note even without speaker segments", 
   assert.equal(result?.isMeetingNote, true);
   assert.match(result?.content ?? "", /## Meeting Transcript/);
   assert.match(result?.content ?? "", /Universe/);
+  assert.notEqual(result?.contentHash, "0-");
 });
 
 test("formats structured transcript segments with speaker labels", () => {
@@ -29,6 +30,22 @@ test("formats structured transcript segments with speaker labels", () => {
   assert.match(result?.content ?? "", /manual note/);
   assert.match(result?.content ?? "", /You: 我的观点/);
   assert.match(result?.content ?? "", /Them: 对方回应/);
+  assert.equal(result?.contentHash, `${result?.content.length}-${result?.content.slice(0, 50)}`);
+});
+
+test("action content hash changes when transcript changes even if note content is empty", () => {
+  const first = buildNoteActionInput({
+    noteContent: "",
+    rawTranscript: "第一段会议转录",
+    speakerLabels: { you: "You", them: "Them" },
+  });
+  const second = buildNoteActionInput({
+    noteContent: "",
+    rawTranscript: "第二段会议转录",
+    speakerLabels: { you: "You", them: "Them" },
+  });
+
+  assert.notEqual(first?.contentHash, second?.contentHash);
 });
 
 test("returns null without note content or transcript", () => {

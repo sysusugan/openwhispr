@@ -59,7 +59,7 @@ import { MEETINGS_FOLDER_NAME, findDefaultFolder } from "./shared";
 import logger from "../../utils/logger";
 import { normalizeDbDate } from "../../utils/dateFormatting";
 import { parseTranscriptSegments } from "../../utils/parseTranscriptSegments";
-import { buildNoteActionInput } from "./noteActionInput";
+import { buildNoteActionInput, makeActionContentHash } from "./noteActionInput";
 import { serializeTranscriptSegments } from "../../utils/transcriptSpeakerState";
 import {
   useNotes,
@@ -99,10 +99,6 @@ function formatFileSize(bytes: number | null): string {
   if (!bytes || bytes <= 0) return "";
   const mb = bytes / 1024 / 1024;
   return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.round(bytes / 1024)} KB`;
-}
-
-function makeContentHash(content: string): string {
-  return String(content.length) + "-" + content.slice(0, 50);
 }
 
 function formatAudioDate(dateStr: string): string {
@@ -527,11 +523,31 @@ export default function PersonalNotesView({
     runAction,
   } = useActionProcessing(activeNoteId ?? null);
 
+  const isActiveNoteRecording = isTranscribing && recordingNoteId === activeNote?.id;
+
   const isEnhancementStale = useMemo(() => {
     if (!activeNote?.enhanced_content || !activeNote?.enhanced_at_content_hash) return false;
-    const currentHash = makeContentHash(localContent);
+    const rawTranscript =
+      isActiveNoteRecording && realtimeTranscript ? realtimeTranscript : activeNote.transcript;
+    const actionInput = buildNoteActionInput({
+      noteContent: localContent,
+      rawTranscript,
+      speakerLabels: {
+        you: t("notes.speaker.you"),
+        them: t("notes.speaker.them"),
+      },
+    });
+    const currentHash = actionInput?.contentHash ?? makeActionContentHash(localContent);
     return currentHash !== activeNote.enhanced_at_content_hash;
-  }, [activeNote?.enhanced_content, activeNote?.enhanced_at_content_hash, localContent]);
+  }, [
+    activeNote?.enhanced_content,
+    activeNote?.enhanced_at_content_hash,
+    activeNote?.transcript,
+    isActiveNoteRecording,
+    localContent,
+    realtimeTranscript,
+    t,
+  ]);
 
   const handleExportNote = useCallback(
     async (format: "md" | "txt") => {
@@ -632,7 +648,6 @@ export default function PersonalNotesView({
   }, [isTranscribing, realtimeSegments, recordingNoteId]);
 
   const isLocalSynced = syncedNoteId === activeNote?.id;
-  const isActiveNoteRecording = isTranscribing && recordingNoteId === activeNote?.id;
   const editorNote = activeNote
     ? {
         ...activeNote,
@@ -1065,10 +1080,11 @@ export default function PersonalNotesView({
                     });
                     if (!actionInput) return;
 
-                    runAction(action, actionInput.content, makeContentHash(editorNote.content), {
+                    runAction(action, actionInput.content, actionInput.contentHash, {
                       isCloudMode,
                       modelId: effectiveModelId,
                       isMeetingNote: actionInput.isMeetingNote,
+                      currentTitle: editorNote.title,
                     });
                   }}
                   onManageActions={() => setShowActionManager(true)}
