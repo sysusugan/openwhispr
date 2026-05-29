@@ -583,6 +583,9 @@ class IPCHandlers {
 
     // Run initial cleanup with default retention
     try {
+      if (this.databaseManager?.backfillNoteAudioFilesFromDirectory) {
+        this.databaseManager.backfillNoteAudioFilesFromDirectory(this.audioStorageManager.audioDir);
+      }
       this.audioStorageManager.cleanupExpiredAudio(DEFAULT_RETENTION_DAYS, this.databaseManager);
     } catch (error) {
       debugLogger.error("Initial audio cleanup failed", { error: error.message }, "audio-storage");

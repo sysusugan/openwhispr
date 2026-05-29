@@ -5,6 +5,7 @@ const {
   buildAudioDownloadFilename,
   buildMeetingAudioFilename,
   isRetainedAudioFile,
+  parseMeetingAudioFilename,
   resolveRetainedAudioPath,
 } = require("../../src/helpers/audioStorageFiles");
 
@@ -12,6 +13,15 @@ test("buildMeetingAudioFilename namespaces meeting note audio", () => {
   const filename = buildMeetingAudioFilename(42, new Date(2026, 4, 28, 6, 7, 8));
 
   assert.match(filename, /^OpenWhispr-meeting-2026-05-28-06-07-08-42\.wav$/);
+});
+
+test("parseMeetingAudioFilename extracts note id and recording time", () => {
+  assert.deepEqual(parseMeetingAudioFilename("OpenWhispr-meeting-2026-05-28-06-07-08-42.wav"), {
+    noteId: 42,
+    recordedAt: new Date(2026, 4, 28, 6, 7, 8).toISOString(),
+  });
+  assert.equal(parseMeetingAudioFilename("OpenWhispr-2026-05-28-06-07-08-42.webm"), null);
+  assert.equal(parseMeetingAudioFilename("OpenWhispr-meeting-2026-05-28-06-07-08-x.wav"), null);
 });
 
 test("isRetainedAudioFile includes dictation webm and meeting wav files", () => {

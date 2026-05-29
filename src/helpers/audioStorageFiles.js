@@ -22,6 +22,26 @@ function buildMeetingAudioFilename(noteId, timestamp) {
   return `OpenWhispr-meeting-${formatTimestamp(timestamp)}-${noteId}.wav`;
 }
 
+function parseMeetingAudioFilename(filename) {
+  const match = String(filename || "").match(
+    /^OpenWhispr-meeting-(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d+)\.wav$/i
+  );
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute, second, noteId] = match;
+  return {
+    noteId: Number(noteId),
+    recordedAt: new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second)
+    ).toISOString(),
+  };
+}
+
 function isRetainedAudioFile(filename) {
   const lower = String(filename || "").toLowerCase();
   for (const ext of RETAINED_AUDIO_EXTENSIONS) {
@@ -65,5 +85,6 @@ module.exports = {
   buildMeetingAudioFilename,
   isDictationAudioFile,
   isRetainedAudioFile,
+  parseMeetingAudioFilename,
   resolveRetainedAudioPath,
 };

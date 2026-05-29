@@ -88,3 +88,30 @@ test("removing note audio files falls back note source_file to latest remaining 
     [older]
   );
 });
+
+test("backfill from audio directory imports old meeting audio files with note ids", (t) => {
+  const db = createDatabase(t);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "openwhispr-audio-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+
+  const note = db.saveNote("Meeting", "", "meeting").note;
+  const older = `OpenWhispr-meeting-2026-05-29-10-00-00-${note.id}.wav`;
+  const newer = `OpenWhispr-meeting-2026-05-29-10-30-00-${note.id}.wav`;
+  fs.writeFileSync(path.join(root, older), Buffer.alloc(44));
+  fs.writeFileSync(path.join(root, newer), Buffer.alloc(44));
+  fs.writeFileSync(path.join(root, "OpenWhispr-meeting-2026-05-29-10-45-00-999999.wav"), "");
+  fs.writeFileSync(path.join(root, "OpenWhispr-2026-05-29-10-45-00-1.webm"), "");
+  fs.writeFileSync(path.join(root, "customer-call.wav"), "");
+
+  db.backfillNoteAudioFilesFromDirectory(root);
+  db.backfillNoteAudioFilesFromDirectory(root);
+
+  const files = db.getNoteAudioFiles(note.id);
+  assert.deepEqual(
+    files.map((file) => file.filename),
+    [newer, older]
+  );
+
+  const updated = db.getNote(note.id);
+  assert.equal(updated.source_file, newer);
+});

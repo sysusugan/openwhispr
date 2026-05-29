@@ -4,7 +4,7 @@ const fs = require("fs");
 const { randomUUID } = require("crypto");
 const debugLogger = require("./debugLogger");
 const { app } = require("electron");
-const { isRetainedAudioFile } = require("./audioStorageFiles");
+const { isRetainedAudioFile, parseMeetingAudioFilename } = require("./audioStorageFiles");
 
 class DatabaseManager {
   constructor(options = {}) {
@@ -932,6 +932,82 @@ class DatabaseManager {
       return { success: true };
     } catch (error) {
       debugLogger.error("Error backfilling note audio files", { error: error.message }, "notes");
+      throw error;
+    }
+  }
+
+  backfillNoteAudioFilesFromDirectory(audioDir) {
+    try {
+      if (!this.db) throw new Error("Database not initialized");
+      const dir = String(audioDir || "");
+      if (!dir || !fs.existsSync(dir)) return { success: true, inserted: 0 };
+
+      const filenames = fs
+        .readdirSync(dir)
+        .filter((filename) => isRetainedAudioFile(filename) && parseMeetingAudioFilename(filename));
+      if (filenames.length === 0) return { success: true, inserted: 0 };
+
+      const insert = this.db.prepare(
+        `INSERT OR IGNORE INTO note_audio_files
+          (note_id, filename, duration_seconds, recorded_at)
+         VALUES (?, ?, ?, ?)`
+      );
+      const noteExists = this.db.prepare("SELECT id FROM notes WHERE id = ?");
+      const updateLatest = this.db.prepare(
+        `UPDATE notes
+         SET source_file = ?,
+             audio_duration_seconds = ?,
+             updated_at = CURRENT_TIMESTAMP,
+             sync_status = 'pending'
+         WHERE id = ?`
+      );
+      const notes = this.db.prepare("SELECT id, source_file FROM notes").all();
+
+      const available = new Set(filenames);
+      const transaction = this.db.transaction(() => {
+        let inserted = 0;
+        for (const filename of filenames) {
+          const parsed = parseMeetingAudioFilename(filename);
+          if (!parsed || !noteExists.get(parsed.noteId)) continue;
+
+          let durationSeconds = null;
+          try {
+            const stats = fs.statSync(path.join(dir, filename));
+            if (stats.size > 44) {
+              durationSeconds = (stats.size - 44) / (24000 * 1 * 2);
+            }
+          } catch {}
+
+          const result = insert.run(parsed.noteId, filename, durationSeconds, parsed.recordedAt);
+          inserted += result.changes;
+        }
+
+        for (const note of notes) {
+          if (note.source_file && available.has(note.source_file)) continue;
+          const latest = this.db
+            .prepare(
+              `SELECT filename, duration_seconds
+               FROM note_audio_files
+               WHERE note_id = ?
+                 AND filename IN (${filenames.map(() => "?").join(",")})
+               ORDER BY recorded_at DESC, id DESC
+               LIMIT 1`
+            )
+            .get(note.id, ...filenames);
+          if (latest) updateLatest.run(latest.filename, latest.duration_seconds, note.id);
+        }
+
+        return inserted;
+      });
+
+      const inserted = transaction();
+      return { success: true, inserted };
+    } catch (error) {
+      debugLogger.error(
+        "Error backfilling note audio files from directory",
+        { error: error.message },
+        "notes"
+      );
       throw error;
     }
   }
