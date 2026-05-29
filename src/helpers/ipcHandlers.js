@@ -4890,21 +4890,15 @@ class IPCHandlers {
 
       const pcm16k = downsample24kTo16k(pcm24k);
 
-      const samples = new Int16Array(pcm16k.buffer, pcm16k.byteOffset, pcm16k.length / 2);
-      let sumSq = 0;
-      let peak = 0;
-      for (let i = 0; i < samples.length; i++) {
-        const n = samples[i] / 0x7fff;
-        sumSq += n * n;
-        const abs = n < 0 ? -n : n;
-        if (abs > peak) peak = abs;
-      }
-      const rms = Math.sqrt(sumSq / samples.length);
-      if (rms < 0.0015 && peak < 0.05) {
-        debugLogger.debug("Skipping silent meeting chunk", {
+      const speechDecision = analyzePreviewPcmSpeech(pcm16k);
+      const rms = speechDecision.rms;
+      const peak = speechDecision.peakAmplitude;
+      if (!speechDecision.shouldTranscribe) {
+        debugLogger.debug("Skipping non-speech meeting chunk", {
           source,
           rms: rms.toFixed(4),
           peak: peak.toFixed(4),
+          speechDecision: speechDecision.reason,
         });
         return;
       }

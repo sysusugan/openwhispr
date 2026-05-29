@@ -536,6 +536,40 @@ function reserveSpeakerIndex(speakerId?: string) {
   nextPlaceholderSpeakerIndex = Math.max(nextPlaceholderSpeakerIndex, idx + 1);
 }
 
+function assignSystemPartialSpeakerIdentity(nowMs = Date.now()) {
+  if (systemPartialSpeakerIdValue) return;
+
+  const recent = getRecentSystemSpeaker(nowMs);
+  if (recent?.speakerId) {
+    reserveSpeakerIndex(recent.speakerId);
+    setSystemPartialSpeakerIdentity(recent.speakerId, recent.speakerName);
+    return;
+  }
+
+  const previousSystemSegment = [...segmentsRefValue]
+    .reverse()
+    .find(
+      (candidate) =>
+        candidate.source === "system" &&
+        candidate.speaker &&
+        candidate.timestamp != null &&
+        nowMs - candidate.timestamp <= SYSTEM_SPEAKER_CARRY_FORWARD_MS
+    );
+
+  if (previousSystemSegment?.speaker) {
+    reserveSpeakerIndex(previousSystemSegment.speaker);
+    setSystemPartialSpeakerIdentity(
+      previousSystemSegment.speaker,
+      previousSystemSegment.speakerName ?? null
+    );
+    return;
+  }
+
+  const speakerId = `speaker_${nextPlaceholderSpeakerIndex}`;
+  nextPlaceholderSpeakerIndex += 1;
+  setSystemPartialSpeakerIdentity(speakerId, null);
+}
+
 function assignProvisionalSpeaker(segment: TranscriptSegment): TranscriptSegment {
   if (segment.source !== "system" || segment.speaker) return segment;
 
@@ -886,11 +920,7 @@ export async function startRecording(args: StartRecordingArgs): Promise<void> {
             useMeetingRecordingStore.setState({ micPartial: data.text });
           } else {
             useMeetingRecordingStore.setState({ systemPartial: data.text });
-            if (!systemPartialSpeakerIdValue) {
-              const speakerId = `speaker_${nextPlaceholderSpeakerIndex}`;
-              nextPlaceholderSpeakerIndex += 1;
-              setSystemPartialSpeakerIdentity(speakerId, null);
-            }
+            assignSystemPartialSpeakerIdentity(data.timestamp ?? Date.now());
           }
           return;
         }

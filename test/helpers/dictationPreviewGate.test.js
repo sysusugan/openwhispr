@@ -29,6 +29,15 @@ test("skips weak background noise preview chunks before local transcription", ()
   assert.equal(decision.reason, "insufficient_speech");
 });
 
+test("skips weak background noise meeting chunks before local transcription", () => {
+  const pcm = pcmFromSamples([96, -118, 132, -105, 124, -116, 110, -128]);
+
+  const decision = analyzePreviewPcmSpeech(pcm);
+
+  assert.equal(decision.shouldTranscribe, false);
+  assert.equal(decision.reason, "insufficient_speech");
+});
+
 test("allows speech-like preview chunks through", () => {
   const pcm = pcmFromSamples([1500, -1800, 2100, -2500, 1900, -2200]);
 
