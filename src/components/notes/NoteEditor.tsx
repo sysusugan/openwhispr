@@ -15,6 +15,8 @@ import {
   Plus,
   Check,
   Share2,
+  Pencil,
+  X,
 } from "lucide-react";
 import ShareNoteDialog from "./ShareNoteDialog";
 import { useShareCacheEntry } from "../../stores/noteStore";
@@ -49,6 +51,7 @@ import {
 } from "../../utils/transcriptSpeakerState";
 import NoteParticipants from "./NoteParticipants";
 import type { CalendarAttendee } from "../../types/calendar";
+import { countMatches, replaceAllMatches } from "../../utils/transcriptFindReplace";
 
 function formatNoteDate(dateStr: string): string {
   const date = normalizeDbDate(dateStr);
@@ -161,6 +164,15 @@ export default function NoteEditor({
   const [newFolderName, setNewFolderName] = useState("");
   const [isDiarizing, setIsDiarizing] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [isTranscriptEditing, setIsTranscriptEditing] = useState(false);
+  const [isTranscriptSaving, setIsTranscriptSaving] = useState(false);
+  const [editableTranscriptText, setEditableTranscriptText] = useState("");
+  const [editableTranscriptSegments, setEditableTranscriptSegments] = useState<TranscriptSegment[]>(
+    []
+  );
+  const [findText, setFindText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+  const [ignoreCase, setIgnoreCase] = useState(true);
   const shareCache = useShareCacheEntry(note.cloud_id);
   const isShared = (shareCache?.share.visibility ?? "private") !== "private";
   const [diarizedSegments, setDiarizedSegments] = useState<TranscriptSegment[] | null>(null);
@@ -216,6 +228,19 @@ export default function NoteEditor({
   }, [displaySegments]);
 
   const hasChatSegments = displaySegments.length > 0;
+  const transcriptIsStructured = hasChatSegments;
+  const renderedTranscriptSegments = isTranscriptEditing
+    ? editableTranscriptSegments
+    : displaySegments;
+  const activeTranscriptText = transcriptIsStructured
+    ? renderedTranscriptSegments.map((segment) => segment.text).join("\n")
+    : editableTranscriptText;
+  const transcriptMatchCount = useMemo(
+    () => countMatches(activeTranscriptText, findText, { ignoreCase }),
+    [activeTranscriptText, findText, ignoreCase]
+  );
+  const hasTranscriptEditControls = viewMode === "transcript" && !!effectiveTranscript;
+  const canEditTranscript = hasTranscriptEditControls && !isRecording;
 
   const knownSpeakers = useMemo(() => {
     const seen = new Set<string>();
@@ -308,6 +333,11 @@ export default function NoteEditor({
         setChatMode("hidden");
         setDiarizedSegments(null);
         setIsDiarizing(false);
+        setIsTranscriptEditing(false);
+        setEditableTranscriptText("");
+        setEditableTranscriptSegments([]);
+        setFindText("");
+        setReplaceText("");
         setSpeakerMappings({});
         if (!isRecording) {
           setViewMode("raw");
@@ -559,6 +589,7 @@ export default function NoteEditor({
   const prevRecordingRef = useRef(false);
   useEffect(() => {
     if (isRecording && !prevRecordingRef.current) {
+      setIsTranscriptEditing(false);
       scheduleUiUpdate(() => setViewMode("transcript"));
     }
     prevRecordingRef.current = isRecording;
@@ -577,6 +608,68 @@ export default function NoteEditor({
     },
     [enhancement]
   );
+
+  const handleStartTranscriptEdit = useCallback(() => {
+    if (!canEditTranscript) return;
+    setEditableTranscriptSegments(displaySegments.map((segment) => ({ ...segment })));
+    setEditableTranscriptText(effectiveTranscript);
+    setFindText("");
+    setReplaceText("");
+    setIgnoreCase(true);
+    setSelectedSegmentIds(new Set());
+    setIsTranscriptEditing(true);
+  }, [canEditTranscript, displaySegments, effectiveTranscript]);
+
+  const handleCancelTranscriptEdit = useCallback(() => {
+    setIsTranscriptEditing(false);
+    setEditableTranscriptSegments([]);
+    setEditableTranscriptText("");
+    setFindText("");
+    setReplaceText("");
+  }, []);
+
+  const handleReplaceAllTranscriptMatches = useCallback(() => {
+    if (!findText || transcriptMatchCount === 0) return;
+    if (transcriptIsStructured) {
+      setEditableTranscriptSegments((segments) =>
+        segments.map((segment) => ({
+          ...segment,
+          text: replaceAllMatches(segment.text, findText, replaceText, { ignoreCase }),
+        }))
+      );
+      return;
+    }
+    setEditableTranscriptText((text) =>
+      replaceAllMatches(text, findText, replaceText, { ignoreCase })
+    );
+  }, [findText, ignoreCase, replaceText, transcriptIsStructured, transcriptMatchCount]);
+
+  const handleSaveTranscriptEdit = useCallback(async () => {
+    if (!isTranscriptEditing) return;
+    const transcript = transcriptIsStructured
+      ? serializeTranscriptSegments(editableTranscriptSegments)
+      : editableTranscriptText;
+    setIsTranscriptSaving(true);
+    try {
+      await window.electronAPI?.updateNote(note.id, { transcript });
+      if (transcriptIsStructured) {
+        setDiarizedSegments(editableTranscriptSegments);
+      }
+      setIsTranscriptEditing(false);
+      setEditableTranscriptSegments([]);
+      setEditableTranscriptText("");
+      setFindText("");
+      setReplaceText("");
+    } finally {
+      setIsTranscriptSaving(false);
+    }
+  }, [
+    editableTranscriptSegments,
+    editableTranscriptText,
+    isTranscriptEditing,
+    note.id,
+    transcriptIsStructured,
+  ]);
 
   const handleAskSubmit = useCallback(
     (text: string) => {
@@ -765,12 +858,16 @@ export default function NoteEditor({
                   <button
                     data-segment-button
                     data-segment-value="raw"
-                    onClick={() => setViewMode("raw")}
+                    onClick={() => {
+                      if (!isTranscriptEditing) setViewMode("raw");
+                    }}
                     className={cn(
                       "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
                       viewMode === "raw"
                         ? "text-foreground/60"
-                        : "text-foreground/25 hover:text-foreground/40"
+                        : isTranscriptEditing
+                          ? "text-foreground/15 cursor-not-allowed"
+                          : "text-foreground/25 hover:text-foreground/40"
                     )}
                   >
                     <AlignLeft size={10} />
@@ -780,12 +877,16 @@ export default function NoteEditor({
                     <button
                       data-segment-button
                       data-segment-value="enhanced"
-                      onClick={() => setViewMode("enhanced")}
+                      onClick={() => {
+                        if (!isTranscriptEditing) setViewMode("enhanced");
+                      }}
                       className={cn(
                         "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
                         viewMode === "enhanced"
                           ? "text-foreground/60"
-                          : "text-foreground/25 hover:text-foreground/40"
+                          : isTranscriptEditing
+                            ? "text-foreground/15 cursor-not-allowed"
+                            : "text-foreground/25 hover:text-foreground/40"
                       )}
                     >
                       <Sparkles size={9} />
@@ -796,6 +897,52 @@ export default function NoteEditor({
                           title={t("notes.editor.staleIndicator")}
                         />
                       )}
+                    </button>
+                  )}
+                </div>
+              )}
+              {hasTranscriptEditControls && (
+                <div className="flex items-center gap-1">
+                  {isTranscriptEditing ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleSaveTranscriptEdit}
+                        disabled={isTranscriptSaving}
+                        className="shrink-0 h-6 px-2 flex items-center gap-1 rounded-md bg-foreground/6 dark:bg-white/6 text-foreground/60 dark:text-foreground/50 hover:text-foreground/80 hover:bg-foreground/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150 text-[11px] font-medium"
+                        aria-label={t("notes.editor.transcriptSave")}
+                      >
+                        {isTranscriptSaving ? (
+                          <Loader2 size={10} className="animate-spin" />
+                        ) : (
+                          <Check size={10} />
+                        )}
+                        {t("notes.editor.transcriptSave")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCancelTranscriptEdit}
+                        disabled={isTranscriptSaving}
+                        className="shrink-0 h-6 px-2 flex items-center gap-1 rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150 text-[11px] font-medium"
+                        aria-label={t("notes.editor.transcriptCancel")}
+                      >
+                        <X size={10} />
+                        {t("notes.editor.transcriptCancel")}
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleStartTranscriptEdit}
+                      disabled={!canEditTranscript}
+                      className="shrink-0 h-6 px-2 flex items-center gap-1 rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-35 disabled:pointer-events-none transition-colors duration-150 text-[11px] font-medium"
+                      aria-label={t("notes.editor.transcriptEdit")}
+                      title={
+                        isRecording ? t("notes.editor.transcriptEditDisabledRecording") : undefined
+                      }
+                    >
+                      <Pencil size={10} />
+                      {t("notes.editor.transcriptEdit")}
                     </button>
                   )}
                 </div>
@@ -907,11 +1054,58 @@ export default function NoteEditor({
           </div>
         </div>
 
-        <div className="flex-1 relative min-h-0">
-          <div className="h-full overflow-y-auto">
+        <div className="flex-1 relative min-h-0 flex flex-col">
+          {isTranscriptEditing && viewMode === "transcript" && (
+            <div className="shrink-0 border-b border-border/20 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 rounded-md border border-border/30 bg-background/80 px-2 py-1">
+                  <Search size={12} className="text-foreground/35" />
+                  <input
+                    value={findText}
+                    onChange={(event) => setFindText(event.target.value)}
+                    placeholder={t("notes.editor.transcriptFind")}
+                    className="w-32 bg-transparent text-xs text-foreground outline-none placeholder:text-foreground/25"
+                  />
+                </div>
+                <input
+                  value={replaceText}
+                  onChange={(event) => setReplaceText(event.target.value)}
+                  placeholder={t("notes.editor.transcriptReplaceWith")}
+                  className="h-7 w-32 rounded-md border border-border/30 bg-background/80 px-2 text-xs text-foreground outline-none placeholder:text-foreground/25 focus-visible:ring-1 focus-visible:ring-ring/60"
+                />
+                <label className="flex h-7 items-center gap-1.5 rounded-md px-1.5 text-[11px] text-foreground/55">
+                  <input
+                    type="checkbox"
+                    checked={ignoreCase}
+                    onChange={(event) => setIgnoreCase(event.target.checked)}
+                    className="h-3 w-3 accent-primary"
+                  />
+                  {t("notes.editor.transcriptIgnoreCase")}
+                </label>
+                <span className="text-[11px] tabular-nums text-foreground/35">
+                  {findText
+                    ? t("notes.editor.transcriptMatchCount", { count: transcriptMatchCount })
+                    : t("notes.editor.transcriptNoSearch")}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleReplaceAllTranscriptMatches}
+                  disabled={!findText || transcriptMatchCount === 0}
+                  className="h-7 rounded-md bg-foreground/5 px-2 text-[11px] font-medium text-foreground/55 transition-colors hover:bg-foreground/9 hover:text-foreground/75 disabled:opacity-35 disabled:pointer-events-none"
+                >
+                  {t("notes.editor.transcriptReplaceAll")}
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {viewMode === "transcript" && (hasChatSegments || isRecording) ? (
               <MeetingTranscriptChat
-                segments={displaySegments}
+                segments={renderedTranscriptSegments}
+                isEditing={isTranscriptEditing}
+                onSegmentsChange={setEditableTranscriptSegments}
+                searchTerm={findText}
+                ignoreCase={ignoreCase}
                 micPartial={isRecording ? meetingMicPartial : undefined}
                 systemPartial={isRecording ? meetingSystemPartial : undefined}
                 systemPartialSpeakerId={isRecording ? meetingSystemPartialSpeakerId : undefined}
@@ -930,11 +1124,23 @@ export default function NoteEditor({
                 onConfirmSuggestion={handleConfirmSuggestion}
                 onDismissSuggestion={handleDismissSuggestion}
                 onAttachSpeakerEmail={handleAttachSpeakerEmail}
-                selectedSegmentIds={!isRecording ? selectedSegmentIds : undefined}
-                onToggleSelect={!isRecording ? handleToggleSelect : undefined}
+                selectedSegmentIds={
+                  !isRecording && !isTranscriptEditing ? selectedSegmentIds : undefined
+                }
+                onToggleSelect={
+                  !isRecording && !isTranscriptEditing ? handleToggleSelect : undefined
+                }
               />
             ) : viewMode === "transcript" && hasMeetingTranscript ? (
-              <RichTextEditor value={effectiveTranscript} disabled />
+              isTranscriptEditing ? (
+                <textarea
+                  value={editableTranscriptText}
+                  onChange={(event) => setEditableTranscriptText(event.target.value)}
+                  className="h-full w-full resize-none bg-transparent px-5 py-4 text-sm leading-relaxed text-foreground outline-none placeholder:text-foreground/25"
+                />
+              ) : (
+                <RichTextEditor value={effectiveTranscript} disabled />
+              )
             ) : viewMode === "enhanced" && enhancement ? (
               <RichTextEditor value={enhancement.content} onChange={handleEnhancedChange} />
             ) : (

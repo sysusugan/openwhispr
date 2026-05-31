@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Loader2, Sparkles, Users, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
@@ -10,6 +10,7 @@ import {
   isTranscriptSpeakerLocked,
   type TranscriptSpeakerStatus,
 } from "../../utils/transcriptSpeakerState";
+import { countMatches, makeFindPattern } from "../../utils/transcriptFindReplace";
 
 const BUBBLE_STYLES = {
   mic: {
@@ -67,6 +68,37 @@ const getSpeakerNumber = (speakerId: string) => {
   const match = speakerId.match(/speaker_(\d+)/);
   return match ? Number(match[1]) + 1 : 1;
 };
+
+function HighlightedText({
+  text,
+  searchTerm,
+  ignoreCase,
+}: {
+  text: string;
+  searchTerm?: string;
+  ignoreCase?: boolean;
+}) {
+  const pattern = makeFindPattern(searchTerm || "", { ignoreCase });
+  if (!pattern) return <>{text}</>;
+
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(pattern)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) parts.push(text.slice(lastIndex, index));
+    parts.push(
+      <mark
+        key={`${index}-${match[0]}`}
+        className="rounded-sm bg-amber-300/60 text-inherit px-0.5 dark:bg-amber-400/30"
+      >
+        {match[0]}
+      </mark>
+    );
+    lastIndex = index + match[0].length;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return <>{parts}</>;
+}
 
 const getSpeakerStateLabel = (state: TranscriptSpeakerStatus, t: (key: string) => string) => {
   switch (state) {
@@ -561,6 +593,10 @@ export function SelectionBar({
 
 interface MeetingTranscriptChatProps {
   segments: TranscriptSegment[];
+  isEditing?: boolean;
+  onSegmentsChange?: (segments: TranscriptSegment[]) => void;
+  searchTerm?: string;
+  ignoreCase?: boolean;
   micPartial?: string;
   systemPartial?: string;
   systemPartialSpeakerId?: string | null;
@@ -590,6 +626,10 @@ interface MeetingTranscriptChatProps {
 
 export function MeetingTranscriptChat({
   segments,
+  isEditing,
+  onSegmentsChange,
+  searchTerm,
+  ignoreCase,
   micPartial,
   systemPartial,
   systemPartialSpeakerId,
@@ -682,6 +722,12 @@ export function MeetingTranscriptChat({
 
   const others = Math.max(0, sessionExpectedCount - 1);
 
+  const updateSegmentText = (segmentId: string, text: string) => {
+    onSegmentsChange?.(
+      segments.map((segment) => (segment.id === segmentId ? { ...segment, text } : segment))
+    );
+  };
+
   return (
     <div className="h-full relative">
       {(isRecording || isDiarizing) && !hintDismissed && (
@@ -767,6 +813,8 @@ export function MeetingTranscriptChat({
           const colorIdx = isSystemSpeaker ? (colorByKey.get(effectiveKey) ?? 0) : 0;
           const isSelected = selectedSegmentIds?.has(segment.id) ?? false;
           const selectable = !!onToggleSelect;
+          const hasSearchMatch =
+            isEditing && !!searchTerm && countMatches(segment.text, searchTerm, { ignoreCase }) > 0;
 
           const activeName = speakerMappings?.[segment.speaker!] || segment.speakerName;
           const matchedProfile =
@@ -827,25 +875,49 @@ export function MeetingTranscriptChat({
                 </div>
               )}
               <div className="relative max-w-[80%]">
-                <div
-                  className={cn(
-                    "px-3 py-1.5 cursor-default transition-colors",
-                    "text-[13px] leading-relaxed",
-                    selfSide
-                      ? cn(
-                          "bg-primary/90 text-primary-foreground",
-                          sameSpeaker ? "rounded-lg rounded-tl-sm" : "rounded-lg rounded-bl-sm"
-                        )
-                      : cn(
-                          "bg-surface-2 border border-border/30 text-foreground",
-                          sameSpeaker ? "rounded-lg rounded-tr-sm" : "rounded-lg rounded-br-sm",
-                          isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
-                        ),
-                    isSelected && "ring-2 ring-primary/60"
-                  )}
-                >
-                  {segment.text}
-                </div>
+                {isEditing ? (
+                  <textarea
+                    value={segment.text}
+                    onChange={(event) => updateSegmentText(segment.id, event.target.value)}
+                    rows={Math.max(1, Math.min(6, segment.text.split("\n").length))}
+                    className={cn(
+                      "min-w-56 max-w-full resize-y px-3 py-1.5 outline-none transition-colors",
+                      "text-[13px] leading-relaxed rounded-lg border",
+                      "focus-visible:ring-1 focus-visible:ring-ring/70",
+                      selfSide
+                        ? "bg-primary/90 text-primary-foreground border-primary/20 placeholder:text-primary-foreground/50"
+                        : cn(
+                            "bg-surface-2 text-foreground border-border/40",
+                            isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
+                          ),
+                      hasSearchMatch && "ring-1 ring-amber-300/70 dark:ring-amber-400/45"
+                    )}
+                  />
+                ) : (
+                  <div
+                    className={cn(
+                      "px-3 py-1.5 cursor-default transition-colors",
+                      "text-[13px] leading-relaxed",
+                      selfSide
+                        ? cn(
+                            "bg-primary/90 text-primary-foreground",
+                            sameSpeaker ? "rounded-lg rounded-tl-sm" : "rounded-lg rounded-bl-sm"
+                          )
+                        : cn(
+                            "bg-surface-2 border border-border/30 text-foreground",
+                            sameSpeaker ? "rounded-lg rounded-tr-sm" : "rounded-lg rounded-br-sm",
+                            isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
+                          ),
+                      isSelected && "ring-2 ring-primary/60"
+                    )}
+                  >
+                    <HighlightedText
+                      text={segment.text}
+                      searchTerm={searchTerm}
+                      ignoreCase={ignoreCase}
+                    />
+                  </div>
+                )}
                 {selectable && (
                   <SelectCheckbox
                     isSelected={isSelected}

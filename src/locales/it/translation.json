@@ -1942,7 +1942,18 @@
       "noFolder": "Nessuna cartella",
       "participants": "Partecipanti",
       "downloadSavedAudio": "Scarica audio salvato",
-      "chooseAudioFile": "Scegli file audio"
+      "chooseAudioFile": "Scegli file audio",
+      "transcriptEdit": "Edit transcript",
+      "transcriptSave": "Save",
+      "transcriptCancel": "Cancel",
+      "transcriptFind": "Find",
+      "transcriptReplaceWith": "Replace with",
+      "transcriptReplaceAll": "Replace all",
+      "transcriptIgnoreCase": "Ignore case",
+      "transcriptMatchCount": "{{count}} match",
+      "transcriptMatchCount_plural": "{{count}} matches",
+      "transcriptNoSearch": "Enter text to find",
+      "transcriptEditDisabledRecording": "Stop recording before editing the transcript"
     },
     "participants": {
       "attendee": "partecipante",

@@ -1937,7 +1937,18 @@
       "noFolder": "無資料夾",
       "participants": "參與者",
       "downloadSavedAudio": "下載已儲存音訊",
-      "chooseAudioFile": "選擇音訊檔案"
+      "chooseAudioFile": "選擇音訊檔案",
+      "transcriptEdit": "編輯轉錄",
+      "transcriptSave": "儲存",
+      "transcriptCancel": "取消",
+      "transcriptFind": "尋找",
+      "transcriptReplaceWith": "取代為",
+      "transcriptReplaceAll": "全部取代",
+      "transcriptIgnoreCase": "忽略大小寫",
+      "transcriptMatchCount": "{{count}} 個相符項目",
+      "transcriptMatchCount_plural": "{{count}} 個相符項目",
+      "transcriptNoSearch": "輸入要尋找的內容",
+      "transcriptEditDisabledRecording": "停止錄音後才能編輯轉錄"
     },
     "participants": {
       "attendee": "位與會者",

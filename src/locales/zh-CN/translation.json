@@ -1937,7 +1937,18 @@
       "noFolder": "无文件夹",
       "participants": "参与者",
       "downloadSavedAudio": "下载已保存音频",
-      "chooseAudioFile": "选择音频文件"
+      "chooseAudioFile": "选择音频文件",
+      "transcriptEdit": "编辑转录",
+      "transcriptSave": "保存",
+      "transcriptCancel": "取消",
+      "transcriptFind": "查找",
+      "transcriptReplaceWith": "替换为",
+      "transcriptReplaceAll": "全部替换",
+      "transcriptIgnoreCase": "忽略大小写",
+      "transcriptMatchCount": "{{count}} 个匹配",
+      "transcriptMatchCount_plural": "{{count}} 个匹配",
+      "transcriptNoSearch": "输入要查找的内容",
+      "transcriptEditDisabledRecording": "停止录音后才能编辑转录"
     },
     "participants": {
       "attendee": "位参会者",
