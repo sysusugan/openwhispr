@@ -2168,7 +2168,8 @@
         "decAria": "减少预计发言人数",
         "othersInCall_one": "通话中还有 {{count}} 人",
         "othersInCall_other": "通话中还有 {{count}} 人"
-      }
+      },
+      "bulkEditSpeaker": "批量修改全部“{{name}}”"
     }
   },
   "dictionary": {
@@ -2183,7 +2184,14 @@
     "description": "教 AI 学习你的词汇 — 名字、行话和它可能遗漏的术语",
     "clearTitle": "清空词典？",
     "clearDescription": "这将删除自定义词典中的所有词汇，此操作无法撤销。",
-    "addPlaceholder": "添加词语或短语..."
+    "addPlaceholder": "添加词语或短语...",
+    "dictionary": "词典",
+    "people": "人名表",
+    "peopleTitle": "人名表",
+    "peopleDescription": "给转录分配过的人名会保存在这里，后续可快速选择。",
+    "addPerson": "添加人名",
+    "addPersonPlaceholder": "添加发言人姓名...",
+    "removePerson": "移除 {{name}}"
   },
   "sidebar": {
     "home": "首页",

@@ -468,6 +468,16 @@ class DatabaseManager {
       `);
 
       this.db.exec(`
+        CREATE TABLE IF NOT EXISTS speaker_names (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          display_name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+          email TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      this.db.exec(`
         CREATE TABLE IF NOT EXISTS speaker_mappings (
           note_id INTEGER NOT NULL,
           speaker_id TEXT NOT NULL,
@@ -2369,6 +2379,66 @@ class DatabaseManager {
       return this.db.prepare(query).all();
     } catch (error) {
       debugLogger.error("Error getting speaker profiles", { error: error.message }, "database");
+      throw error;
+    }
+  }
+
+  getSpeakerNames() {
+    try {
+      if (!this.db) throw new Error("Database not initialized");
+      return this.db
+        .prepare(
+          `SELECT id, display_name, email, created_at, updated_at
+           FROM speaker_names
+           ORDER BY lower(display_name) ASC`
+        )
+        .all();
+    } catch (error) {
+      debugLogger.error("Error getting speaker names", { error: error.message }, "database");
+      throw error;
+    }
+  }
+
+  upsertSpeakerName(displayName, email = null) {
+    try {
+      if (!this.db) throw new Error("Database not initialized");
+      const name = (displayName || "").trim();
+      if (!name) throw new Error("Speaker name is required");
+      const normalizedEmail = this._normalizeEmail(email);
+      const existing = this.db
+        .prepare("SELECT * FROM speaker_names WHERE lower(display_name) = lower(?)")
+        .get(name);
+
+      if (existing) {
+        this.db
+          .prepare(
+            `UPDATE speaker_names
+             SET display_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?`
+          )
+          .run(name, normalizedEmail, existing.id);
+        return this.db.prepare("SELECT * FROM speaker_names WHERE id = ?").get(existing.id);
+      }
+
+      const result = this.db
+        .prepare("INSERT INTO speaker_names (display_name, email) VALUES (?, ?)")
+        .run(name, normalizedEmail);
+      return this.db
+        .prepare("SELECT * FROM speaker_names WHERE id = ?")
+        .get(result.lastInsertRowid);
+    } catch (error) {
+      debugLogger.error("Error upserting speaker name", { error: error.message }, "database");
+      throw error;
+    }
+  }
+
+  deleteSpeakerName(id) {
+    try {
+      if (!this.db) throw new Error("Database not initialized");
+      this.db.prepare("DELETE FROM speaker_names WHERE id = ?").run(id);
+      return { success: true };
+    } catch (error) {
+      debugLogger.error("Error deleting speaker name", { error: error.message }, "database");
       throw error;
     }
   }

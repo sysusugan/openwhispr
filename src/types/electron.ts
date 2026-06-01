@@ -1723,6 +1723,30 @@ declare global {
           updated_at: string;
         }>
       >;
+      getSpeakerNames?: () => Promise<
+        Array<{
+          id: number;
+          display_name: string;
+          email: string | null;
+          created_at: string;
+          updated_at: string;
+        }>
+      >;
+      upsertSpeakerName?: (
+        displayName: string,
+        email?: string | null
+      ) => Promise<{
+        success: boolean;
+        error?: string;
+        entry?: {
+          id: number;
+          display_name: string;
+          email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      }>;
+      deleteSpeakerName?: (id: number) => Promise<{ success: boolean }>;
       attachSpeakerEmail?: (
         profileId: number,
         email: string | null

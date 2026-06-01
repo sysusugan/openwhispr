@@ -65,8 +65,8 @@ const getEffectiveSpeakerKey = (
   speakerMappings?: Record<string, string>
 ): string => {
   const mapped = segment.speaker ? speakerMappings?.[segment.speaker] : undefined;
-  if (mapped) return `name:${mapped.toLowerCase()}`;
   if (segment.speakerName) return `name:${segment.speakerName.toLowerCase()}`;
+  if (mapped) return `name:${mapped.toLowerCase()}`;
   if (segment.speaker) return `id:${segment.speaker}`;
   return `src:${segment.source}`;
 };
@@ -213,6 +213,7 @@ interface SpeakerProfileLite {
   id?: number;
   display_name: string;
   email: string | null;
+  source?: "profile" | "name" | "transcript";
 }
 
 interface SpeakerPickerProps {
@@ -402,8 +403,10 @@ function SpeakerPicker({ speakerProfiles, participants, onSelectName, t }: Speak
             </div>
             {filteredProfiles.slice(0, 5).map((p) => (
               <button
-                key={p.id ?? `name-${p.display_name}`}
-                onClick={() => onSelectName(p.display_name, p.email, p.id)}
+                key={`${p.source ?? "profile"}-${p.id ?? p.display_name}`}
+                onClick={() =>
+                  onSelectName(p.display_name, p.email, p.source === "profile" ? p.id : undefined)
+                }
                 className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs text-foreground/70 hover:bg-foreground/5 transition-colors cursor-pointer"
               >
                 <span className="truncate flex-1 text-left">{p.display_name}</span>
@@ -455,6 +458,7 @@ function SpeakerLabel({
   colorIdx,
   isOriginallyYou,
   onMap,
+  onMapSegment,
   onConfirm,
   onDismiss,
   t,
@@ -467,11 +471,18 @@ function SpeakerLabel({
   colorIdx: number;
   isOriginallyYou: boolean;
   onMap?: (speakerId: string, name: string, email?: string | null, profileId?: number) => void;
+  onMapSegment?: (
+    segmentId: string,
+    name: string,
+    email?: string | null,
+    profileId?: number
+  ) => void;
   onConfirm?: (speakerId: string, name: string, profileId: number) => void;
   onDismiss?: (speakerId: string) => void;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const [open, setOpen] = useState(false);
+  const [bulkEditSpeaker, setBulkEditSpeaker] = useState(true);
   const speakerState =
     segment.speakerLocked || isTranscriptSpeakerLocked(segment)
       ? "locked"
@@ -511,8 +522,8 @@ function SpeakerLabel({
   }
 
   const displayLabel =
-    mappedName ||
     segment.speakerName ||
+    mappedName ||
     (isOriginallyYou
       ? t("notes.speaker.you")
       : t("notes.speaker.label", { n: getSpeakerNumber(speakerId) }));
@@ -540,11 +551,30 @@ function SpeakerLabel({
           speakerProfiles={speakerProfiles}
           participants={participants}
           onSelectName={(name, email, profileId) => {
-            onMap?.(speakerId, name, email, profileId);
+            if (bulkEditSpeaker || !onMapSegment) {
+              onMap?.(speakerId, name, email, profileId);
+            } else {
+              onMapSegment(segment.id, name, email, profileId);
+            }
             setOpen(false);
           }}
           t={t}
         />
+        {onMapSegment && (
+          <div className="border-t border-border/40 px-3 py-2">
+            <label className="flex items-center gap-2 text-xs text-foreground/65 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={bulkEditSpeaker}
+                onChange={(event) => setBulkEditSpeaker(event.target.checked)}
+                className="h-3.5 w-3.5 rounded border-border accent-primary"
+              />
+              <span className="truncate">
+                {t("notes.speaker.bulkEditSpeaker", { name: displayLabel })}
+              </span>
+            </label>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -662,6 +692,12 @@ interface MeetingTranscriptChatProps {
     email?: string | null,
     profileId?: number
   ) => void;
+  onMapSegmentSpeaker?: (
+    segmentId: string,
+    displayName: string,
+    email?: string | null,
+    profileId?: number
+  ) => void;
   onConfirmSuggestion?: (speakerId: string, suggestedName: string, profileId: number) => void;
   onDismissSuggestion?: (speakerId: string) => void;
   onAttachSpeakerEmail?: (profileId: number, email: string | null) => void;
@@ -693,6 +729,7 @@ export function MeetingTranscriptChat({
   onSetSessionDiarizationEnabled,
   onSetSessionExpectedCount,
   onMapSpeaker,
+  onMapSegmentSpeaker,
   onConfirmSuggestion,
   onDismissSuggestion,
   onAttachSpeakerEmail,
@@ -807,9 +844,9 @@ export function MeetingTranscriptChat({
 
   const isSelfSide = (segment: TranscriptSegment): boolean => {
     const mapped = segment.speaker ? speakerMappings?.[segment.speaker] : undefined;
+    if (segment.speakerName) return false;
     if (mapped) return mapped.trim().toLowerCase() === t("notes.speaker.you").toLowerCase();
     if (segment.speaker === "you") return true;
-    if (segment.speakerName) return false;
     return segment.source === "mic";
   };
 
@@ -923,7 +960,7 @@ export function MeetingTranscriptChat({
                 )
               : null;
 
-          const activeName = speakerMappings?.[segment.speaker!] || segment.speakerName;
+          const activeName = segment.speakerName || speakerMappings?.[segment.speaker!];
           const matchedProfile =
             activeName && speakerProfiles
               ? speakerProfiles.find((p) => p.id != null && p.display_name === activeName)
@@ -950,6 +987,7 @@ export function MeetingTranscriptChat({
                   colorIdx={colorIdx}
                   isOriginallyYou={isOriginallyYou}
                   onMap={onMapSpeaker}
+                  onMapSegment={onMapSegmentSpeaker}
                   onConfirm={onConfirmSuggestion}
                   onDismiss={onDismissSuggestion}
                   t={t}

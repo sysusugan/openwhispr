@@ -7857,6 +7857,25 @@ class IPCHandlers {
       return this.databaseManager.getSpeakerProfiles();
     });
 
+    ipcMain.handle("get-speaker-names", async () => {
+      return this.databaseManager.getSpeakerNames();
+    });
+
+    ipcMain.handle("upsert-speaker-name", async (_event, displayName, email) => {
+      try {
+        const entry = this.databaseManager.upsertSpeakerName(displayName, email);
+        return { success: true, entry };
+      } catch (error) {
+        debugLogger.error("Failed to upsert speaker name", { error: error.message }, "speaker");
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle("delete-speaker-name", async (_event, id) => {
+      this.databaseManager.deleteSpeakerName(id);
+      return { success: true };
+    });
+
     ipcMain.handle("attach-speaker-email", async (_event, profileId, email) => {
       try {
         const profile = this.databaseManager.attachEmailToProfile(profileId, email);

@@ -2101,7 +2101,8 @@
       "nameOrEmailPlaceholder": "名前またはメールを入力",
       "addContact": "連絡先を追加",
       "save": "保存",
-      "cancel": "キャンセル"
+      "cancel": "キャンセル",
+      "bulkEditSpeaker": "Rename all \"{{name}}\""
     }
   },
   "dictionary": {
@@ -2116,7 +2117,14 @@
     "description": "AIに語彙を学習させましょう — 名前、専門用語、見落とされがちな表現など",
     "clearTitle": "辞書をクリアしますか？",
     "clearDescription": "カスタム辞書のすべての単語が削除されます。この操作は元に戻せません。",
-    "addPlaceholder": "単語やフレーズを追加..."
+    "addPlaceholder": "単語やフレーズを追加...",
+    "dictionary": "Dictionary",
+    "people": "People",
+    "peopleTitle": "Speaker names",
+    "peopleDescription": "Names created while labeling transcripts will appear here for quick reuse.",
+    "addPerson": "Add person",
+    "addPersonPlaceholder": "Add a speaker name...",
+    "removePerson": "Remove {{name}}"
   },
   "referral": {
     "title": "紹介して特典をゲット",

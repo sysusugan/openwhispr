@@ -2221,7 +2221,8 @@
         "decAria": "Disminuir número de participantes esperados",
         "othersInCall_one": "{{count}} otra persona en la llamada",
         "othersInCall_other": "{{count}} otras personas en la llamada"
-      }
+      },
+      "bulkEditSpeaker": "Rename all \"{{name}}\""
     }
   },
   "dictionary": {
@@ -2236,7 +2237,14 @@
     "description": "Enseña a la IA tu vocabulario: nombres, jerga y términos que podría pasar por alto",
     "clearTitle": "¿Borrar el diccionario?",
     "clearDescription": "Esto eliminará todas las palabras de tu diccionario personalizado. Esta acción no se puede deshacer.",
-    "addPlaceholder": "Añadir una palabra o frase..."
+    "addPlaceholder": "Añadir una palabra o frase...",
+    "dictionary": "Dictionary",
+    "people": "People",
+    "peopleTitle": "Speaker names",
+    "peopleDescription": "Names created while labeling transcripts will appear here for quick reuse.",
+    "addPerson": "Add person",
+    "addPersonPlaceholder": "Add a speaker name...",
+    "removePerson": "Remove {{name}}"
   },
   "sidebar": {
     "home": "Inicio",

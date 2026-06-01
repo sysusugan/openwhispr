@@ -1,20 +1,45 @@
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { BookOpen, X, CornerDownLeft, Info } from "lucide-react";
+import { BookOpen, X, CornerDownLeft, Info, Users } from "lucide-react";
 import { Input } from "./ui/input";
 import { ConfirmDialog } from "./ui/dialog";
 import { useSettings } from "../hooks/useSettings";
 import { getAgentName } from "../utils/agentName";
 
+interface SpeakerNameEntry {
+  id: number;
+  display_name: string;
+  email: string | null;
+}
+
 export default function DictionaryView() {
   const { t } = useTranslation();
   const { customDictionary, setCustomDictionary } = useSettings();
   const agentName = getAgentName();
+  const [activeTab, setActiveTab] = useState<"dictionary" | "people">("dictionary");
   const [newWord, setNewWord] = useState("");
+  const [newSpeakerName, setNewSpeakerName] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [speakerNames, setSpeakerNames] = useState<SpeakerNameEntry[]>([]);
 
   const isEmpty = customDictionary.length === 0;
+
+  const refreshSpeakerNames = useCallback(() => {
+    window.electronAPI?.getSpeakerNames?.().then((names) => {
+      setSpeakerNames(
+        (names || []).map((entry) => ({
+          id: entry.id,
+          display_name: entry.display_name,
+          email: entry.email,
+        }))
+      );
+    });
+  }, []);
+
+  useEffect(() => {
+    refreshSpeakerNames();
+  }, [refreshSpeakerNames]);
 
   const handleAdd = useCallback(() => {
     const words = newWord
@@ -35,6 +60,57 @@ export default function DictionaryView() {
     [customDictionary, setCustomDictionary, agentName]
   );
 
+  const handleAddSpeakerName = useCallback(async () => {
+    const name = newSpeakerName.trim();
+    if (!name) return;
+    const result = await window.electronAPI?.upsertSpeakerName?.(name, null);
+    if (result?.success) {
+      setNewSpeakerName("");
+      refreshSpeakerNames();
+    }
+  }, [newSpeakerName, refreshSpeakerNames]);
+
+  const handleRemoveSpeakerName = useCallback(
+    async (id: number) => {
+      const result = await window.electronAPI?.deleteSpeakerName?.(id);
+      if (result?.success) refreshSpeakerNames();
+    },
+    [refreshSpeakerNames]
+  );
+
+  const renderAddInput = (
+    value: string,
+    setValue: (value: string) => void,
+    onAdd: () => void,
+    placeholder: string,
+    ariaLabel: string
+  ) => (
+    <div className="relative">
+      <Input
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onAdd();
+        }}
+        className="w-full h-7 text-xs pr-8 placeholder:text-foreground/20"
+      />
+      {value.trim() ? (
+        <button
+          onClick={onAdd}
+          aria-label={ariaLabel}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-primary/50 hover:text-primary transition-colors"
+        >
+          <CornerDownLeft size={10} />
+        </button>
+      ) : (
+        <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-foreground/12 font-mono select-none pointer-events-none">
+          ⏎
+        </kbd>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full">
       <ConfirmDialog
@@ -46,7 +122,88 @@ export default function DictionaryView() {
         variant="destructive"
       />
 
-      {isEmpty ? (
+      <div className="px-5 pt-4 pb-1">
+        <div className="inline-flex rounded-md bg-foreground/[0.03] p-0.5 text-xs">
+          <button
+            onClick={() => setActiveTab("dictionary")}
+            className={`px-2.5 py-1 rounded transition-colors ${
+              activeTab === "dictionary"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-foreground/35 hover:text-foreground/60"
+            }`}
+          >
+            {t("dictionary.dictionary")}
+          </button>
+          <button
+            onClick={() => setActiveTab("people")}
+            className={`px-2.5 py-1 rounded transition-colors ${
+              activeTab === "people"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-foreground/35 hover:text-foreground/60"
+            }`}
+          >
+            {t("dictionary.people")}
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "people" ? (
+        <>
+          <div className="px-5 pt-3 pb-2.5 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-xs font-semibold text-foreground">
+                {t("dictionary.peopleTitle")}
+              </h2>
+              <span className="text-xs text-foreground/15 font-mono tabular-nums">
+                {speakerNames.length}
+              </span>
+            </div>
+          </div>
+          <div className="px-5 pb-3">
+            {renderAddInput(
+              newSpeakerName,
+              setNewSpeakerName,
+              handleAddSpeakerName,
+              t("dictionary.addPersonPlaceholder"),
+              t("dictionary.addPerson")
+            )}
+          </div>
+          <div className="mx-5 h-px bg-border/8 dark:bg-white/3" />
+          {speakerNames.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center px-8 -mt-8">
+              <div className="w-10 h-10 rounded-[10px] bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center mb-4">
+                <Users size={17} strokeWidth={1.5} className="text-foreground/25" />
+              </div>
+              <h2 className="text-xs font-semibold text-foreground mb-1">
+                {t("dictionary.peopleTitle")}
+              </h2>
+              <p className="text-xs text-foreground/30 text-center leading-relaxed max-w-[260px]">
+                {t("dictionary.peopleDescription")}
+              </p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-5 py-3">
+              <div className="flex flex-wrap gap-1.5">
+                {speakerNames.map((entry) => (
+                  <span
+                    key={entry.id}
+                    className="group inline-flex items-center gap-1 py-[3px] pl-2.5 pr-1 rounded-[5px] text-xs border transition-colors duration-150 bg-foreground/[0.02] dark:bg-white/[0.03] text-foreground/60 dark:text-foreground/50 border-foreground/8 dark:border-white/6 hover:border-foreground/15 dark:hover:border-white/12 hover:bg-foreground/[0.04] dark:hover:bg-white/[0.06] hover:text-foreground/80 dark:hover:text-foreground/70"
+                  >
+                    {entry.display_name}
+                    <button
+                      onClick={() => handleRemoveSpeakerName(entry.id)}
+                      aria-label={t("dictionary.removePerson", { name: entry.display_name })}
+                      className="p-0.5 rounded-sm opacity-0 group-hover:opacity-100 text-foreground/25 hover:!text-destructive/70 transition-colors duration-150"
+                    >
+                      <X size={10} strokeWidth={2} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      ) : isEmpty ? (
         /* ─── Empty state ─── */
         <div className="flex-1 flex flex-col items-center justify-center px-8 -mt-4">
           <div className="w-10 h-10 rounded-[10px] bg-gradient-to-b from-primary/8 to-primary/4 dark:from-primary/12 dark:to-primary/6 border border-primary/10 dark:border-primary/15 flex items-center justify-center mb-4">

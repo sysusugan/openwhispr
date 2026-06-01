@@ -2175,7 +2175,8 @@
         "othersInCall_few": "{{count}} собеседника в разговоре",
         "othersInCall_many": "{{count}} собеседников в разговоре",
         "othersInCall_other": "{{count}} собеседника в разговоре"
-      }
+      },
+      "bulkEditSpeaker": "Rename all \"{{name}}\""
     }
   },
   "dictionary": {
@@ -2190,7 +2191,14 @@
     "title": "Словарь",
     "description": "Добавьте слова для улучшения транскрипции",
     "clearTitle": "Очистить словарь?",
-    "clearDescription": "Все слова будут удалены без возможности восстановления."
+    "clearDescription": "Все слова будут удалены без возможности восстановления.",
+    "dictionary": "Dictionary",
+    "people": "People",
+    "peopleTitle": "Speaker names",
+    "peopleDescription": "Names created while labeling transcripts will appear here for quick reuse.",
+    "addPerson": "Add person",
+    "addPersonPlaceholder": "Add a speaker name...",
+    "removePerson": "Remove {{name}}"
   },
   "sidebar": {
     "home": "Главная",

@@ -2173,7 +2173,8 @@
         "decAria": "Erwartete Sprecheranzahl verringern",
         "othersInCall_one": "{{count}} weitere Person im Gespräch",
         "othersInCall_other": "{{count}} weitere Personen im Gespräch"
-      }
+      },
+      "bulkEditSpeaker": "Rename all \"{{name}}\""
     }
   },
   "dictionary": {
@@ -2188,7 +2189,14 @@
     "description": "Bringe der KI dein Vokabular bei – Namen, Fachbegriffe und Ausdrücke, die sie sonst übersehen könnte",
     "clearTitle": "Wörterbuch leeren?",
     "clearDescription": "Dadurch werden alle Wörter aus deinem benutzerdefinierten Wörterbuch entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
-    "addPlaceholder": "Ein Wort oder eine Phrase hinzufügen..."
+    "addPlaceholder": "Ein Wort oder eine Phrase hinzufügen...",
+    "dictionary": "Dictionary",
+    "people": "People",
+    "peopleTitle": "Speaker names",
+    "peopleDescription": "Names created while labeling transcripts will appear here for quick reuse.",
+    "addPerson": "Add person",
+    "addPersonPlaceholder": "Add a speaker name...",
+    "removePerson": "Remove {{name}}"
   },
   "sidebar": {
     "home": "Startseite",

@@ -2284,7 +2284,8 @@
         "decAria": "Diminuer le nombre d'intervenants attendus",
         "othersInCall_one": "{{count}} autre dans l'appel",
         "othersInCall_other": "{{count}} autres dans l'appel"
-      }
+      },
+      "bulkEditSpeaker": "Rename all \"{{name}}\""
     }
   },
   "dictionary": {
@@ -2299,7 +2300,14 @@
     "howItWorks": "Comment ça marche",
     "howItWorksDetail": "Les mots sont transmis comme indices contextuels au modèle vocal, l'aidant à reconnaître les termes peu courants. Pour les mots difficiles, essayez d'ajouter du contexte comme « Le mot est Synty » en plus du mot lui-même.",
     "autoManaged": "Géré automatiquement — synchronisé depuis le nom de l'agent",
-    "inputHint": "Séparez les mots par des virgules. Ajoutez des phrases de contexte comme « Le mot est Synty » pour une meilleure reconnaissance."
+    "inputHint": "Séparez les mots par des virgules. Ajoutez des phrases de contexte comme « Le mot est Synty » pour une meilleure reconnaissance.",
+    "dictionary": "Dictionary",
+    "people": "People",
+    "peopleTitle": "Speaker names",
+    "peopleDescription": "Names created while labeling transcripts will appear here for quick reuse.",
+    "addPerson": "Add person",
+    "addPersonPlaceholder": "Add a speaker name...",
+    "removePerson": "Remove {{name}}"
   },
   "support": {
     "documentation": "Documentation",

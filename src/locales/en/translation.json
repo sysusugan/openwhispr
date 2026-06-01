@@ -2380,7 +2380,8 @@
         "decAria": "Decrease expected speaker count",
         "othersInCall_one": "{{count}} other in call",
         "othersInCall_other": "{{count}} others in call"
-      }
+      },
+      "bulkEditSpeaker": "Rename all \"{{name}}\""
     }
   },
   "dictionary": {
@@ -2395,7 +2396,14 @@
     "howItWorks": "How it works",
     "howItWorksDetail": "Words are fed as context hints to the speech model, helping it recognize uncommon terms. For difficult words, try adding context like \"The word is Synty\" alongside the word itself.",
     "autoManaged": "Auto-managed — synced from agent name",
-    "inputHint": "Separate multiple words with commas. Add context phrases like \"The word is Synty\" for better recognition."
+    "inputHint": "Separate multiple words with commas. Add context phrases like \"The word is Synty\" for better recognition.",
+    "dictionary": "Dictionary",
+    "people": "People",
+    "peopleTitle": "Speaker names",
+    "peopleDescription": "Names created while labeling transcripts will appear here for quick reuse.",
+    "addPerson": "Add person",
+    "addPersonPlaceholder": "Add a speaker name...",
+    "removePerson": "Remove {{name}}"
   },
   "support": {
     "documentation": "Documentation",
