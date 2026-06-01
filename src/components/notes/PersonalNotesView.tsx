@@ -1028,7 +1028,7 @@ export default function PersonalNotesView({
                   aria-label={t("notes.bulkExport.exportSelected")}
                   className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5 disabled:opacity-30"
                 >
-                  <Download size={12} />
+                  <Download size={11} />
                 </Button>
                 <Button
                   variant="ghost"
@@ -1037,7 +1037,7 @@ export default function PersonalNotesView({
                   aria-label={t("common.cancel")}
                   className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
                 >
-                  <X size={12} />
+                  <X size={11} />
                 </Button>
               </div>
             ) : (
@@ -1051,7 +1051,7 @@ export default function PersonalNotesView({
                     title={t("notes.bulkExport.select")}
                     className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
                   >
-                    <SquareCheckBig size={12} />
+                    <SquareCheckBig size={10} />
                   </Button>
                 )}
                 <DropdownMenu>
@@ -1063,7 +1063,7 @@ export default function PersonalNotesView({
                       title={t("notes.list.sort")}
                       className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
                     >
-                      <ArrowDownUp size={12} />
+                      <ArrowDownUp size={10} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" sideOffset={4} className="min-w-36">
@@ -1073,13 +1073,13 @@ export default function PersonalNotesView({
                     <DropdownMenuRadioGroup value={noteSortBy} onValueChange={handleNoteSortChange}>
                       <DropdownMenuRadioItem
                         value="updatedAt"
-                        className="text-xs gap-2 rounded-md px-2 py-1"
+                        className="text-xs gap-2 rounded-md py-1"
                       >
                         {t("notes.list.sortUpdated")}
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem
                         value="createdAt"
-                        className="text-xs gap-2 rounded-md px-2 py-1"
+                        className="text-xs gap-2 rounded-md py-1"
                       >
                         {t("notes.list.sortCreated")}
                       </DropdownMenuRadioItem>
@@ -1093,7 +1093,7 @@ export default function PersonalNotesView({
                   aria-label={t("notes.list.newNote")}
                   className="h-5 w-5 rounded-md text-muted-foreground/50 dark:text-muted-foreground/30 hover:text-foreground/60 hover:bg-foreground/5"
                 >
-                  <Plus size={13} />
+                  <Plus size={11} />
                 </Button>
               </div>
             )}
