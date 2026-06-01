@@ -38,3 +38,28 @@ export function getLastWritableAssistantContent(messages: Message[]): string | n
   }
   return null;
 }
+
+export function expireLoadedPendingConfirmations(toolCalls: ToolCallInfo[]): ToolCallInfo[] {
+  let changed = false;
+  const next = toolCalls.map((toolCall) => {
+    const metadata = toolCall.metadata;
+    if (
+      metadata?.confirmationRequired !== true ||
+      metadata.confirmationStatus !== "pending"
+    ) {
+      return toolCall;
+    }
+
+    changed = true;
+    return {
+      ...toolCall,
+      metadata: {
+        ...metadata,
+        confirmationRequired: false,
+        confirmationStatus: "expired",
+      },
+    };
+  });
+
+  return changed ? next : toolCalls;
+}

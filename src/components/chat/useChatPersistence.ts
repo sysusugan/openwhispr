@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import type { Message, ToolCallInfo } from "./types";
+import { expireLoadedPendingConfirmations } from "../../hooks/embeddedChatActions";
 
 interface UseChatPersistenceOptions {
   conversationId?: number | null;
@@ -53,7 +54,7 @@ export function useChatPersistence(options: UseChatPersistenceOptions = {}): Cha
         role: m.role as Message["role"],
         content: m.content,
         isStreaming: false,
-        ...(toolCalls ? { toolCalls } : {}),
+        ...(toolCalls ? { toolCalls: expireLoadedPendingConfirmations(toolCalls) } : {}),
       };
     });
     setMessages(loaded);

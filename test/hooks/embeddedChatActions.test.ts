@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   createPendingRunNoteActionToolCall,
+  expireLoadedPendingConfirmations,
   getLastWritableAssistantContent,
 } from "../../src/hooks/embeddedChatActions.ts";
 import type { Message } from "../../src/components/chat/types.ts";
@@ -46,4 +47,37 @@ test("write shortcuts ignore empty and streaming assistant messages", () => {
   ];
 
   assert.equal(getLastWritableAssistantContent(messages), null);
+});
+
+test("loaded pending confirmation tool calls expire instead of staying actionable", () => {
+  const pending = createPendingRunNoteActionToolCall({
+    actionId: 12,
+    actionName: "总结会议",
+    noteId: 34,
+  });
+
+  const [expired] = expireLoadedPendingConfirmations([pending]);
+
+  assert.notEqual(expired, pending);
+  assert.equal(expired.metadata?.confirmationStatus, "expired");
+  assert.equal(expired.metadata?.confirmationRequired, false);
+});
+
+test("loaded non-pending confirmation tool calls are preserved", () => {
+  const pending = createPendingRunNoteActionToolCall({
+    actionId: 12,
+    actionName: "总结会议",
+    noteId: 34,
+  });
+  const confirmed = {
+    ...pending,
+    metadata: {
+      ...pending.metadata,
+      confirmationStatus: "confirmed",
+    },
+  };
+
+  const [loaded] = expireLoadedPendingConfirmations([confirmed]);
+
+  assert.equal(loaded, confirmed);
 });
