@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   Plus,
@@ -104,6 +111,13 @@ import type {
 const FOLDER_INPUT_CLASS =
   "w-full h-7 bg-background dark:bg-white/[0.03] rounded-md px-2 text-xs text-foreground outline-none border border-border/70 focus:border-border-hover";
 const NOTE_SORT_STORAGE_KEY = "noteSortBy";
+const NOTES_SIDEBAR_WIDTH_KEY = "openwhispr.notesSidebarWidth";
+const NOTES_SIDEBAR_DEFAULT_WIDTH = 224;
+const NOTES_SIDEBAR_MIN_WIDTH = 200;
+const NOTES_SIDEBAR_MAX_WIDTH = 420;
+
+const clampNotesSidebarWidth = (value: number) =>
+  Math.min(NOTES_SIDEBAR_MAX_WIDTH, Math.max(NOTES_SIDEBAR_MIN_WIDTH, value));
 
 function readNoteSortBy(): NoteSortBy {
   if (typeof window === "undefined") return "updatedAt";
@@ -173,6 +187,10 @@ export default function PersonalNotesView({
   const [noteAudioFiles, setNoteAudioFiles] = useState<NoteAudioFile[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isMiddlePaneCollapsed, setIsMiddlePaneCollapsed] = useState(false);
+  const [notesSidebarWidth, setNotesSidebarWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(NOTES_SIDEBAR_WIDTH_KEY));
+    return Number.isFinite(saved) ? clampNotesSidebarWidth(saved) : NOTES_SIDEBAR_DEFAULT_WIDTH;
+  });
   const [selectedNoteIds, setSelectedNoteIds] = useState<Set<number>>(new Set());
   const [exportFields, setExportFields] = useState<NoteExportField[]>([
     "transcript",
@@ -791,6 +809,37 @@ export default function PersonalNotesView({
       }
     : null;
 
+  const handleNotesSidebarResizeStart = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = notesSidebarWidth;
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      const updateWidth = (clientX: number) => {
+        const nextWidth = clampNotesSidebarWidth(startWidth + clientX - startX);
+        setNotesSidebarWidth(nextWidth);
+        localStorage.setItem(NOTES_SIDEBAR_WIDTH_KEY, String(nextWidth));
+      };
+
+      const onPointerMove = (moveEvent: globalThis.PointerEvent) => updateWidth(moveEvent.clientX);
+      const onPointerUp = (upEvent: globalThis.PointerEvent) => {
+        updateWidth(upEvent.clientX);
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
+      };
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+    },
+    [notesSidebarWidth]
+  );
+
   if (!isOnboardingComplete) {
     return <NotesOnboarding onComplete={completeOnboarding} />;
   }
@@ -799,13 +848,13 @@ export default function PersonalNotesView({
     <div className="ow-workspace-page flex overflow-hidden">
       <div
         className={cn(
-          "ow-collapsible-pane",
+          "ow-collapsible-pane relative overflow-visible",
           (isSidePanelLayout || isMiddlePaneCollapsed) && "border-r-transparent"
         )}
-        style={{ width: isSidePanelLayout || isMiddlePaneCollapsed ? 0 : "14rem" }}
+        style={{ width: isSidePanelLayout || isMiddlePaneCollapsed ? 0 : notesSidebarWidth }}
       >
         <div className="ow-collapsible-pane-content">
-          <div className="w-56 h-full shrink-0 ow-inner-sidebar">
+          <div className="h-full w-full shrink-0 ow-inner-sidebar">
             <div className="px-3 pt-4 pb-3 shrink-0 space-y-1">
               <button onClick={handleOpenNewNoteDialog} className="ow-inner-nav-item h-7">
                 <SquarePen size={14} className="shrink-0" />
@@ -1264,6 +1313,14 @@ export default function PersonalNotesView({
           >
             {isMiddlePaneCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
+        )}
+        {!isSidePanelLayout && !isMiddlePaneCollapsed && (
+          <button
+            type="button"
+            className="absolute inset-y-0 right-[-4px] z-10 w-2 cursor-col-resize bg-transparent outline-none transition-colors hover:bg-primary/20 focus-visible:bg-primary/25"
+            aria-label={t("common.resize", { defaultValue: "Resize" })}
+            onPointerDown={handleNotesSidebarResizeStart}
+          />
         )}
       </div>
 

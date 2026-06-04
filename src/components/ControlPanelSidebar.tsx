@@ -237,7 +237,7 @@ export default function ControlPanelSidebar({
   }
 
   return (
-    <div className="w-56 h-full shrink-0 flex flex-col bg-sidebar dark:bg-surface-1">
+    <div className="h-full w-full shrink-0 flex flex-col bg-sidebar dark:bg-surface-1">
       <div
         className="w-full h-10 shrink-0"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
@@ -477,9 +477,7 @@ export default function ControlPanelSidebar({
                 )}
               </>
             ) : authLoaded && !isSignedIn ? (
-              <p className="text-xs text-muted-foreground">
-                {t("sidebar.notSignedIn")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("sidebar.notSignedIn")}</p>
             ) : null}
           </div>
         </div>

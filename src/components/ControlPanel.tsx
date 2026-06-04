@@ -1,13 +1,7 @@
 import React, { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
-import {
-  Download,
-  RefreshCw,
-  Loader2,
-  AlertTriangle,
-  Zap,
-} from "lucide-react";
+import { Download, RefreshCw, Loader2, AlertTriangle, Zap } from "lucide-react";
 import UpgradePrompt from "./UpgradePrompt";
 import PostMigrationOnboarding from "./PostMigrationOnboarding";
 import { ConfirmDialog, AlertDialog } from "./ui/dialog";
@@ -65,6 +59,14 @@ const IntegrationsView = React.lazy(() => import("./IntegrationsView"));
 const ChatView = React.lazy(() => import("./chat/ChatView"));
 const CommandSearch = React.lazy(() => import("./CommandSearch"));
 
+const PRIMARY_SIDEBAR_WIDTH_KEY = "openwhispr.primarySidebarWidth";
+const PRIMARY_SIDEBAR_DEFAULT_WIDTH = 224;
+const PRIMARY_SIDEBAR_MIN_WIDTH = 200;
+const PRIMARY_SIDEBAR_MAX_WIDTH = 340;
+const COLLAPSED_PRIMARY_SIDEBAR_WIDTH = 72;
+
+const clampWidth = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 export default function ControlPanel() {
   const { t } = useTranslation();
   const history = useTranscriptions();
@@ -84,6 +86,12 @@ export default function ControlPanel() {
   const [showCloudMigrationBanner, setShowCloudMigrationBanner] = useState(false);
   const [activeView, setActiveView] = useState<ControlPanelView>("home");
   const [isPrimarySidebarCollapsed, setIsPrimarySidebarCollapsed] = useState(false);
+  const [primarySidebarWidth, setPrimarySidebarWidth] = useState(() => {
+    const saved = Number(localStorage.getItem(PRIMARY_SIDEBAR_WIDTH_KEY));
+    return Number.isFinite(saved)
+      ? clampWidth(saved, PRIMARY_SIDEBAR_MIN_WIDTH, PRIMARY_SIDEBAR_MAX_WIDTH)
+      : PRIMARY_SIDEBAR_DEFAULT_WIDTH;
+  });
   const isMeetingMode = useIsMeetingMode();
   const isNarrowWindow = useIsNarrowWindow();
   const activeNoteId = useActiveNoteId();
@@ -377,6 +385,41 @@ export default function ControlPanel() {
   const handleMeetingRecordingRequestHandled = useCallback(
     () => setMeetingRecordingRequest(null),
     []
+  );
+
+  const handlePrimarySidebarResizeStart = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = primarySidebarWidth;
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      const updateWidth = (clientX: number) => {
+        const nextWidth = clampWidth(
+          startWidth + clientX - startX,
+          PRIMARY_SIDEBAR_MIN_WIDTH,
+          PRIMARY_SIDEBAR_MAX_WIDTH
+        );
+        setPrimarySidebarWidth(nextWidth);
+        localStorage.setItem(PRIMARY_SIDEBAR_WIDTH_KEY, String(nextWidth));
+      };
+
+      const onPointerMove = (moveEvent: PointerEvent) => updateWidth(moveEvent.clientX);
+      const onPointerUp = (upEvent: PointerEvent) => {
+        updateWidth(upEvent.clientX);
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
+      };
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+    },
+    [primarySidebarWidth]
   );
 
   const copyToClipboard = useCallback(
@@ -714,9 +757,13 @@ export default function ControlPanel() {
 
       <div className="flex min-w-0 flex-1 overflow-hidden">
         <div
-          className="shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-border bg-sidebar"
+          className="relative shrink-0 overflow-visible border-r border-border bg-sidebar transition-[width] duration-300 ease-out"
           style={{
-            width: isSidePanelLayout ? 0 : isPrimarySidebarCollapsed ? "4.5rem" : "14rem",
+            width: isSidePanelLayout
+              ? 0
+              : isPrimarySidebarCollapsed
+                ? COLLAPSED_PRIMARY_SIDEBAR_WIDTH
+                : primarySidebarWidth,
           }}
         >
           <ControlPanelSidebar
@@ -760,6 +807,14 @@ export default function ControlPanel() {
               ) : undefined
             }
           />
+          {!isSidePanelLayout && !isPrimarySidebarCollapsed && (
+            <button
+              type="button"
+              aria-label={t("common.resize", { defaultValue: "Resize" })}
+              className="absolute inset-y-0 right-[-4px] z-20 w-2 cursor-col-resize bg-transparent outline-none transition-colors hover:bg-primary/20 focus-visible:bg-primary/25"
+              onPointerDown={handlePrimarySidebarResizeStart}
+            />
+          )}
         </div>
         <main className="min-w-0 flex-1 flex flex-col overflow-hidden bg-background">
           <div
