@@ -79,14 +79,14 @@ export default function WorkspaceTeamsTab({ workspace }: Props) {
           </p>
         </div>
         {canManage && (
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             {t("settingsPage.workspace.teams.new")}
           </Button>
         )}
       </div>
 
-      <div className="rounded-lg border border-border/50 dark:border-border-subtle/70 divide-y divide-border/30 dark:divide-border-subtle/50 bg-card/50 dark:bg-surface-2/50">
+      <div className="rounded-md border border-border/60 dark:border-border-subtle/70 divide-y divide-border/40 dark:divide-border-subtle/50 bg-background dark:bg-surface-2/50">
         {teams.length === 0 && (
           <div className="py-10 text-center">
             <Users className="w-5 h-5 text-muted-foreground/60 mx-auto mb-2" />
@@ -116,7 +116,7 @@ export default function WorkspaceTeamsTab({ workspace }: Props) {
                 type="button"
                 onClick={() => handleDelete(team)}
                 aria-label={t("common.delete")}
-                className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+                className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -164,7 +164,7 @@ export default function WorkspaceTeamsTab({ workspace }: Props) {
               >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={!name.trim() || submitting}>
+              <Button type="submit" variant="outline" disabled={!name.trim() || submitting}>
                 {submitting ? t("common.saving") : t("common.create")}
               </Button>
             </DialogFooter>

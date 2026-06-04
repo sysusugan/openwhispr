@@ -56,22 +56,30 @@ export default function ConversationItem({
   const isArchived = !!conversation.is_archived;
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        onClick();
+      }}
       className={cn(
-        "group relative w-full text-left px-3 py-2 cursor-pointer transition-all duration-150",
+        "group relative mx-2 my-0.5 w-[calc(100%-1rem)] rounded-md border text-left px-2.5 py-2 cursor-pointer transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
-        isActive ? "bg-primary/8 dark:bg-primary/10" : "hover:bg-foreground/4 dark:hover:bg-white/4"
+        isActive
+          ? "border-border bg-muted text-foreground shadow-sm"
+          : "border-transparent text-muted-foreground hover:border-border/70 hover:bg-muted hover:text-foreground"
       )}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className={cn("text-xs truncate text-foreground", isActive && "font-medium")}>
+          <p className={cn("text-xs truncate font-semibold", isActive ? "text-foreground" : "text-current")}>
             {conversation.title}
           </p>
           <div className="flex items-center gap-0.5 shrink-0">
-            <span className="text-[10px] text-muted-foreground/40 tabular-nums group-hover:opacity-0 transition-opacity">
+            <span className="text-[10px] text-muted-foreground tabular-nums group-hover:opacity-0 transition-opacity">
               {formatTimestamp(conversation.updated_at)}
             </span>
             <DropdownMenu>
@@ -80,7 +88,7 @@ export default function ConversationItem({
                   size="icon"
                   variant="ghost"
                   onClick={(e) => e.stopPropagation()}
-                  className="h-5 w-5 rounded-sm opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity absolute right-2 text-muted-foreground/60 dark:text-muted-foreground/40 hover:text-foreground/60 hover:bg-foreground/5 active:bg-foreground/8"
+                  className="h-5 w-5 rounded-sm opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity absolute right-2 text-muted-foreground hover:text-foreground hover:bg-card active:bg-muted"
                 >
                   <MoreHorizontal size={12} />
                 </Button>
@@ -121,11 +129,11 @@ export default function ConversationItem({
           </div>
         </div>
         {conversation.preview && (
-          <p className="text-[11px] text-muted-foreground/50 line-clamp-1 mt-0.5">
+          <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
             {conversation.preview}
           </p>
         )}
       </div>
-    </button>
+    </div>
   );
 }

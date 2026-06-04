@@ -96,7 +96,7 @@ function LocalModelCard({
             <div
               className={`w-1.5 h-1.5 rounded-full ${
                 isSelected
-                  ? "bg-primary shadow-[0_0_6px_oklch(0.62_0.22_260/0.6)] animate-[pulse-glow_2s_ease-in-out_infinite]"
+                  ? "bg-foreground/60 shadow-sm animate-[pulse-glow_2s_ease-in-out_infinite]"
                   : "bg-success shadow-[0_0_4px_rgba(34,197,94,0.5)]"
               }`}
             />
@@ -129,7 +129,7 @@ function LocalModelCard({
           {isDownloaded ? (
             <>
               {isSelected && (
-                <span className="text-xs font-medium text-primary px-2 py-0.5 bg-primary/10 rounded-sm">
+                <span className="text-xs font-medium text-foreground/70 px-2 py-0.5 bg-foreground/[0.06] rounded-sm">
                   {t("common.active")}
                 </span>
               )}
@@ -166,7 +166,7 @@ function LocalModelCard({
                 onDownload();
               }}
               size="sm"
-              variant="default"
+              variant="outline"
               className="h-6 px-2.5 text-xs"
             >
               <Download size={11} className="mr-1" />
@@ -873,7 +873,7 @@ export default function TranscriptionModelPicker({
                           openai: "https://platform.openai.com/api-keys",
                         }[selectedCloudProvider] || "https://platform.openai.com/api-keys"
                       )}
-                      className="text-xs text-primary/70 hover:text-primary transition-colors cursor-pointer"
+                      className="text-xs text-foreground/55 hover:text-foreground transition-colors cursor-pointer"
                     >
                       {t("transcription.getKey")}
                     </button>
@@ -955,7 +955,7 @@ export default function TranscriptionModelPicker({
                   </div>
                 ) : (
                   <div className="flex items-start gap-2.5">
-                    <Zap size={13} className="text-primary shrink-0 mt-0.5" />
+                    <Zap size={13} className="text-foreground/45 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground">
                         {t("gpu.transcriptionBanner")}
@@ -964,7 +964,7 @@ export default function TranscriptionModelPicker({
                         <Button
                           onClick={handleCudaDownload}
                           size="sm"
-                          variant="default"
+                          variant="outline"
                           className="h-6 px-2.5 text-xs"
                         >
                           {t("gpu.enableButton")}

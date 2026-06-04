@@ -8,8 +8,8 @@ export default function ConversationDateGroup({ label }: ConversationDateGroupPr
   return (
     <div
       className={cn(
-        "px-3 pt-3 pb-1",
-        "text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wider",
+        "px-4 pt-3 pb-1",
+        "text-[10px] font-semibold text-muted-foreground uppercase tracking-wider",
         "select-none"
       )}
     >

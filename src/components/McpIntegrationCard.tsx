@@ -35,7 +35,7 @@ export default function McpIntegrationCard({ isPaid, onUpgrade }: McpIntegration
   };
 
   return (
-    <div className="rounded-lg border border-border/50 dark:border-border-subtle/70 bg-card/50 dark:bg-surface-2/50 backdrop-blur-sm p-4">
+    <div className="rounded-md border border-border/60 bg-background p-4">
       <div className="flex items-center gap-2 mb-4">
         <LogoTile src={logo} alt="OpenWhispr" />
         <Plus className="h-3 w-3 text-muted-foreground/40 shrink-0" />
@@ -62,13 +62,13 @@ export default function McpIntegrationCard({ isPaid, onUpgrade }: McpIntegration
         <ol className="space-y-1.5 text-xs text-muted-foreground mb-4 list-decimal pl-4 marker:text-muted-foreground/40">
           <li className="leading-relaxed">
             {t("integrations.mcp.step1")}{" "}
-            <span className="inline-flex items-center gap-1 rounded-md border border-primary/15 bg-primary/5 px-1.5 py-0.5 font-mono text-[10.5px] text-foreground align-middle">
+            <span className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-muted/40 px-1.5 py-0.5 font-mono text-[10.5px] text-foreground align-middle">
               {MCP_URL}
               <button
                 type="button"
                 onClick={handleCopy}
                 aria-label={t("integrations.mcp.copyUrl")}
-                className="p-0.5 rounded transition-colors hover:bg-primary/10 text-muted-foreground hover:text-foreground"
+                className="p-0.5 rounded transition-colors hover:bg-foreground/5 text-muted-foreground hover:text-foreground"
               >
                 {copied ? (
                   <Check className="h-2.5 w-2.5 text-success" />
@@ -85,6 +85,7 @@ export default function McpIntegrationCard({ isPaid, onUpgrade }: McpIntegration
 
       {isPaid ? (
         <Button
+          variant="outline"
           size="sm"
           onClick={() => window.electronAPI?.openExternal?.(MCP_DOCS_URL)}
           className="gap-1.5"
@@ -93,7 +94,7 @@ export default function McpIntegrationCard({ isPaid, onUpgrade }: McpIntegration
           <ExternalLink className="h-3 w-3" />
         </Button>
       ) : (
-        <Button size="sm" onClick={onUpgrade}>
+        <Button variant="outline" size="sm" onClick={onUpgrade}>
           {t("integrations.mcp.viewPlans")}
         </Button>
       )}

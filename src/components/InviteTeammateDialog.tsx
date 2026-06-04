@@ -129,7 +129,7 @@ export default function InviteTeammateDialog({
                     "flex-1 h-9 px-3 rounded-md border text-xs font-medium transition-colors",
                     "outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
                     role === r
-                      ? "border-primary/40 bg-primary/8 text-foreground"
+                      ? "border-border-hover bg-foreground/[0.06] text-foreground"
                       : "border-border/60 text-muted-foreground hover:bg-foreground/4 hover:text-foreground"
                   )}
                 >
@@ -154,7 +154,7 @@ export default function InviteTeammateDialog({
                         "h-7 px-2.5 rounded-md border text-xs transition-colors outline-none",
                         "focus-visible:ring-1 focus-visible:ring-primary/30",
                         checked
-                          ? "border-primary/40 bg-primary/8 text-foreground"
+                          ? "border-border-hover bg-foreground/[0.06] text-foreground"
                           : "border-border/60 text-muted-foreground hover:bg-foreground/4 hover:text-foreground"
                       )}
                     >
@@ -175,7 +175,7 @@ export default function InviteTeammateDialog({
             >
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={!email.trim() || submitting}>
+            <Button type="submit" variant="outline" disabled={!email.trim() || submitting}>
               {submitting ? t("workspaces.invite.submitting") : t("workspaces.invite.submit")}
             </Button>
           </DialogFooter>

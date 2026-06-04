@@ -129,8 +129,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   const usageLoaded = usage?.hasLoaded ?? false;
   const showSetup = usageLoaded && !isProUser && !setupDismissed && state === "idle";
   const showModelPicker = !isSignedIn || cloudTranscriptionMode === "byok" || useLocalWhisper;
-  const shouldCenter = !showSetup && !advancedOpen;
-
   // Mode detection
   const isByok = !useLocalWhisper && !isOpenWhisprCloud;
 
@@ -391,7 +389,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   };
 
   const modeSelector = isSignedIn ? (
-    <div className="flex items-center rounded-md border border-foreground/6 dark:border-white/6 bg-surface-1/30 dark:bg-white/[0.02] p-0.5 mb-3">
+    <div className="ow-segmented mb-3 grid grid-cols-2">
       <button
         onClick={() => {
           setCloudTranscriptionMode("openwhispr");
@@ -399,26 +397,22 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
           updateTranscriptionSettings({ useLocalWhisper: false });
         }}
         className={cn(
-          "flex-1 flex items-center justify-center gap-1.5 h-7 rounded text-xs font-medium transition-colors duration-150",
-          isOpenWhisprCloud
-            ? "bg-foreground/[0.06] dark:bg-white/8 text-foreground/70"
-            : "text-foreground/30 hover:text-foreground/50"
+          "ow-segmented-item h-7 w-full px-2",
+          isOpenWhisprCloud && "ow-segmented-item-active"
         )}
       >
-        <Cloud size={11} />
-        {t("notes.upload.openwhisprCloud")}
+        <Cloud size={11} className="shrink-0" />
+        <span className="truncate">{t("notes.upload.openwhisprCloud")}</span>
       </button>
       <button
         onClick={() => setCloudTranscriptionMode("byok")}
         className={cn(
-          "flex-1 flex items-center justify-center gap-1.5 h-7 rounded text-xs font-medium transition-colors duration-150",
-          !isOpenWhisprCloud
-            ? "bg-foreground/[0.06] dark:bg-white/8 text-foreground/70"
-            : "text-foreground/30 hover:text-foreground/50"
+          "ow-segmented-item h-7 w-full px-2",
+          !isOpenWhisprCloud && "ow-segmented-item-active"
         )}
       >
-        <Key size={11} />
-        {t("notes.upload.custom")}
+        <Key size={11} className="shrink-0" />
+        <span className="truncate">{t("notes.upload.custom")}</span>
       </button>
     </div>
   ) : null;
@@ -454,21 +448,22 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   ) : null;
 
   return (
-    <div className="flex flex-col items-center h-full overflow-y-auto px-6">
+    <div className="ow-workspace-page overflow-y-auto">
+      <div className="ow-page-column max-w-3xl">
       <div
-        className={cn("w-full max-w-md shrink-0", shouldCenter ? "my-auto" : "pt-4 pb-8")}
+        className="w-full shrink-0"
         style={{ animation: "float-up 0.4s ease-out" }}
       >
         {showSetup && (
           <div className="mb-6" style={{ animation: "float-up 0.3s ease-out" }}>
             <div className="flex flex-col items-center mb-5">
-              <div className="w-10 h-10 rounded-[10px] bg-linear-to-b from-primary/10 to-primary/[0.03] dark:from-primary/15 dark:to-primary/5 border border-primary/15 dark:border-primary/20 flex items-center justify-center mb-3">
-                <Upload size={17} strokeWidth={1.5} className="text-primary/50" />
+              <div className="w-10 h-10 rounded-md bg-muted border border-border flex items-center justify-center mb-3">
+                <Upload size={17} strokeWidth={1.5} className="text-muted-foreground" />
               </div>
               <h2 className="text-xs font-semibold text-foreground mb-1">
                 {t("notes.upload.setupTitle")}
               </h2>
-              <p className="text-xs text-foreground/30 text-center leading-relaxed max-w-[280px]">
+              <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[280px]">
                 {t("notes.upload.setupDescription")}
               </p>
             </div>
@@ -478,7 +473,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
 
             <div className="flex justify-center mt-4">
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
                 onClick={dismissSetup}
                 className="h-8 text-xs px-6"
@@ -487,11 +482,11 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
               </Button>
             </div>
 
-            <div className="h-px bg-foreground/5 dark:bg-white/5 my-5" />
+            <div className="h-px bg-border my-5" />
           </div>
         )}
 
-        <div className="max-w-[320px] mx-auto">
+        <div className="mx-auto w-full max-w-2xl">
           {state === "idle" && providerReady === false && (
             <NoProviderView t={t} onOpenSettings={() => onOpenSettings?.("transcription")} />
           )}
@@ -557,10 +552,10 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
         </div>
 
         {!showSetup && (state === "idle" || state === "selected") && (
-          <div className="mx-auto mt-5" style={{ maxWidth: advancedOpen ? "448px" : "320px" }}>
+          <div className="mx-auto mt-5" style={{ maxWidth: advancedOpen ? "560px" : "320px" }}>
             <button
               onClick={() => setAdvancedOpen(!advancedOpen)}
-              className="flex items-center gap-1.5 text-xs text-foreground/25 hover:text-foreground/40 transition-colors mx-auto"
+              className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors mx-auto"
             >
               <ChevronRight
                 size={10}
@@ -614,6 +609,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
@@ -629,22 +625,22 @@ function NoProviderView({ t, onOpenSettings }: NoProviderViewProps) {
       className="flex flex-col items-center gap-4 py-2"
       style={{ animation: "float-up 0.4s ease-out" }}
     >
-      <div className="w-10 h-10 rounded-[10px] bg-linear-to-b from-foreground/5 to-foreground/2 dark:from-white/8 dark:to-white/3 border border-foreground/8 dark:border-white/8 flex items-center justify-center">
+      <div className="w-10 h-10 rounded-md bg-muted border border-border flex items-center justify-center">
         <Settings
           size={17}
           strokeWidth={1.5}
-          className="text-foreground/25 dark:text-foreground/35"
+          className="text-muted-foreground"
         />
       </div>
       <div className="text-center">
         <h2 className="text-xs font-semibold text-foreground mb-1">
           {t("notes.upload.noProviderTitle")}
         </h2>
-        <p className="text-xs text-foreground/30 leading-relaxed max-w-60">
+        <p className="text-xs text-muted-foreground leading-relaxed max-w-60">
           {t("notes.upload.noProviderDescription")}
         </p>
       </div>
-      <Button variant="default" size="sm" className="h-7 text-xs px-4" onClick={onOpenSettings}>
+      <Button variant="outline" size="sm" className="h-7 text-xs px-4" onClick={onOpenSettings}>
         {t("notes.upload.noProviderAction")}
       </Button>
     </div>
@@ -689,18 +685,20 @@ function IdleView({
 
   return (
     <>
-      <div className="flex flex-col items-center mb-5">
-        <div className="w-10 h-10 rounded-[10px] bg-linear-to-b from-foreground/5 to-foreground/[0.02] dark:from-white/8 dark:to-white/3 border border-foreground/8 dark:border-white/8 flex items-center justify-center mb-4">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-md bg-muted border border-border flex items-center justify-center">
           <Upload
             size={17}
             strokeWidth={1.5}
-            className="text-foreground/25 dark:text-foreground/35"
+            className="text-muted-foreground"
           />
         </div>
-        <h2 className="text-xs font-semibold text-foreground mb-1">{t("notes.upload.title")}</h2>
-        <p className="text-xs text-foreground/25">
-          {t("notes.upload.using", { model: getActiveModelLabel() })}
-        </p>
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-foreground">{t("notes.upload.title")}</h2>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {t("notes.upload.using", { model: getActiveModelLabel() })}
+          </p>
+        </div>
       </div>
 
       <input
@@ -729,16 +727,16 @@ function IdleView({
         onClick={handleBrowse}
         onKeyDown={handleKeyDown}
         className={cn(
-          "relative rounded-lg p-8 text-center cursor-pointer transition-[background-color,border-color,transform] duration-300 group",
-          "bg-surface-1/40 dark:bg-white/[0.03] backdrop-blur-sm",
-          "border border-foreground/6 dark:border-white/6",
-          "hover:bg-surface-1/60 dark:hover:bg-white/[0.05] hover:border-foreground/12 dark:hover:border-white/10",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
-          isDragOver && "border-primary/30 bg-primary/[0.04] dark:bg-primary/[0.06] scale-[1.01]"
+          "group relative cursor-pointer rounded-md p-8 text-center transition-[background-color,border-color,transform] duration-300",
+          "bg-muted/30",
+          "border border-dashed border-border",
+          "hover:bg-muted hover:border-border-hover",
+          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
+          isDragOver && "border-border-hover bg-muted/60 scale-[1.01]"
         )}
         style={isDragOver ? { animation: "drag-pulse 1.5s ease-in-out infinite" } : undefined}
       >
-        <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 rounded-md overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
           <div
             className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/[0.02] dark:via-white/[0.03] to-transparent"
             style={{ animation: "shimmer-slide 3s ease-in-out infinite" }}
@@ -747,23 +745,25 @@ function IdleView({
 
         {!isDragOver ? (
           <div className="flex flex-col items-center gap-2 relative">
-            <div className="w-8 h-8 rounded-full bg-foreground/[0.03] dark:bg-white/[0.04] flex items-center justify-center mb-1">
+            <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center mb-1">
               <Upload
                 size={14}
-                className="text-foreground/20 dark:text-foreground/30 group-hover:text-foreground/40 transition-colors"
+                className="text-muted-foreground group-hover:text-foreground transition-colors"
               />
             </div>
-            <p className="text-xs text-foreground/35 group-hover:text-foreground/50 transition-colors">
+            <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
               {t("notes.upload.dropOrBrowse")}
             </p>
-            <p className="text-xs text-foreground/15 tracking-wide">
+            <p className="text-xs text-muted-foreground tracking-wide">
               {t("notes.upload.supportedFormats")}
             </p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2 relative">
-            <Upload size={18} className="text-primary/60" />
-            <p className="text-xs text-primary/60 font-medium">{t("notes.upload.dropToUpload")}</p>
+            <Upload size={18} className="text-foreground/55" />
+            <p className="text-xs text-foreground/60 font-medium">
+              {t("notes.upload.dropToUpload")}
+            </p>
           </div>
         )}
       </div>
@@ -810,19 +810,19 @@ function SelectedView({
 
   return (
     <div style={{ animation: "float-up 0.3s ease-out" }}>
-      <div className="rounded-lg border border-foreground/8 dark:border-white/6 bg-surface-1/40 dark:bg-white/[0.03] backdrop-blur-sm p-4 mb-3">
+      <div className="rounded-md border border-border bg-card p-4 mb-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-[8px] bg-primary/8 dark:bg-primary/12 border border-primary/10 dark:border-primary/15 flex items-center justify-center shrink-0">
-            <FileAudio size={15} className="text-primary/60" />
+          <div className="w-9 h-9 rounded-md bg-muted border border-border flex items-center justify-center shrink-0">
+            <FileAudio size={15} className="text-muted-foreground" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-foreground/70 truncate font-medium">{file.name}</p>
-            {file.size && <p className="text-xs text-foreground/25 mt-0.5">{file.size}</p>}
-            <p className="text-xs text-foreground/20 mt-0.5">{getActiveModelLabel()}</p>
+            <p className="text-xs text-foreground truncate font-semibold">{file.name}</p>
+            {file.size && <p className="text-xs text-muted-foreground mt-0.5">{file.size}</p>}
+            <p className="text-xs text-muted-foreground mt-0.5">{getActiveModelLabel()}</p>
           </div>
           <button
             onClick={reset}
-            className="text-foreground/15 hover:text-foreground/40 transition-colors p-1 rounded"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
           >
             <X size={12} />
           </button>
@@ -840,14 +840,14 @@ function SelectedView({
 
       {/* BYOK file too large — shared explanation */}
       {byokTooLarge && (
-        <div className="rounded-lg border border-primary/12 dark:border-primary/15 bg-primary/[0.03] px-3 py-2.5 mb-3">
-          <p className="text-xs text-foreground/50 leading-relaxed">
+        <div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2.5 mb-3">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {t("notes.upload.byokTooLarge")}
           </p>
-          <p className="text-xs text-foreground/35 leading-relaxed mt-1.5">
+          <p className="text-xs text-muted-foreground leading-relaxed mt-1.5">
             {t("notes.upload.byokTooLargeDetail")}
           </p>
-          <p className="text-xs text-foreground/50 leading-relaxed mt-1.5 font-medium">
+          <p className="text-xs text-foreground leading-relaxed mt-1.5 font-medium">
             {requiresAccount
               ? t("notes.upload.byokTooLargeNeedsAccount")
               : isProUser
@@ -859,8 +859,8 @@ function SelectedView({
 
       {/* Cloud free user, file > 25 MB → needs paid plan */}
       {requiresUpgrade && !fileTooLarge && (
-        <div className="rounded-lg border border-primary/12 dark:border-primary/15 bg-primary/[0.03] px-3 py-2.5 mb-3">
-          <p className="text-xs text-foreground/50 leading-relaxed">
+        <div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2.5 mb-3">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             {t("notes.upload.paidPlanRequired")}
           </p>
         </div>
@@ -868,7 +868,7 @@ function SelectedView({
 
       {/* Cloud large file info (Pro user, will be chunked) */}
       {isLargeFile && !requiresUpgrade && !fileTooLarge && isOpenWhisprCloud && (
-        <p className="text-xs text-foreground/20 text-center mb-3">
+        <p className="text-xs text-muted-foreground text-center mb-3">
           {t("notes.upload.largeFileNote")}
         </p>
       )}
@@ -877,7 +877,7 @@ function SelectedView({
         {/* BYOK too large — not signed in: Create Account */}
         {byokTooLarge && requiresAccount && (
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={onCreateAccount}
             className="h-8 text-xs px-5"
@@ -889,7 +889,7 @@ function SelectedView({
         {/* BYOK too large — signed in, Pro: Switch to Cloud */}
         {byokTooLarge && !requiresAccount && isProUser && (
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={onSwitchToCloud}
             className="h-8 text-xs px-5"
@@ -900,14 +900,14 @@ function SelectedView({
 
         {/* BYOK too large — signed in, Free: Upgrade */}
         {byokTooLarge && !requiresAccount && !isProUser && (
-          <Button variant="default" size="sm" onClick={onUpgrade} className="h-8 text-xs px-5">
+          <Button variant="outline" size="sm" onClick={onUpgrade} className="h-8 text-xs px-5">
             {t("notes.upload.upgrade")}
           </Button>
         )}
 
         {/* Cloud requires upgrade */}
         {!byokTooLarge && requiresUpgrade && (
-          <Button variant="default" size="sm" onClick={onUpgrade} className="h-8 text-xs px-5">
+          <Button variant="outline" size="sm" onClick={onUpgrade} className="h-8 text-xs px-5">
             {t("notes.upload.upgrade")}
           </Button>
         )}
@@ -915,7 +915,7 @@ function SelectedView({
         {/* Normal: can transcribe */}
         {canTranscribe && (
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={handleTranscribe}
             className="h-8 text-xs px-5"
@@ -929,7 +929,7 @@ function SelectedView({
           variant="ghost"
           size="sm"
           onClick={reset}
-          className="h-8 text-xs text-foreground/35"
+          className="h-8 text-xs text-muted-foreground"
         >
           {t("notes.upload.cancel")}
         </Button>
@@ -967,7 +967,7 @@ function TranscribingView({
         {[0, 1, 2, 3, 4, 5, 6].map((i) => (
           <div
             key={i}
-            className="w-[3px] rounded-full bg-primary/40 dark:bg-primary/50 origin-bottom"
+            className="w-[3px] rounded-full bg-foreground/35 dark:bg-foreground/45 origin-bottom"
             style={{
               height: "100%",
               animation: `waveform-bar ${0.8 + i * 0.12}s ease-in-out infinite`,
@@ -979,14 +979,14 @@ function TranscribingView({
 
       <div className="w-full max-w-[200px] h-[3px] rounded-full bg-foreground/5 dark:bg-white/5 overflow-hidden mb-3">
         <div
-          className="h-full rounded-full bg-primary/50 transition-[width] duration-500 ease-out"
+          className="h-full rounded-full bg-foreground/55 transition-[width] duration-500 ease-out"
           style={{ width: `${Math.min(progress, 100)}%` }}
         />
       </div>
 
-      <p className="text-xs text-foreground/50 font-medium">{getTranscribingLabel()}</p>
+      <p className="text-xs text-foreground font-medium">{getTranscribingLabel()}</p>
       {hasChunkInfo ? (
-        <p className="text-xs text-foreground/20 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {t("notes.upload.chunkProgress", {
             completed: processedChunks,
             total: chunkProgress.chunksTotal,
@@ -994,13 +994,13 @@ function TranscribingView({
         </p>
       ) : null}
       {!hasChunkInfo && file ? (
-        <p className="text-xs text-foreground/20 mt-1 truncate max-w-50">{file.name}</p>
+        <p className="text-xs text-muted-foreground mt-1 truncate max-w-50">{file.name}</p>
       ) : null}
       <Button
         variant="ghost"
         size="sm"
         onClick={onCancel}
-        className="h-7 text-xs text-foreground/35 mt-4"
+        className="h-7 text-xs text-muted-foreground mt-4"
       >
         {t("notes.upload.cancel")}
       </Button>
@@ -1069,16 +1069,16 @@ function CompleteView({
         </div>
       </div>
 
-      <p className="text-xs text-foreground/60 font-medium mb-1">
+      <p className="text-xs text-foreground font-semibold mb-1">
         {t("notes.upload.transcriptionComplete")}
       </p>
-      <p className="text-xs text-foreground/25 max-w-[240px] text-center line-clamp-2 mb-4">
+      <p className="text-xs text-muted-foreground max-w-[240px] text-center line-clamp-2 mb-4">
         {result.slice(0, 150)}
       </p>
 
       {folders.length > 0 && (
         <div className="flex items-center justify-center gap-2 mb-4">
-          <FolderOpen size={12} className="text-foreground/20 shrink-0" />
+          <FolderOpen size={12} className="text-muted-foreground shrink-0" />
           <Select value={selectedFolderId} onValueChange={handleFolderChange}>
             <SelectTrigger className="h-7 w-44 text-xs rounded-lg px-2.5 [&>svg]:h-3 [&>svg]:w-3">
               <SelectValue placeholder={t("notes.upload.selectFolder")} />
@@ -1096,7 +1096,7 @@ function CompleteView({
                     <span className="flex items-center gap-1.5">
                       {f.name}
                       {isMeetings && (
-                        <span className="text-[8px] uppercase tracking-wider text-foreground/25 font-medium">
+                          <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-semibold">
                           {t("notes.folders.soon")}
                         </span>
                       )}
@@ -1106,7 +1106,7 @@ function CompleteView({
               })}
               <SelectSeparator />
               <SelectItem value="__create_new__" className="text-xs py-1.5 pl-2.5 pr-7 rounded-md">
-                <span className="flex items-center gap-1.5 text-primary/60">
+                <span className="flex items-center gap-1.5 text-muted-foreground">
                   <Plus size={11} />
                   {t("notes.upload.newFolder")}
                 </span>
@@ -1119,7 +1119,7 @@ function CompleteView({
       <div className="flex items-center gap-2">
         {noteId != null && onNoteCreated && (
           <Button
-            variant="default"
+            variant="outline"
             size="sm"
             onClick={() =>
               onNoteCreated(noteId, selectedFolderId ? Number(selectedFolderId) : null)
@@ -1133,7 +1133,7 @@ function CompleteView({
           variant="ghost"
           size="sm"
           onClick={reset}
-          className="h-8 text-xs text-foreground/35"
+          className="h-8 text-xs text-muted-foreground"
         >
           {t("notes.upload.uploadAnother")}
         </Button>
@@ -1152,13 +1152,13 @@ interface ErrorViewProps {
 function ErrorView({ t, error, reset, handleTranscribe }: ErrorViewProps) {
   return (
     <div style={{ animation: "float-up 0.3s ease-out" }}>
-      <div className="rounded-lg border border-destructive/15 dark:border-destructive/20 bg-destructive/[0.03] dark:bg-destructive/[0.05] backdrop-blur-sm p-4 mb-4">
+      <div className="rounded-md border border-destructive/15 dark:border-destructive/20 bg-destructive/[0.03] dark:bg-destructive/[0.05] p-4 mb-4">
         <div className="flex items-start gap-2.5">
           <AlertCircle size={14} className="text-destructive/50 shrink-0 mt-0.5" />
           <p className="flex-1 text-xs text-destructive/70 leading-relaxed">{error}</p>
           <button
             onClick={reset}
-            className="text-foreground/15 hover:text-foreground/30 transition-colors shrink-0 p-0.5 rounded"
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0 p-0.5 rounded-md hover:bg-muted"
           >
             <X size={11} />
           </button>
@@ -1170,7 +1170,7 @@ function ErrorView({ t, error, reset, handleTranscribe }: ErrorViewProps) {
           variant="ghost"
           size="sm"
           onClick={handleTranscribe}
-          className="h-7 text-xs text-foreground/40"
+          className="h-7 text-xs text-muted-foreground"
         >
           {t("notes.upload.retry")}
         </Button>
@@ -1178,7 +1178,7 @@ function ErrorView({ t, error, reset, handleTranscribe }: ErrorViewProps) {
           variant="ghost"
           size="sm"
           onClick={reset}
-          className="h-7 text-xs text-foreground/25"
+          className="h-7 text-xs text-muted-foreground"
         >
           {t("notes.upload.startOver")}
         </Button>

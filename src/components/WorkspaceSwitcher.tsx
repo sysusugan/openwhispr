@@ -38,14 +38,14 @@ export default function WorkspaceSwitcher({ userName }: { userName?: string | nu
           className={cn(
             "group flex items-center w-full h-8 px-2 rounded-md outline-none gap-2",
             "hover:bg-foreground/5 dark:hover:bg-white/5 transition-colors",
-            "focus-visible:ring-1 focus-visible:ring-primary/30"
+            "focus-visible:ring-1 focus-visible:ring-ring/30"
           )}
         >
           <span
             className={cn(
               "shrink-0 w-5 h-5 rounded-md text-[10px] font-semibold flex items-center justify-center",
               active
-                ? "bg-primary/12 text-primary"
+                ? "bg-foreground/[0.06] text-foreground/70"
                 : "bg-foreground/8 text-foreground/70 dark:bg-white/8 dark:text-foreground/65"
             )}
           >
@@ -74,7 +74,7 @@ export default function WorkspaceSwitcher({ userName }: { userName?: string | nu
                 <span
                   className={cn(
                     "shrink-0 w-5 h-5 rounded-md text-[10px] font-semibold flex items-center justify-center",
-                    "bg-primary/12 text-primary"
+                    "bg-foreground/[0.06] text-foreground/70"
                   )}
                 >
                   {workspaceInitials(ws.name)}

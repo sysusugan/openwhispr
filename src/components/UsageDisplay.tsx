@@ -33,11 +33,11 @@ export default function UsageDisplay() {
   // Pro plan or trial — minimal display
   if (usage.isSubscribed) {
     return (
-      <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+      <div className="bg-background border border-border/60 rounded-md p-4 space-y-3 dark:bg-surface-2/50">
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-foreground">{t("usage.yourPlan")}</span>
           {usage.isTrial ? (
-            <Badge variant="outline" className="text-primary border-primary/30">
+            <Badge variant="outline" className="text-foreground/70 border-border/70">
               {t("usage.trial", { days: usage.trialDaysLeft, count: usage.trialDaysLeft })}
             </Badge>
           ) : (
@@ -65,10 +65,10 @@ export default function UsageDisplay() {
       ? "[&>div]:bg-destructive"
       : percentage >= 80
         ? "[&>div]:bg-warning"
-        : "[&>div]:bg-primary";
+        : "[&>div]:bg-foreground/45";
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+    <div className="bg-background border border-border/60 rounded-md p-4 space-y-3 dark:bg-surface-2/50">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-foreground">{t("usage.weeklyUsage")}</span>
         {usage.isOverLimit ? (
@@ -105,7 +105,7 @@ export default function UsageDisplay() {
         <div className="flex gap-2">
           <Button
             size="sm"
-            className="bg-primary hover:bg-primary/90"
+            variant="outline"
             onClick={() => usage.openCheckout()}
           >
             {t("usage.upgradeToPro")}
@@ -122,17 +122,13 @@ export default function UsageDisplay() {
           </Button>
         </div>
       ) : usage.isApproachingLimit ? (
-        <Button
-          size="sm"
-          className="bg-primary hover:bg-primary/90"
-          onClick={() => usage.openCheckout()}
-        >
+        <Button size="sm" variant="outline" onClick={() => usage.openCheckout()}>
           {t("usage.upgradeToPro")}
         </Button>
       ) : (
         <a
           href="#"
-          className="text-primary hover:text-primary/80 text-sm inline-block"
+          className="text-foreground/70 hover:text-foreground text-sm inline-block"
           onClick={(e) => {
             e.preventDefault();
             usage.openCheckout();

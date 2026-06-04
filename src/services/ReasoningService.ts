@@ -16,14 +16,12 @@ import { createCustomProviderFetch } from "./ai/customProviderFetch";
 import { PROVIDER_REGISTRY, type ProviderContext } from "./ai/inferenceProviders";
 import { getConfiguredOpenAIBase } from "./ai/openaiBase";
 import { applyThinkingSuppression } from "./ai/thinkingSuppression";
-import thinkingSuppressionPolicy from "./ai/thinkingSuppressionPolicy.js";
+import { getGroqProviderOptions } from "./ai/thinkingSuppressionPolicyCompat";
 import {
   errorToMessage,
   formatToolErrorStreamChunk,
   formatToolResultStreamChunk,
 } from "./agentToolStream";
-
-const { getGroqProviderOptions } = thinkingSuppressionPolicy;
 
 export type AgentStreamChunk =
   | { type: "content"; text: string }

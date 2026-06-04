@@ -130,10 +130,8 @@ export default function ActionManagerDialog({ open, onOpenChange }: ActionManage
 
   const optionButtonClass = (active: boolean) =>
     cn(
-      "h-7 px-2.5 rounded-md text-xs font-medium transition-colors",
-      active
-        ? "bg-accent/10 text-accent dark:bg-accent/15"
-        : "text-muted-foreground/55 hover:text-foreground/70 hover:bg-foreground/5 dark:hover:bg-white/5"
+      "ow-segmented-item h-7 flex-1 px-2.5",
+      active && "ow-segmented-item-active"
     );
 
   return (
@@ -144,7 +142,7 @@ export default function ActionManagerDialog({ open, onOpenChange }: ActionManage
 
         <div className="flex h-120">
           {/* Left panel — action list */}
-          <div className="w-56 shrink-0 border-r border-border/15 dark:border-white/4 flex flex-col bg-card/50 dark:bg-surface-1/30">
+          <div className="w-56 shrink-0 border-r border-border/40 dark:border-white/6 flex flex-col bg-background dark:bg-surface-1/40">
             {/* List header */}
             <div className="flex items-center justify-between px-3 pt-3.5 pb-2">
               <span className="text-xs font-semibold tracking-tight text-foreground/70">
@@ -313,7 +311,7 @@ export default function ActionManagerDialog({ open, onOpenChange }: ActionManage
                       <label className="text-xs font-medium text-foreground/50">
                         {t("notes.actions.outputTargetLabel")}
                       </label>
-                      <div className="flex items-center rounded-lg bg-foreground/4 dark:bg-white/4 p-1">
+                      <div className="ow-segmented grid grid-cols-2">
                         <button
                           type="button"
                           onClick={() => setOutputTarget("content")}
@@ -337,7 +335,7 @@ export default function ActionManagerDialog({ open, onOpenChange }: ActionManage
                       <label className="text-xs font-medium text-foreground/50">
                         {t("notes.actions.writeModeLabel")}
                       </label>
-                      <div className="flex items-center rounded-lg bg-foreground/4 dark:bg-white/4 p-1">
+                      <div className="ow-segmented grid grid-cols-2">
                         <button
                           type="button"
                           onClick={() => setWriteMode("overwrite")}
@@ -372,7 +370,7 @@ export default function ActionManagerDialog({ open, onOpenChange }: ActionManage
                         "flex-1 min-h-50 w-full rounded border border-border/70 bg-input px-3.5 py-3 text-sm text-foreground leading-relaxed transition-colors duration-200 outline-none resize-none",
                         "placeholder:text-muted-foreground/40",
                         "hover:border-border-hover",
-                        "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/10",
+                        "focus-visible:border-border-hover focus-visible:ring-2 focus-visible:ring-ring/15",
                         "dark:bg-surface-1 dark:border-border-subtle/50",
                         "dark:focus-visible:border-border-active dark:focus-visible:ring-ring/10",
                         "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted",
@@ -385,7 +383,7 @@ export default function ActionManagerDialog({ open, onOpenChange }: ActionManage
             ) : (
               /* Empty state — no action selected */
               <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
-                <div className="w-10 h-10 rounded-xl bg-accent/5 dark:bg-accent/8 flex items-center justify-center mb-3">
+                <div className="w-10 h-10 rounded-md bg-foreground/[0.04] dark:bg-white/[0.05] flex items-center justify-center mb-3">
                   <Sparkles size={18} className="text-accent/30" />
                 </div>
                 <p className="text-sm font-medium text-foreground/40 mb-1">

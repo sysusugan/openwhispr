@@ -77,11 +77,10 @@ export default function MeetingRecordingPill({
     >
       <div
         className={cn(
-          "flex items-center gap-2 h-9 px-3 rounded-xl",
-          "bg-card/95 dark:bg-surface-2/95",
-          "backdrop-blur-xl",
-          "border border-primary/25 dark:border-primary/30",
-          "shadow-elevated"
+          "flex items-center gap-2 h-9 px-3 rounded-md",
+          "bg-background/95 dark:bg-surface-2/95",
+          "border border-border/60 dark:border-border-subtle/70",
+          "shadow-lg"
         )}
       >
         <button
@@ -92,7 +91,7 @@ export default function MeetingRecordingPill({
           className={cn(
             "flex items-center gap-3 px-1 -mx-1 rounded-md",
             "transition-colors",
-            "hover:bg-primary/8 active:bg-primary/14",
+            "hover:bg-foreground/[0.06] active:bg-foreground/[0.1]",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
           )}
         >
@@ -100,7 +99,7 @@ export default function MeetingRecordingPill({
             {Array.from({ length: BAR_COUNT }, (_, i) => (
               <div
                 key={i}
-                className="w-0.75 rounded-full bg-primary/60 dark:bg-primary/70 origin-bottom"
+                className="w-0.75 rounded-full bg-foreground/55 dark:bg-white/60 origin-bottom"
                 style={{ height: computeBarHeight(micLevel, i) }}
               />
             ))}
@@ -121,8 +120,8 @@ export default function MeetingRecordingPill({
             "transition-colors duration-150",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
             isStopping
-              ? "bg-primary/6 text-primary/40 cursor-not-allowed"
-              : "bg-primary/10 hover:bg-primary/18 active:bg-primary/25 text-primary"
+              ? "bg-foreground/[0.04] text-muted-foreground/40 cursor-not-allowed"
+              : "bg-foreground/[0.06] hover:bg-foreground/[0.1] active:bg-foreground/[0.14] text-foreground/70"
           )}
         >
           <Square size={12} fill="currentColor" />

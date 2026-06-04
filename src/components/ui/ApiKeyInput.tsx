@@ -38,7 +38,7 @@ export default function ApiKeyInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hasKey = apiKey.length > 0;
-  const variantClasses = variant === "purple" ? "border-primary focus:border-primary" : "";
+  const variantClasses = variant === "purple" ? "border-border-hover focus:border-border-hover" : "";
 
   useEffect(() => {
     if (isEditing) {

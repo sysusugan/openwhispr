@@ -263,12 +263,12 @@ export default function CommandSearch({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/45 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           className={cn(
             "fixed left-[50%] top-[18%] z-50 w-full max-w-xl translate-x-[-50%]",
-            "rounded-xl border border-border/60 bg-card shadow-2xl overflow-hidden",
-            "dark:bg-surface-2 dark:border-border dark:shadow-modal",
+            "rounded-md border border-border/70 bg-background shadow-lg overflow-hidden",
+            "dark:bg-surface-2 dark:border-border dark:shadow-elevated",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -333,9 +333,9 @@ export default function CommandSearch({
                   onClick={() => selectItem({ kind: "conversation", conversation: conv })}
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={cn(
-                    "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left transition-colors duration-100 outline-none",
+                    "flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-left transition-colors duration-100 outline-none",
                     selectedIndex === idx
-                      ? "bg-primary/8 dark:bg-primary/10"
+                      ? "bg-foreground/[0.06] dark:bg-white/[0.08]"
                       : "hover:bg-foreground/4 dark:hover:bg-white/4"
                   )}
                 >
@@ -343,7 +343,7 @@ export default function CommandSearch({
                     size={13}
                     className={cn(
                       "shrink-0 mt-px transition-colors",
-                      selectedIndex === idx ? "text-primary" : "text-muted-foreground/40"
+                      selectedIndex === idx ? "text-foreground/65" : "text-muted-foreground/40"
                     )}
                   />
                   <div className="flex-1 min-w-0">
@@ -467,9 +467,9 @@ function NoteRow({
       onClick={onSelect}
       onMouseEnter={onHover}
       className={cn(
-        "group flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left transition-colors duration-100 outline-none",
+        "group flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-left transition-colors duration-100 outline-none",
         isSelected
-          ? "bg-primary/8 dark:bg-primary/10"
+          ? "bg-foreground/[0.06] dark:bg-white/[0.08]"
           : "hover:bg-foreground/4 dark:hover:bg-white/4"
       )}
     >
@@ -477,7 +477,7 @@ function NoteRow({
         size={13}
         className={cn(
           "shrink-0 mt-px transition-colors",
-          isSelected ? "text-primary" : "text-muted-foreground/40"
+          isSelected ? "text-foreground/65" : "text-muted-foreground/40"
         )}
       />
       <div className="flex-1 min-w-0">
@@ -522,9 +522,9 @@ function TranscriptRow({
       onClick={onSelect}
       onMouseEnter={onHover}
       className={cn(
-        "group flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left transition-colors duration-100 outline-none",
+        "group flex items-center gap-2.5 w-full px-2.5 py-2 rounded-md text-left transition-colors duration-100 outline-none",
         isSelected
-          ? "bg-primary/8 dark:bg-primary/10"
+          ? "bg-foreground/[0.06] dark:bg-white/[0.08]"
           : "hover:bg-foreground/4 dark:hover:bg-white/4"
       )}
     >
@@ -532,7 +532,7 @@ function TranscriptRow({
         size={13}
         className={cn(
           "shrink-0 mt-px transition-colors",
-          isSelected ? "text-primary" : "text-muted-foreground/40"
+          isSelected ? "text-foreground/65" : "text-muted-foreground/40"
         )}
       />
       <p className="flex-1 text-xs text-foreground/75 truncate min-w-0">{transcript.text}</p>

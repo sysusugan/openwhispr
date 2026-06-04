@@ -117,7 +117,7 @@ function VisibilityItem({
     <DropdownMenuItem onClick={onSelect} className="text-xs gap-2 py-1.5">
       {icon}
       <span className="flex-1">{label}</span>
-      {active && <Check size={12} className="text-primary" />}
+      {active && <Check size={12} className="text-foreground/65" />}
     </DropdownMenuItem>
   );
 }

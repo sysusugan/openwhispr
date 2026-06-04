@@ -23,8 +23,8 @@ const BUBBLE_STYLES = {
   mic: {
     align: "justify-start",
     radius: "rounded-bl-sm",
-    bg: "bg-primary/60 text-primary-foreground/80",
-    cursor: "bg-primary-foreground/60",
+    bg: "bg-foreground text-background/90",
+    cursor: "bg-background/60",
   },
   system: {
     align: "justify-end",
@@ -35,7 +35,7 @@ const BUBBLE_STYLES = {
 } as const;
 
 const SPEAKER_COLORS = [
-  "text-blue-400",
+  "text-sky-500",
   "text-green-400",
   "text-purple-400",
   "text-orange-400",
@@ -299,8 +299,8 @@ function AddContactButton({
             disabled={!canSave}
             className={cn(
               "px-2 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer",
-              "bg-primary text-primary-foreground hover:bg-primary/90",
-              "disabled:bg-primary/20 disabled:text-primary-foreground/40 disabled:pointer-events-none"
+              "border border-border/70 bg-background text-foreground hover:bg-foreground/[0.04]",
+              "disabled:bg-muted/40 disabled:text-muted-foreground/40 disabled:pointer-events-none"
             )}
           >
             {t("notes.speaker.save")}
@@ -599,7 +599,7 @@ function SelectCheckbox({
       className={cn(
         "w-4 h-4 rounded-full border flex items-center justify-center transition-all cursor-pointer",
         isSelected
-          ? "border-primary bg-primary text-primary-foreground opacity-100"
+          ? "border-foreground/70 bg-foreground text-background opacity-100"
           : "border-border/60 bg-background/80 opacity-0 group-hover:opacity-100 hover:border-foreground/50",
         className
       )}
@@ -867,7 +867,7 @@ export function MeetingTranscriptChat({
           ) : (
             <Sparkles
               size={12}
-              className={cn(sessionDiarizationEnabled ? "text-primary" : "text-muted-foreground")}
+              className={cn(sessionDiarizationEnabled ? "text-foreground/70" : "text-muted-foreground")}
             />
           )}
           <span>
@@ -1050,7 +1050,7 @@ export function MeetingTranscriptChat({
                         "text-[13px] leading-relaxed rounded-lg border",
                         "focus-visible:ring-1 focus-visible:ring-ring/70",
                         selfSide
-                          ? "bg-primary/90 text-primary-foreground border-primary/20 placeholder:text-primary-foreground/50"
+                          ? "bg-foreground text-background border-foreground/20 placeholder:text-background/50"
                           : cn(
                               "bg-surface-2 text-foreground border-border/40",
                               isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
@@ -1069,7 +1069,7 @@ export function MeetingTranscriptChat({
                       "text-[13px] leading-relaxed",
                       selfSide
                         ? cn(
-                            "bg-primary/90 text-primary-foreground",
+                            "bg-foreground text-background",
                             sameSpeaker ? "rounded-lg rounded-tl-sm" : "rounded-lg rounded-bl-sm"
                           )
                         : cn(

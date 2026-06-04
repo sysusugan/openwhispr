@@ -301,7 +301,7 @@ function CreateKeyDialog({
             </DialogHeader>
 
             <div className="space-y-3">
-              <div className="rounded-lg border border-border/50 bg-muted/30 dark:bg-surface-raised/30 p-3">
+              <div className="rounded-md border border-border/60 bg-foreground/[0.03] dark:bg-white/[0.04] p-3">
                 <code className="text-xs font-mono text-foreground break-all select-all leading-relaxed">
                   {rawKey}
                 </code>
@@ -327,7 +327,7 @@ function CreateKeyDialog({
             </div>
 
             <DialogFooter>
-              <Button variant="default" size="sm" onClick={() => handleClose(false)}>
+              <Button variant="outline" size="sm" onClick={() => handleClose(false)}>
                 {t("apiKeysSection.created.done")}
               </Button>
             </DialogFooter>
@@ -408,7 +408,7 @@ function CreateKeyDialog({
                 {t("apiKeysSection.create.cancel")}
               </Button>
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
                 disabled={!name.trim() || scopes.size === 0 || isSubmitting}
                 onClick={handleSubmit}

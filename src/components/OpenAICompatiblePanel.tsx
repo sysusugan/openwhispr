@@ -251,8 +251,8 @@ export default function OpenAICompatiblePanel({
         {helpExamples ?? (
           <p className="text-xs text-muted-foreground">
             {t("reasoning.custom.endpointExamples")}{" "}
-            <code className="text-primary">https://openrouter.ai/api/v1</code> (OpenRouter),{" "}
-            <code className="text-primary">https://api.together.xyz/v1</code> (Together).
+            <code className="text-foreground/70">https://openrouter.ai/api/v1</code> (OpenRouter),{" "}
+            <code className="text-foreground/70">https://api.together.xyz/v1</code> (Together).
           </p>
         )}
       </div>
@@ -303,13 +303,13 @@ export default function OpenAICompatiblePanel({
           {t("reasoning.custom.querySuffix")}
         </p>
         {isDraftDirty && (
-          <p className="text-xs text-primary">{t("reasoning.custom.modelsReloadHint")}</p>
+          <p className="text-xs text-foreground/55">{t("reasoning.custom.modelsReloadHint")}</p>
         )}
         {!hasBase && <p className="text-xs text-warning">{t("reasoning.custom.enterEndpoint")}</p>}
         {hasBase && (
           <>
             {modelsLoading && (
-              <p className="text-xs text-primary">{t("reasoning.custom.fetchingModels")}</p>
+              <p className="text-xs text-foreground/55">{t("reasoning.custom.fetchingModels")}</p>
             )}
             {modelsError && <p className="text-xs text-destructive">{modelsError}</p>}
             {!modelsLoading && !modelsError && modelOptions.length === 0 && (

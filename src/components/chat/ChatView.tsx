@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useChatPersistence } from "./useChatPersistence";
 import { useChatStreaming } from "./useChatStreaming";
 import { ChatMessages } from "./ChatMessages";
@@ -10,6 +11,7 @@ import EmptyChatState from "./EmptyChatState";
 import { ConfirmDialog } from "../ui/dialog";
 import { useDialogs } from "../../hooks/useDialogs";
 import { getCachedPlatform } from "../../utils/platform";
+import { cn } from "../lib/utils";
 
 const CommandSearch = lazy(() => import("../CommandSearch"));
 
@@ -33,6 +35,7 @@ export default function ChatView() {
   const [isNewChat, setIsNewChat] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
+  const [isListCollapsed, setIsListCollapsed] = useState(false);
   const { confirmDialog, showConfirmDialog, hideConfirmDialog } = useDialogs();
 
   const persistence = useChatPersistence({
@@ -154,19 +157,35 @@ export default function ChatView() {
           />
         </Suspense>
       )}
-      <div className="flex h-full">
-        <div className="w-56 min-w-50 shrink-0 border-r border-border/15 dark:border-white/6">
-          <ConversationList
-            activeConversationId={activeConversationId}
-            onSelectConversation={handleSelectConversation}
-            onNewChat={handleNewChat}
-            onOpenSearch={() => setShowSearch(true)}
-            onArchive={handleArchive}
-            onDelete={handleDelete}
-            refreshKey={refreshKey}
-          />
+      <div className="ow-workspace-page flex">
+        <div
+          className={cn("ow-collapsible-pane", isListCollapsed && "border-r-transparent")}
+          style={{ width: isListCollapsed ? 0 : "14rem" }}
+        >
+          <div className="ow-collapsible-pane-content">
+            <div className="w-56 h-full ow-inner-sidebar">
+              <ConversationList
+                activeConversationId={activeConversationId}
+                onSelectConversation={handleSelectConversation}
+                onNewChat={handleNewChat}
+                onOpenSearch={() => setShowSearch(true)}
+                onArchive={handleArchive}
+                onDelete={handleDelete}
+                refreshKey={refreshKey}
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            className="ow-pane-toggle"
+            onClick={() => setIsListCollapsed((value) => !value)}
+            aria-label={isListCollapsed ? "展开会话列表" : "收起会话列表"}
+            title={isListCollapsed ? "展开会话列表" : "收起会话列表"}
+          >
+            {isListCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+          </button>
         </div>
-        <div className="flex-1 min-w-80 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col bg-background">
           {hasActiveChat ? (
             <>
               <ChatMessages messages={persistence.messages} emptyState={<NewChatEmptyState />} />

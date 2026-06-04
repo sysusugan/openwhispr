@@ -19,9 +19,9 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   return (
     <div className={`space-y-3 ${className}`}>
       <div>
-        <h3 className="text-xs font-semibold text-foreground tracking-tight">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
         {description && (
-          <p className="text-xs text-muted-foreground/80 mt-0.5 leading-relaxed">{description}</p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
         )}
       </div>
       {children}
@@ -42,10 +42,10 @@ export const SettingsGroup: React.FC<SettingsGroupProps> = ({
   variant = "default",
   className = "",
 }) => {
-  const baseClasses = "space-y-3 p-3 rounded-lg border";
+  const baseClasses = "space-y-3 p-3 rounded-md border shadow-sm";
   const variantClasses = {
-    default: "bg-card/50 dark:bg-surface-2/50 border-border/50 dark:border-border-subtle",
-    highlighted: "bg-primary/5 dark:bg-primary/10 border-primary/20 dark:border-primary/30",
+    default: "bg-background dark:bg-white/[0.02] border-border/60 dark:border-white/8",
+    highlighted: "bg-muted/50 dark:bg-white/[0.04] border-border/70 dark:border-white/10",
   };
 
   return (
@@ -79,9 +79,7 @@ export const SettingsRow: React.FC<SettingsRowProps> = ({
     >
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-foreground">{label}</p>
-        {description && (
-          <p className="text-xs text-muted-foreground/80 mt-0.5 leading-relaxed">{description}</p>
-        )}
+        {description && <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>}
       </div>
       <div className={isCompact ? "" : "shrink-0"}>{children}</div>
     </div>
@@ -97,7 +95,7 @@ export function SettingsPanel({
 }) {
   return (
     <div
-      className={`rounded-lg border border-border/50 dark:border-border-subtle/70 bg-card/50 dark:bg-surface-2/50 backdrop-blur-sm divide-y divide-border/30 dark:divide-border-subtle/50 ${className}`}
+      className={`ow-panel divide-y divide-border/50 dark:divide-white/8 ${className}`}
     >
       {children}
     </div>
@@ -113,17 +111,15 @@ export function SettingsPanelRow({
 }) {
   const { isCompact } = useSettingsLayout();
 
-  return (
-    <div className={`${isCompact ? "px-3 py-2.5" : "px-4 py-3"} ${className}`}>{children}</div>
-  );
+  return <div className={`${isCompact ? "px-3 py-2.5" : "px-4 py-3.5"} ${className}`}>{children}</div>;
 }
 
 export function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
     <div className="mb-3">
-      <h3 className="text-xs font-semibold text-foreground tracking-tight">{title}</h3>
+      <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
       {description && (
-        <p className="text-xs text-muted-foreground/80 mt-0.5 leading-relaxed">{description}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
       )}
     </div>
   );
@@ -170,12 +166,12 @@ export function InferenceModeSelector({
               <div
                 className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 transition-colors ${
                   isActive
-                    ? "bg-primary/10 dark:bg-primary/15"
-                    : "bg-muted/60 dark:bg-surface-raised group-hover:bg-muted dark:group-hover:bg-surface-3"
+                    ? "bg-muted dark:bg-white/[0.08]"
+                    : "bg-muted/60 dark:bg-white/[0.04] group-hover:bg-muted dark:group-hover:bg-white/[0.06]"
                 }`}
               >
                 <div
-                  className={`transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`}
+                  className={`transition-colors ${isActive ? "text-foreground" : "text-muted-foreground"}`}
                 >
                   {mode.icon}
                 </div>
@@ -184,7 +180,7 @@ export function InferenceModeSelector({
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-foreground">{mode.label}</span>
                   {isActive && !isDisabled && (
-                    <span className="text-xs font-medium text-primary bg-primary/10 dark:bg-primary/15 px-1.5 py-px rounded-sm">
+                    <span className="text-xs font-medium text-foreground/70 bg-muted px-1.5 py-px rounded-sm">
                       {t("common.active")}
                     </span>
                   )}
@@ -199,13 +195,13 @@ export function InferenceModeSelector({
               <div
                 className={`w-4 h-4 rounded-full border-2 shrink-0 transition-colors ${
                   isActive
-                    ? "border-primary bg-primary"
+                    ? "border-foreground/70 bg-foreground"
                     : "border-border-hover dark:border-border-subtle"
                 }`}
               >
                 {isActive && (
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-background" />
                   </div>
                 )}
               </div>

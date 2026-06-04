@@ -99,7 +99,7 @@ export default function UpcomingMeetings({ events, isLoading }: UpcomingMeetings
       {/* Loading state */}
       {isLoading && (
         <div className="flex items-center justify-center gap-2 py-6">
-          <Loader2 size={14} className="animate-spin text-primary" />
+          <Loader2 size={14} className="animate-spin text-muted-foreground" />
         </div>
       )}
 
@@ -163,7 +163,7 @@ export default function UpcomingMeetings({ events, isLoading }: UpcomingMeetings
                   return (
                     <div
                       key={event.id}
-                      className="group rounded-md border border-border/40 dark:border-border-subtle/60 bg-card/50 dark:bg-surface-2/60 px-3 py-2.5 transition-colors duration-150 hover:bg-muted/30 dark:hover:bg-surface-2/80"
+                      className="group rounded-md border border-border/60 dark:border-border-subtle/70 bg-background dark:bg-surface-2/50 px-3 py-2.5 transition-colors duration-150 hover:bg-muted/30 dark:hover:bg-surface-2/80"
                       onMouseEnter={() => setHoveredEventId(event.id)}
                       onMouseLeave={() => setHoveredEventId(null)}
                     >

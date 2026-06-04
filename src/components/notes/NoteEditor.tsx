@@ -243,8 +243,6 @@ export default function NoteEditor({
   const prevNoteIdRef = useRef<number>(note.id);
   const autoShowDoneRef = useRef(false);
 
-  const segmentContainerRef = useRef<HTMLDivElement>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({ opacity: 0 });
   const scheduleUiUpdate = useCallback((callback: () => void) => {
     const frameId = window.requestAnimationFrame(callback);
     return () => window.cancelAnimationFrame(frameId);
@@ -287,7 +285,7 @@ export default function NoteEditor({
     () => getFindMatches(editableTranscriptText, findText, { ignoreCase }),
     [editableTranscriptText, findText, ignoreCase]
   );
-  const hasTranscriptEditControls = viewMode === "transcript" && !!effectiveTranscript;
+  const hasTranscriptEditControls = !!effectiveTranscript;
   const canEditTranscript = hasTranscriptEditControls && !isRecording;
 
   const knownSpeakers = useMemo<SpeakerOption[]>(() => {
@@ -370,34 +368,6 @@ export default function NoteEditor({
     },
     [refreshSpeakerNames]
   );
-
-  const updateSegmentIndicator = useCallback(() => {
-    const container = segmentContainerRef.current;
-    if (!container) return;
-
-    const buttons = container.querySelectorAll<HTMLButtonElement>("[data-segment-button]");
-    const activeBtn = Array.from(buttons).find((btn) => btn.dataset.segmentValue === viewMode);
-    if (!activeBtn) return;
-
-    const cr = container.getBoundingClientRect();
-    const br = activeBtn.getBoundingClientRect();
-    setIndicatorStyle({
-      width: br.width,
-      height: br.height,
-      transform: `translateX(${br.left - cr.left}px)`,
-      opacity: 1,
-    });
-  }, [viewMode]);
-
-  useEffect(() => {
-    updateSegmentIndicator();
-  }, [updateSegmentIndicator]);
-
-  useEffect(() => {
-    const observer = new ResizeObserver(() => updateSegmentIndicator());
-    if (segmentContainerRef.current) observer.observe(segmentContainerRef.current);
-    return () => observer.disconnect();
-  }, [updateSegmentIndicator]);
 
   const prevProcessingStateRef = useRef(actionProcessingState);
   useEffect(() => {
@@ -826,6 +796,7 @@ export default function NoteEditor({
 
   const handleStartTranscriptEdit = useCallback(() => {
     if (!canEditTranscript) return;
+    setViewMode("transcript");
     setEditableTranscriptSegments(displaySegments.map((segment) => ({ ...segment })));
     setEditableTranscriptText(effectiveTranscript);
     setFindText("");
@@ -1053,9 +1024,9 @@ export default function NoteEditor({
     : t("notes.editor.transcriptNoSearch");
 
   return (
-    <div className="flex h-full min-h-0">
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="px-5 pt-4 pb-0">
+    <div className="flex h-full min-w-0 min-h-0 overflow-hidden">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <div className="min-w-0 px-5 pt-4 pb-3">
           <div
             ref={titleRef}
             contentEditable
@@ -1064,158 +1035,179 @@ export default function NoteEditor({
             onKeyDown={handleTitleKeyDown}
             onPaste={handleTitlePaste}
             data-placeholder={t("notes.editor.untitled")}
-            className="text-base font-semibold text-foreground bg-transparent outline-none tracking-[-0.01em] empty:before:content-[attr(data-placeholder)] empty:before:text-foreground/15 empty:before:pointer-events-none"
+            className="min-h-9 max-w-full -mx-2 rounded-lg border border-transparent px-2 py-1 text-lg font-semibold leading-7 text-foreground bg-transparent outline-none tracking-[-0.01em] transition-colors empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none hover:border-border/70 hover:bg-background/75 focus:border-ring/45 focus:bg-background focus:shadow-sm"
             role="textbox"
             aria-label={t("notes.editor.noteTitle")}
           />
-          <div className="flex items-center gap-2 mt-1.5">
-            {shortDate && (
-              <span
-                className="inline-flex items-center gap-1.5 text-[11px] text-foreground/50 dark:text-foreground/35"
-                title={noteDate}
-              >
-                <Calendar size={11} className="shrink-0" />
-                {shortDate}
-              </span>
-            )}
-            {calendarEventName && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground/50 dark:text-foreground/35">
-                <LinkIcon size={11} className="shrink-0" />
-                <span className="truncate max-w-40">{calendarEventName}</span>
-              </span>
-            )}
-            <NoteParticipants noteId={note.id} participants={parsedParticipants} />
-            {folders && onMoveToFolder && (
-              <DropdownMenu
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setFolderSearch("");
-                    setIsCreatingFolder(false);
-                    setNewFolderName("");
-                  }
-                }}
-              >
-                <DropdownMenuTrigger asChild>
-                  <button className="inline-flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded-md border border-border/70 dark:border-white/25 text-foreground/50 dark:text-foreground/35 hover:text-foreground/60 hover:border-border/60 hover:bg-foreground/3 dark:hover:text-foreground/40 dark:hover:border-white/10 dark:hover:bg-white/3 transition-all duration-150 cursor-pointer outline-none">
-                    <FolderOpen size={11} className="shrink-0" />
-                    {folderName || t("notes.editor.noFolder")}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 p-1">
-                  {folders.length > 5 && (
-                    <>
-                      <div className="relative px-1.5 py-0.5">
-                        <Search
-                          size={9}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/15 pointer-events-none"
-                        />
-                        <input
-                          value={folderSearch}
-                          onChange={(e) => setFolderSearch(e.target.value)}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          placeholder={t("notes.context.searchFolders")}
-                          className="input-inline w-full pl-4.5 pr-1 py-0.5 text-xs text-foreground placeholder:text-foreground/15 outline-none border-none appearance-none"
-                        />
-                      </div>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <div className="overflow-y-auto max-h-48">
-                    {filteredFolders.map((folder) => {
-                      const isCurrent = folder.id === note.folder_id;
-                      return (
-                        <DropdownMenuItem
-                          key={folder.id}
-                          disabled={isCurrent}
-                          onClick={() => onMoveToFolder(note.id, folder.id)}
-                          className="text-xs gap-2 rounded-md px-2 py-1.5"
-                        >
-                          <FolderOpen size={11} className="text-foreground/30 shrink-0" />
-                          <span className="truncate flex-1">{folder.name}</span>
-                          {isCurrent && <Check size={9} className="text-primary shrink-0" />}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    {folderSearch && filteredFolders.length === 0 && (
-                      <p className="text-xs text-foreground/20 text-center py-1.5">
-                        {t("notes.context.noResults")}
-                      </p>
-                    )}
-                  </div>
-                  {onCreateFolderAndMove && (
-                    <>
-                      <DropdownMenuSeparator />
-                      {isCreatingFolder ? (
-                        <div className="px-1">
+          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
+              {shortDate && (
+                <span
+                  className="inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground"
+                  title={noteDate}
+                >
+                  <Calendar size={11} className="shrink-0" />
+                  {shortDate}
+                </span>
+              )}
+              {calendarEventName && (
+                <span className="inline-flex h-6 min-w-0 max-w-44 items-center gap-1.5 rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground">
+                  <LinkIcon size={11} className="shrink-0" />
+                  <span className="truncate">{calendarEventName}</span>
+                </span>
+              )}
+              <NoteParticipants noteId={note.id} participants={parsedParticipants} />
+              {folders && onMoveToFolder && (
+                <DropdownMenu
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setFolderSearch("");
+                      setIsCreatingFolder(false);
+                      setNewFolderName("");
+                    }
+                  }}
+                >
+                  <DropdownMenuTrigger asChild>
+                    <button className="inline-flex h-6 max-w-44 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors duration-150 hover:border-border hover:bg-muted/70 hover:text-foreground cursor-pointer outline-none">
+                      <FolderOpen size={11} className="shrink-0" />
+                      <span className="truncate">{folderName || t("notes.editor.noFolder")}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 p-1">
+                    {folders.length > 5 && (
+                      <>
+                        <div className="relative px-1.5 py-0.5">
+                          <Search
+                            size={9}
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/15 pointer-events-none"
+                          />
                           <input
-                            autoFocus
-                            value={newFolderName}
-                            onChange={(e) => setNewFolderName(e.target.value)}
-                            onKeyDown={(e) => {
-                              e.stopPropagation();
-                              if (e.key === "Enter" && newFolderName.trim()) {
-                                onCreateFolderAndMove(note.id, newFolderName.trim());
-                                setNewFolderName("");
-                                setIsCreatingFolder(false);
-                              }
-                              if (e.key === "Escape") {
-                                setIsCreatingFolder(false);
-                                setNewFolderName("");
-                              }
-                            }}
-                            placeholder={t("notes.folders.folderName")}
-                            className="input-inline w-full px-2 py-1.5 rounded-md bg-transparent text-xs text-foreground placeholder:text-foreground/20 outline-none border-none appearance-none"
+                            value={folderSearch}
+                            onChange={(e) => setFolderSearch(e.target.value)}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            placeholder={t("notes.context.searchFolders")}
+                            className="input-inline w-full pl-4.5 pr-1 py-0.5 text-xs text-foreground placeholder:text-foreground/15 outline-none border-none appearance-none"
                           />
                         </div>
-                      ) : (
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setIsCreatingFolder(true);
-                          }}
-                          className="text-xs gap-2 rounded-md px-2 py-1.5 text-foreground/40"
-                        >
-                          <Plus size={10} />
-                          {t("notes.context.newFolder")}
-                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <div className="overflow-y-auto max-h-48">
+                      {filteredFolders.map((folder) => {
+                        const isCurrent = folder.id === note.folder_id;
+                        return (
+                          <DropdownMenuItem
+                            key={folder.id}
+                            disabled={isCurrent}
+                            onClick={() => onMoveToFolder(note.id, folder.id)}
+                            className="text-xs gap-2 rounded-md px-2 py-1.5"
+                          >
+                            <FolderOpen size={11} className="text-foreground/30 shrink-0" />
+                            <span className="truncate flex-1">{folder.name}</span>
+                            {isCurrent && (
+                              <Check size={9} className="text-foreground/65 shrink-0" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                      {folderSearch && filteredFolders.length === 0 && (
+                        <p className="text-xs text-foreground/20 text-center py-1.5">
+                          {t("notes.context.noResults")}
+                        </p>
                       )}
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {isSaving && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-foreground/30 dark:text-foreground/15 tabular-nums">
-                <Loader2 size={8} className="animate-spin" />
-                {t("notes.editor.saving")}
-              </span>
-            )}
-            <div className="flex-1" />
-            <div className="flex items-center gap-1">
+                    </div>
+                    {onCreateFolderAndMove && (
+                      <>
+                        <DropdownMenuSeparator />
+                        {isCreatingFolder ? (
+                          <div className="px-1">
+                            <input
+                              autoFocus
+                              value={newFolderName}
+                              onChange={(e) => setNewFolderName(e.target.value)}
+                              onKeyDown={(e) => {
+                                e.stopPropagation();
+                                if (e.key === "Enter" && newFolderName.trim()) {
+                                  onCreateFolderAndMove(note.id, newFolderName.trim());
+                                  setNewFolderName("");
+                                  setIsCreatingFolder(false);
+                                }
+                                if (e.key === "Escape") {
+                                  setIsCreatingFolder(false);
+                                  setNewFolderName("");
+                                }
+                              }}
+                              placeholder={t("notes.folders.folderName")}
+                              className="input-inline w-full px-2 py-1.5 rounded-md bg-transparent text-xs text-foreground placeholder:text-foreground/20 outline-none border-none appearance-none"
+                            />
+                          </div>
+                        ) : (
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setIsCreatingFolder(true);
+                            }}
+                            className="text-xs gap-2 rounded-md px-2 py-1.5 text-foreground/40"
+                          >
+                            <Plus size={10} />
+                            {t("notes.context.newFolder")}
+                          </DropdownMenuItem>
+                        )}
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              {isSaving && (
+                <span className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap text-[11px] text-muted-foreground tabular-nums">
+                  <Loader2 size={8} className="animate-spin" />
+                  {t("notes.editor.saving")}
+                </span>
+              )}
+            <div className="flex min-w-0 flex-wrap items-center gap-1 pl-1">
               {(enhancement || hasMeetingTranscript || hasChatSegments || isRecording) && (
-                <div
-                  ref={segmentContainerRef}
-                  className="relative flex items-center shrink-0 rounded-md bg-foreground/3 dark:bg-white/3 p-0.5"
-                >
-                  <div
-                    className="absolute top-0.5 left-0 rounded bg-background dark:bg-surface-2 shadow-sm transition-[width,height,transform,opacity] duration-200 ease-out pointer-events-none"
-                    style={indicatorStyle}
-                  />
+                <div className="ow-segmented flex shrink-0 items-center gap-0.5 shadow-none">
                   {(hasMeetingTranscript || hasChatSegments || isRecording) && (
-                    <button
-                      data-segment-button
-                      data-segment-value="transcript"
-                      onClick={() => setViewMode("transcript")}
+                    <div
                       className={cn(
-                        "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
-                        viewMode === "transcript"
-                          ? "text-foreground/60"
-                          : "text-foreground/25 hover:text-foreground/40"
+                        "flex h-6 shrink-0 items-center rounded-md",
+                        viewMode === "transcript" && "bg-background shadow-sm"
                       )}
                     >
-                      <MessageSquareText size={10} />
-                      {t("notes.editor.transcript")}
-                    </button>
+                      <button
+                        data-segment-button
+                        data-segment-value="transcript"
+                        onClick={() => setViewMode("transcript")}
+                        className={cn(
+                          "ow-segmented-item h-6 shrink-0 whitespace-nowrap rounded-r-none px-2 py-0 text-[11px]",
+                          viewMode === "transcript" && "bg-transparent text-foreground shadow-none"
+                        )}
+                      >
+                        <MessageSquareText size={10} />
+                        {t("notes.editor.transcript")}
+                      </button>
+                      {hasTranscriptEditControls && !isTranscriptEditing && (
+                        <button
+                          type="button"
+                          onClick={handleStartTranscriptEdit}
+                          disabled={!canEditTranscript}
+                          className={cn(
+                            "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-l transition-colors",
+                            viewMode === "transcript"
+                              ? "border-border/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                              : "border-transparent text-muted-foreground/70 hover:bg-background/80 hover:text-foreground",
+                            "disabled:cursor-not-allowed disabled:opacity-40"
+                          )}
+                          aria-label={t("notes.editor.transcriptEdit")}
+                          title={
+                            isRecording
+                              ? t("notes.editor.transcriptEditDisabledRecording")
+                              : t("notes.editor.transcriptEdit")
+                          }
+                        >
+                          <Pencil size={10} />
+                        </button>
+                      )}
+                    </div>
                   )}
                   <button
                     data-segment-button
@@ -1224,12 +1216,9 @@ export default function NoteEditor({
                       if (!isTranscriptEditing) setViewMode("raw");
                     }}
                     className={cn(
-                      "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
-                      viewMode === "raw"
-                        ? "text-foreground/60"
-                        : isTranscriptEditing
-                          ? "text-foreground/15 cursor-not-allowed"
-                          : "text-foreground/25 hover:text-foreground/40"
+                      "ow-segmented-item h-6 shrink-0 whitespace-nowrap px-2 py-0 text-[11px]",
+                      viewMode === "raw" && "ow-segmented-item-active",
+                      isTranscriptEditing && viewMode !== "raw" && "cursor-not-allowed opacity-40"
                     )}
                   >
                     <AlignLeft size={10} />
@@ -1243,12 +1232,9 @@ export default function NoteEditor({
                         if (!isTranscriptEditing) setViewMode("enhanced");
                       }}
                       className={cn(
-                        "relative z-1 px-1.5 h-5 rounded text-xs font-medium transition-colors duration-150 flex items-center gap-1",
-                        viewMode === "enhanced"
-                          ? "text-foreground/60"
-                          : isTranscriptEditing
-                            ? "text-foreground/15 cursor-not-allowed"
-                            : "text-foreground/25 hover:text-foreground/40"
+                        "ow-segmented-item h-6 shrink-0 whitespace-nowrap px-2 py-0 text-[11px]",
+                        viewMode === "enhanced" && "ow-segmented-item-active",
+                        isTranscriptEditing && viewMode !== "enhanced" && "cursor-not-allowed opacity-40"
                       )}
                     >
                       <Sparkles size={9} />
@@ -1263,50 +1249,32 @@ export default function NoteEditor({
                   )}
                 </div>
               )}
-              {hasTranscriptEditControls && (
-                <div className="flex items-center gap-1">
-                  {isTranscriptEditing ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleSaveTranscriptEdit}
-                        disabled={isTranscriptSaving}
-                        className="shrink-0 h-6 px-2 flex items-center gap-1 rounded-md bg-foreground/6 dark:bg-white/6 text-foreground/60 dark:text-foreground/50 hover:text-foreground/80 hover:bg-foreground/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150 text-[11px] font-medium"
-                        aria-label={t("notes.editor.transcriptSave")}
-                      >
-                        {isTranscriptSaving ? (
-                          <Loader2 size={10} className="animate-spin" />
-                        ) : (
-                          <Check size={10} />
-                        )}
-                        {t("notes.editor.transcriptSave")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCancelTranscriptEdit}
-                        disabled={isTranscriptSaving}
-                        className="shrink-0 h-6 px-2 flex items-center gap-1 rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150 text-[11px] font-medium"
-                        aria-label={t("notes.editor.transcriptCancel")}
-                      >
-                        <X size={10} />
-                        {t("notes.editor.transcriptCancel")}
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleStartTranscriptEdit}
-                      disabled={!canEditTranscript}
-                      className="shrink-0 h-6 px-2 flex items-center gap-1 rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-35 disabled:pointer-events-none transition-colors duration-150 text-[11px] font-medium"
-                      aria-label={t("notes.editor.transcriptEdit")}
-                      title={
-                        isRecording ? t("notes.editor.transcriptEditDisabledRecording") : undefined
-                      }
-                    >
-                      <Pencil size={10} />
-                      {t("notes.editor.transcriptEdit")}
-                    </button>
-                  )}
+              {hasTranscriptEditControls && isTranscriptEditing && (
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleSaveTranscriptEdit}
+                    disabled={isTranscriptSaving}
+                    className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/6 dark:bg-white/6 text-foreground/60 dark:text-foreground/50 hover:text-foreground/80 hover:bg-foreground/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
+                    aria-label={t("notes.editor.transcriptSave")}
+                    title={t("notes.editor.transcriptSave")}
+                  >
+                    {isTranscriptSaving ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : (
+                      <Check size={10} />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelTranscriptEdit}
+                    disabled={isTranscriptSaving}
+                    className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
+                    aria-label={t("notes.editor.transcriptCancel")}
+                    title={t("notes.editor.transcriptCancel")}
+                  >
+                    <X size={10} />
+                  </button>
                 </div>
               )}
               {SHARING_ENABLED && note.cloud_id && (
@@ -1328,7 +1296,7 @@ export default function NoteEditor({
                     className={cn(
                       "transition-colors",
                       isShared
-                        ? "text-blue-600 dark:text-blue-400"
+                        ? "text-foreground/70 dark:text-white/70"
                         : "text-foreground/50 dark:text-foreground/40"
                     )}
                   />
@@ -1416,7 +1384,7 @@ export default function NoteEditor({
           </div>
         </div>
 
-        <div className="flex-1 relative min-h-0 flex flex-col">
+        <div className="flex-1 relative min-w-0 min-h-0 flex flex-col overflow-hidden">
           {showFindBar && (
             <div className="shrink-0 border-b border-border/20 px-3 py-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -1506,7 +1474,7 @@ export default function NoteEditor({
               </div>
             </div>
           )}
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-w-0 min-h-0 overflow-x-hidden overflow-y-auto">
             {viewMode === "transcript" && (hasChatSegments || isRecording) ? (
               <MeetingTranscriptChat
                 segments={renderedTranscriptSegments}
@@ -1549,7 +1517,7 @@ export default function NoteEditor({
                   ref={plainTranscriptTextareaRef}
                   value={editableTranscriptText}
                   onChange={(event) => setEditableTranscriptText(event.target.value)}
-                  className="h-full w-full resize-none bg-transparent px-5 py-4 text-sm leading-relaxed text-foreground outline-none placeholder:text-foreground/25"
+                  className="mx-5 mt-5 mb-24 h-[calc(100%-7rem)] w-[calc(100%-2.5rem)] resize-none rounded-xl border border-border/70 bg-background px-5 py-4 text-sm leading-relaxed text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus:border-ring/50 focus:ring-2 focus:ring-ring/10"
                 />
               ) : (
                 <RichTextEditor
@@ -1565,6 +1533,7 @@ export default function NoteEditor({
               <RichTextEditor
                 value={enhancement.content}
                 onChange={handleEnhancedChange}
+                className="mx-5 mt-5 mb-24 h-[calc(100%-7rem)] w-[calc(100%-2.5rem)] rounded-xl border border-border/70 bg-background shadow-sm"
                 findQuery={findText}
                 findActiveIndex={activeFindIndex}
                 findIgnoreCase={ignoreCase}
@@ -1579,6 +1548,7 @@ export default function NoteEditor({
                 editorRef={editorRef}
                 placeholder={t("notes.editor.startWriting")}
                 disabled={actionProcessingState === "processing"}
+                className="mx-5 mt-5 mb-24 h-[calc(100%-7rem)] w-[calc(100%-2.5rem)] rounded-xl border border-border/70 bg-background shadow-sm transition-colors focus-within:border-ring/50 focus-within:ring-2 focus-within:ring-ring/10"
                 findQuery={findText}
                 findActiveIndex={activeFindIndex}
                 findIgnoreCase={ignoreCase}

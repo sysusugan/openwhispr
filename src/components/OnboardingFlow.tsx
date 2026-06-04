@@ -612,9 +612,9 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       </div>
 
       {/* Unified control surface */}
-      <div className="rounded-lg border border-border-subtle bg-surface-1 overflow-hidden">
+      <div className="rounded-md border border-border/60 bg-background overflow-hidden">
         {/* Hotkey section */}
-        <div className="p-4 border-b border-border-subtle">
+        <div className="p-4 border-b border-border/60">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               {t("onboarding.activation.hotkey")}
@@ -789,7 +789,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         <div className="shrink-0 z-10">
           <TitleBar
             showTitle={true}
-            className="bg-background backdrop-blur-xl border-b border-border shadow-sm"
+            className="bg-background border-b border-border/70"
             actions={isSignedIn ? <SupportDropdown /> : undefined}
           ></TitleBar>
         </div>
@@ -797,7 +797,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
       {/* Progress Bar - hidden on welcome/auth step */}
       {showProgress && (
-        <div className="shrink-0 bg-background/80 backdrop-blur-2xl border-b border-white/5 px-6 md:px-12 py-3 z-10">
+        <div className="shrink-0 bg-background border-b border-border/60 px-6 md:px-12 py-3 z-10">
           <div className="max-w-3xl mx-auto">
             <StepProgress steps={steps.slice(1)} currentStep={currentStep - 1} />
           </div>
@@ -809,7 +809,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         className={`flex-1 px-6 md:px-12 overflow-y-auto ${currentStep === 0 ? "flex items-center" : "py-6"}`}
       >
         <div className={`w-full ${currentStep === 0 ? "max-w-sm" : "max-w-3xl"} mx-auto`}>
-          <Card className="bg-card/90 backdrop-blur-2xl border border-border/50 dark:border-white/5 shadow-lg rounded-xl overflow-hidden">
+          <Card className="bg-background border border-border/70 shadow-none rounded-md overflow-hidden">
             <CardContent className={currentStep === 0 ? "p-6" : "p-6 md:p-8"}>
               {renderStep()}
             </CardContent>
@@ -819,7 +819,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
       {/* Footer Navigation - hidden on welcome/auth step */}
       {showProgress && (
-        <div className="shrink-0 bg-background/80 backdrop-blur-2xl border-t border-white/5 px-6 md:px-12 py-3 z-10">
+        <div className="shrink-0 bg-background border-t border-border/60 px-6 md:px-12 py-3 z-10">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             {/* Hide back button on first step for signed-in users */}
             {!(currentStep === 1 && isSignedIn && !skipAuth) && (

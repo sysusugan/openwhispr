@@ -69,23 +69,28 @@ export default function HistoryView({
   }, [history, t]);
 
   return (
-    <div className="px-4 pt-4 pb-6">
-      <div className={cn("mx-auto", isConnected ? "max-w-5xl" : "max-w-3xl")}>
+    <div className="ow-workspace-page">
+      <div
+        className={cn(
+          "ow-page-column",
+          isConnected ? "max-w-6xl xl:max-w-6xl" : "max-w-4xl xl:max-w-4xl"
+        )}
+      >
         {showCloudMigrationBanner && (
-          <div className="mb-3 relative rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3">
+          <div className="ow-panel mb-3 relative p-3">
             <button
               onClick={() => {
                 setShowCloudMigrationBanner(false);
                 localStorage.setItem("cloudMigrationShown", "true");
               }}
               aria-label={t("common.close")}
-              className="absolute top-2 right-2 p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="absolute top-2 right-2 p-1 ow-icon-button-muted"
             >
               <X size={14} />
             </button>
             <div className="flex items-start gap-3 pr-6">
-              <div className="shrink-0 w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
-                <Cloud size={16} className="text-primary" />
+              <div className="shrink-0 w-8 h-8 rounded-md bg-muted border border-border flex items-center justify-center">
+                <Cloud size={16} className="text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground mb-0.5">
@@ -95,7 +100,7 @@ export default function HistoryView({
                   {t("controlPanel.cloudMigration.description")}
                 </p>
                 <Button
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   className="h-7 text-xs"
                   onClick={() => {
@@ -112,20 +117,20 @@ export default function HistoryView({
         )}
 
         {!useCleanupModel && !aiCTADismissed && (
-          <div className="mb-3 relative rounded-lg border border-primary/20 bg-primary/5 dark:bg-primary/10 p-3">
+          <div className="ow-panel mb-3 relative p-3">
             <button
               onClick={() => {
                 localStorage.setItem("aiCTADismissed", "true");
                 setAiCTADismissed(true);
               }}
               aria-label={t("common.close")}
-              className="absolute top-2 right-2 p-1 rounded-sm text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="absolute top-2 right-2 p-1 ow-icon-button-muted"
             >
               <X size={14} />
             </button>
             <div className="flex items-start gap-3 pr-6">
-              <div className="shrink-0 w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
-                <Sparkles size={16} className="text-primary" />
+              <div className="shrink-0 w-8 h-8 rounded-md bg-muted border border-border flex items-center justify-center">
+                <Sparkles size={16} className="text-muted-foreground" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-foreground mb-0.5">
@@ -135,7 +140,7 @@ export default function HistoryView({
                   {t("controlPanel.aiCta.description")}
                 </p>
                 <Button
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   className="h-7 text-xs"
                   onClick={() => onOpenSettings("intelligence")}
@@ -147,7 +152,7 @@ export default function HistoryView({
           </div>
         )}
 
-        <div className={cn(isConnected ? "flex gap-6" : "")}>
+        <div className={cn("h-full min-w-0", isConnected ? "flex gap-6" : "")}>
           <div className={cn("min-w-0", isConnected ? "flex-1" : "w-full")}>
             {isConnected && (
               <div className="flex items-center gap-1.5 pb-2.5">
@@ -166,17 +171,17 @@ export default function HistoryView({
               </div>
             )}
             {isLoading ? (
-              <div className="rounded-lg border border-border bg-card/50 dark:bg-card/60 backdrop-blur-sm">
+              <div className="min-h-[360px]">
                 <div className="flex items-center justify-center gap-2 py-8">
-                  <Loader2 size={14} className="animate-spin text-primary" />
+                  <Loader2 size={14} className="animate-spin text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">{t("controlPanel.loading")}</span>
                 </div>
               </div>
             ) : history.length === 0 ? (
-              <div className="rounded-lg border border-border bg-card/50 dark:bg-card/60 backdrop-blur-sm">
-                <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="min-h-[420px] flex items-center justify-center">
+                <div className="flex flex-col items-center justify-center px-4">
                   <svg
-                    className="text-foreground dark:text-white mb-5"
+                    className="text-muted-foreground mb-5"
                     width="64"
                     height="64"
                     viewBox="0 0 64 64"
@@ -259,12 +264,12 @@ export default function HistoryView({
                       strokeLinecap="round"
                     />
                   </svg>
-                  <h3 className="text-xs font-semibold text-foreground/70 dark:text-foreground/60 mb-2">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">
                     {t("controlPanel.history.empty")}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-foreground/50 dark:text-foreground/25">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{t("controlPanel.history.press")}</span>
-                    <kbd className="inline-flex items-center h-5 px-1.5 rounded-sm bg-surface-1 dark:bg-white/6 border border-border/50 text-xs font-mono font-medium text-foreground/60 dark:text-foreground/40">
+                    <kbd className="inline-flex items-center h-5 px-1.5 rounded-sm bg-background border border-border text-xs font-mono font-semibold text-foreground">
                       {formatHotkeyLabel(hotkey)}
                     </kbd>
                     <span>{t("controlPanel.history.toStart")}</span>
@@ -272,10 +277,10 @@ export default function HistoryView({
                 </div>
               </div>
             ) : (
-              <div className="group">
+              <div className="group border-y border-border/60 px-4 pb-4 dark:border-white/8">
                 {groupedHistory.map((group, index) => (
                   <div key={group.label} className={index > 0 ? "mt-4" : ""}>
-                    <div className="sticky -top-1 z-10 -mx-4 px-5 pt-2 pb-2 bg-background flex items-center justify-between">
+                    <div className="sticky -top-4 z-10 -mx-4 flex items-center justify-between border-b border-border/60 bg-background px-5 pt-4 pb-2 dark:border-white/8">
                       <span className="text-[11px] font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
                         {group.label}
                       </span>

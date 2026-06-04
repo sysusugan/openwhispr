@@ -113,7 +113,7 @@ function OptionCard({
       disabled={disabled}
       className={`w-full text-left p-4 rounded-lg border transition-shadow duration-150 hover:shadow-md flex items-center justify-between cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
         highlighted
-          ? "bg-primary/5 dark:bg-primary/10 border-primary/20 dark:border-primary/15"
+          ? "bg-foreground/[0.04] dark:bg-white/[0.05] border-border-hover dark:border-border-subtle"
           : "bg-muted/50 dark:bg-surface-2 border-border dark:border-border-subtle hover:border-border-hover"
       }`}
     >

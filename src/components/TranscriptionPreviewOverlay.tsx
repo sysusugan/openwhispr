@@ -233,7 +233,7 @@ export default function TranscriptionPreviewOverlay() {
       <div
         ref={shellRef}
         className={[
-          "relative overflow-hidden rounded-xl border bg-card/92 p-3 backdrop-blur-xl",
+          "relative overflow-hidden rounded-md border bg-background/95 p-3",
           "shadow-[0_8px_24px_rgba(0,0,0,0.14)]",
           "dark:bg-surface-2/92",
           phase === "final"
@@ -269,7 +269,7 @@ export default function TranscriptionPreviewOverlay() {
               <span
                 className={[
                   "block h-1.5 w-1.5 shrink-0 rounded-full animate-pulse",
-                  rawText ? "bg-primary/70" : "bg-muted-foreground/30",
+                  rawText ? "bg-foreground/55" : "bg-muted-foreground/30",
                 ].join(" ")}
               />
             )}
@@ -335,7 +335,7 @@ export default function TranscriptionPreviewOverlay() {
               {[8, 13, 10].map((h, i) => (
                 <span
                   key={i}
-                  className="w-[2px] rounded-full bg-primary/35"
+                  className="w-[2px] rounded-full bg-foreground/35"
                   style={{
                     height: h,
                     animation: "preview-bars 0.9s ease-in-out infinite",

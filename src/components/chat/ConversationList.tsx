@@ -66,7 +66,7 @@ function SkeletonRows() {
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className="space-y-1.5">
           <div
-            className="h-3 rounded bg-foreground/5"
+            className="h-3 rounded bg-muted"
             style={{
               width: `${60 + i * 10}%`,
               animation: `tool-status-sweep 1.5s ease-in-out ${i * 0.15}s infinite`,
@@ -75,7 +75,7 @@ function SkeletonRows() {
             }}
           />
           <div
-            className="h-2.5 rounded bg-foreground/3"
+            className="h-2.5 rounded bg-muted"
             style={{
               width: `${80 + (i % 2) * 10}%`,
               animation: `tool-status-sweep 1.5s ease-in-out ${i * 0.15 + 0.08}s infinite`,
@@ -199,8 +199,8 @@ export default function ConversationList({
   if (isLoading && showSkeleton) {
     return (
       <div className="flex flex-col h-full">
-        <div className="px-2 pt-2 pb-1 flex items-center gap-1.5">
-          <h2 className="text-xs font-medium text-foreground px-1 flex-1">{t("sidebar.chat")}</h2>
+        <div className="px-3 pt-3 pb-2 flex items-center gap-1.5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1 flex-1">{t("sidebar.chat")}</h2>
         </div>
         <SkeletonRows />
       </div>
@@ -210,8 +210,8 @@ export default function ConversationList({
   if (isLoading && !showSkeleton) {
     return (
       <div className="flex flex-col h-full">
-        <div className="px-2 pt-2 pb-1 flex items-center gap-1.5">
-          <h2 className="text-xs font-medium text-foreground px-1 flex-1">{t("sidebar.chat")}</h2>
+        <div className="px-3 pt-3 pb-2 flex items-center gap-1.5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1 flex-1">{t("sidebar.chat")}</h2>
         </div>
       </div>
     );
@@ -219,27 +219,17 @@ export default function ConversationList({
 
   return (
     <div className="flex flex-col h-full" onKeyDown={handleKeyDown} tabIndex={-1}>
-      <div className="px-2 pt-2 pb-1 shrink-0 space-y-0.5">
+      <div className="px-3 pt-3 pb-2 shrink-0 space-y-1">
         <button
           onClick={onNewChat}
-          className={cn(
-            "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs",
-            "text-muted-foreground/80 hover:text-foreground hover:bg-foreground/5",
-            "transition-colors duration-150",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-          )}
+          className="ow-inner-nav-item"
         >
           <SquarePen size={14} className="shrink-0" />
           {t("chat.newChat")}
         </button>
         <button
           onClick={onOpenSearch}
-          className={cn(
-            "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs",
-            "text-muted-foreground/80 hover:text-foreground hover:bg-foreground/5",
-            "transition-colors duration-150",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
-          )}
+          className="ow-inner-nav-item"
         >
           <Search size={14} className="shrink-0" />
           {t("chat.searchChats")}
@@ -248,11 +238,8 @@ export default function ConversationList({
           <button
             onClick={() => setShowArchived((v) => !v)}
             className={cn(
-              "flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-xs transition-colors duration-150",
-              "focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
-              showArchived
-                ? "bg-primary/8 text-primary"
-                : "text-muted-foreground/80 hover:text-foreground hover:bg-foreground/5"
+              "ow-inner-nav-item",
+              showArchived && "ow-inner-nav-item-active"
             )}
           >
             <ArchiveIcon size={14} className="shrink-0" />

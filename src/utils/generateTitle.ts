@@ -1,4 +1,5 @@
 import reasoningService from "../services/ReasoningService";
+import type { ReasoningConfig } from "../services/BaseReasoningService";
 import { getSettings } from "../stores/settingsStore";
 import { buildTitleSystemPrompt } from "./generateTitlePrompt";
 
@@ -6,13 +7,15 @@ export async function generateNoteTitle(
   text: string,
   modelId: string,
   customDictionary?: string[],
-  uiLanguage?: string
+  uiLanguage?: string,
+  config: ReasoningConfig = {}
 ): Promise<string> {
   try {
     const raw = await reasoningService.processText(text.slice(0, 2000), modelId, null, {
+      ...config,
       systemPrompt: buildTitleSystemPrompt(customDictionary, uiLanguage),
       temperature: 0.3,
-      disableThinking: getSettings().noteFormattingDisableThinking,
+      disableThinking: config.disableThinking ?? getSettings().noteFormattingDisableThinking,
     });
     const cleaned = raw.trim().replace(/^["']|["']$/g, "");
     return cleaned.length > 0 && cleaned.length < 100 ? cleaned : "";

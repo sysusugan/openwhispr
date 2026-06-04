@@ -120,35 +120,43 @@ export default function NoteListItem({
     [folders, folderSearch]
   );
 
+  const handleActivate = () => {
+    if (isSelectionMode) {
+      onToggleSelected?.(note.id);
+      return;
+    }
+    onClick();
+  };
+
   return (
-    <button
-      type="button"
-      onClick={() => {
-        if (isSelectionMode) {
-          onToggleSelected?.(note.id);
-          return;
-        }
-        onClick();
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleActivate}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        handleActivate();
       }}
       {...(isSelectionMode ? {} : dragHandlers)}
       className={cn(
-        "group relative w-full text-left px-3 py-2 cursor-pointer transition-all duration-150",
-        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/30",
+        "ow-list-row group relative w-full min-h-9 cursor-pointer px-2.5 py-2",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
         isSelected
-          ? "bg-primary/10 dark:bg-primary/12"
+          ? "ow-list-row-active"
           : isActive
-            ? "bg-primary/6 dark:bg-primary/8"
-            : "hover:bg-foreground/3 dark:hover:bg-white/3",
+            ? "ow-list-row-active"
+            : "ow-list-row-idle",
         isDragging && "opacity-40 scale-[0.97]"
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex min-w-0 items-start gap-2">
         {isSelectionMode && (
           <span
             className={cn(
               "mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors",
               isSelected
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-foreground/70 bg-foreground text-background"
                 : "border-border bg-background text-transparent"
             )}
             aria-hidden="true"
@@ -156,18 +164,18 @@ export default function NoteListItem({
             <Check size={11} />
           </span>
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 items-center justify-between gap-2">
             <p
               className={cn(
-                "text-xs truncate transition-colors duration-150 text-foreground",
-                isActive && "font-medium"
+                "min-w-0 flex-1 overflow-hidden truncate text-xs transition-colors duration-150",
+                isActive ? "font-semibold text-foreground" : "font-medium text-current"
               )}
             >
               {note.title || t("notes.list.untitled")}
             </p>
             <div className="flex items-center gap-0.5 shrink-0">
-              <span className="text-xs text-muted-foreground dark:text-muted-foreground/30 tabular-nums group-hover:opacity-0 transition-opacity">
+              <span className="text-[11px] text-muted-foreground tabular-nums group-hover:opacity-0 transition-opacity">
                 {relativeTime(timestamp ?? note.updated_at, t)}
               </span>
               {!isSelectionMode && (
@@ -185,7 +193,7 @@ export default function NoteListItem({
                       size="icon"
                       variant="ghost"
                       onClick={(e) => e.stopPropagation()}
-                      className="h-5 w-5 rounded-sm opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity absolute right-2 text-muted-foreground/60 dark:text-muted-foreground/40 hover:text-foreground/60 hover:bg-foreground/5 active:bg-foreground/8"
+                      className="h-6 w-6 rounded-md opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 transition-opacity absolute right-2 text-muted-foreground hover:text-foreground hover:bg-background active:bg-muted"
                     >
                       <MoreHorizontal size={12} />
                     </Button>
@@ -198,7 +206,7 @@ export default function NoteListItem({
                             e.stopPropagation();
                             window.electronAPI?.showNoteFile?.(note.id);
                           }}
-                          className="text-xs gap-2 rounded-lg px-2.5 py-1.5 cursor-pointer focus:bg-foreground/5"
+                          className="text-xs gap-2 rounded-md px-2.5 py-1.5 cursor-pointer focus:bg-muted"
                         >
                           <ExternalLink
                             size={12}
@@ -210,7 +218,7 @@ export default function NoteListItem({
                       </>
                     )}
                     <DropdownMenuSub>
-                      <DropdownMenuSubTrigger className="text-xs gap-2 rounded-lg px-2.5 py-1.5 cursor-pointer focus:bg-foreground/5 data-[state=open]:bg-foreground/5">
+                      <DropdownMenuSubTrigger className="text-xs gap-2 rounded-md px-2.5 py-1.5 cursor-pointer focus:bg-muted data-[state=open]:bg-muted">
                         <FolderOpen
                           size={12}
                           className="text-muted-foreground/80 dark:text-muted-foreground/60"
@@ -219,7 +227,7 @@ export default function NoteListItem({
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent
                         sideOffset={4}
-                        className="min-w-36 rounded-xl border border-border p-1"
+                        className="min-w-36 rounded-md border border-border p-1"
                       >
                         {folders.length > 5 && (
                           <>
@@ -253,7 +261,9 @@ export default function NoteListItem({
                                 className="text-xs gap-2 rounded-md px-2 py-1"
                               >
                                 <span className="truncate flex-1">{folder.name}</span>
-                                {isCurrent && <Check size={9} className="text-primary shrink-0" />}
+                                {isCurrent && (
+                                  <Check size={9} className="text-muted-foreground shrink-0" />
+                                )}
                               </DropdownMenuItem>
                             );
                           })}
@@ -317,12 +327,12 @@ export default function NoteListItem({
             </div>
           </div>
           {preview && (
-            <p className="text-xs text-muted-foreground/80 dark:text-muted-foreground/40 line-clamp-1 mt-0.5">
+            <p className="mt-0.5 min-w-0 overflow-hidden truncate text-xs text-muted-foreground">
               {preview}
             </p>
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

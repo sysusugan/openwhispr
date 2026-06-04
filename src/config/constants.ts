@@ -1,7 +1,4 @@
 // API Configuration helpers
-import openwhisprCloud from "./openwhisprCloud.js";
-
-const { resolveOpenWhisprApiUrl } = openwhisprCloud;
 
 export const normalizeBaseUrl = (value?: string | null): string => {
   if (!value) return "";
@@ -48,6 +45,13 @@ export const ensureV1Suffix = (base: string): string => {
 };
 
 const env = (typeof import.meta !== "undefined" && (import.meta as any).env) || {};
+const DEFAULT_OPENWHISPR_API_URL = "https://api.openwhispr.com";
+
+const resolveOpenWhisprApiUrl = (values: Record<string, string | undefined>): string =>
+  values.OPENWHISPR_API_URL ||
+  values.VITE_OPENWHISPR_API_URL ||
+  values.runtimeViteOpenWhisprApiUrl ||
+  DEFAULT_OPENWHISPR_API_URL;
 
 const computeBaseUrl = (candidates: Array<string | undefined>, fallback: string): string => {
   for (const candidate of candidates) {

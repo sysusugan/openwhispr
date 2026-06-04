@@ -25,18 +25,18 @@ export default function StepProgress({ steps, currentStep, className = "" }: Ste
             <div
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors duration-150 ${
                 isActive
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-foreground/[0.06] text-foreground"
                   : isCompleted
-                    ? "text-success"
+                    ? "text-foreground/55"
                     : "text-muted-foreground/40"
               }`}
             >
               <div
                 className={`w-4.5 h-4.5 rounded-md flex items-center justify-center shrink-0 transition-colors duration-150 ${
                   isActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-foreground text-background"
                     : isCompleted
-                      ? "bg-success/15 text-success"
+                      ? "bg-muted text-foreground/55"
                       : "bg-muted text-muted-foreground/40"
                 }`}
               >
@@ -49,9 +49,9 @@ export default function StepProgress({ steps, currentStep, className = "" }: Ste
               <span
                 className={`text-xs font-medium hidden md:block tracking-wide ${
                   isActive
-                    ? "text-primary"
+                    ? "text-foreground"
                     : isCompleted
-                      ? "text-success"
+                      ? "text-foreground/55"
                       : "text-muted-foreground/40"
                 }`}
               >
@@ -61,7 +61,7 @@ export default function StepProgress({ steps, currentStep, className = "" }: Ste
             {index < steps.length - 1 && (
               <div
                 className={`w-3 h-px mx-0.5 transition-colors duration-150 ${
-                  isCompleted ? "bg-success/40" : "bg-border"
+                  isCompleted ? "bg-border-hover" : "bg-border"
                 }`}
               />
             )}

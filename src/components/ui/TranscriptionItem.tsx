@@ -78,7 +78,7 @@ export default function TranscriptionItem({
         "group rounded-md border px-3 py-2.5 transition-colors duration-150",
         isFailed
           ? "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
-          : "border-border/40 dark:border-border-subtle/60 bg-card/50 dark:bg-surface-2/60 hover:bg-muted/30 dark:hover:bg-surface-2/80"
+          : "border-border/60 dark:border-border-subtle/70 bg-background dark:bg-surface-2/50 hover:bg-muted/30 dark:hover:bg-surface-2/80"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -108,7 +108,7 @@ export default function TranscriptionItem({
                     <>
                       <button
                         onClick={() => onOpenSettings?.()}
-                        className="text-primary hover:underline cursor-pointer"
+                        className="text-foreground/70 hover:text-foreground hover:underline cursor-pointer"
                       >
                         {t("controlPanel.history.failedCtaSettings")}
                       </button>{" "}
@@ -117,7 +117,7 @@ export default function TranscriptionItem({
                   ) : (
                     <button
                       onClick={() => onOpenSettings?.()}
-                      className="text-primary hover:underline cursor-pointer"
+                      className="text-foreground/70 hover:text-foreground hover:underline cursor-pointer"
                     >
                       {t("controlPanel.history.failedCtaSettingsOnly")}
                     </button>
@@ -172,8 +172,8 @@ export default function TranscriptionItem({
                 variant="ghost"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={cn(
-                  "h-6 w-6 rounded-sm text-muted-foreground hover:text-primary hover:bg-primary/10",
-                  isExpanded && "text-primary"
+                  "h-6 w-6 rounded-sm text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06]",
+                  isExpanded && "text-foreground"
                 )}
               >
                 <FileText size={12} />
@@ -186,7 +186,7 @@ export default function TranscriptionItem({
                 size="icon"
                 variant="ghost"
                 onClick={() => onShowAudioInFolder?.(item.id)}
-                className="h-6 w-6 rounded-sm text-muted-foreground hover:text-primary hover:bg-primary/10"
+                className="h-6 w-6 rounded-sm text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06]"
               >
                 <FolderOpen size={12} />
               </Button>
@@ -199,7 +199,7 @@ export default function TranscriptionItem({
                 variant="ghost"
                 onClick={handleRetry}
                 disabled={isRetrying}
-                className="h-6 w-6 rounded-sm text-muted-foreground hover:text-primary hover:bg-primary/10"
+                className="h-6 w-6 rounded-sm text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06]"
               >
                 {isRetrying ? (
                   <Loader2 size={12} className="animate-spin" />

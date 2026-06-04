@@ -7,23 +7,23 @@ import { cn } from "../lib/utils";
 const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 whitespace-nowrap",
-    "rounded text-sm font-medium cursor-pointer select-none",
+    "rounded-md text-sm font-medium cursor-pointer select-none",
     "transition-[background-color,border-color,color,transform] duration-200 ease-out",
     "outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-    "disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed",
+    "disabled:pointer-events-none disabled:opacity-60 disabled:cursor-not-allowed",
     "[&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 shrink-0",
   ].join(" "),
   {
     variants: {
       variant: {
-        // Primary CTA — ultra-premium with subtle depth
+        // Primary CTA — neutral, Typeless-like emphasis without saturated color
         default: [
-          "relative text-primary-foreground font-semibold tracking-[0.005em]",
-          "bg-primary",
-          "border border-primary/60",
+          "relative text-background font-semibold tracking-[0.005em]",
+          "bg-foreground",
+          "border border-foreground",
           "shadow-sm",
-          "hover:bg-primary/95 hover:shadow",
-          "active:bg-primary/85 active:scale-[0.985]",
+          "hover:bg-foreground/90 hover:shadow",
+          "active:bg-foreground/85 active:scale-[0.99]",
           "transition-[background-color,border-color,color,transform] duration-200 ease-out",
         ].join(" "),
 
@@ -50,11 +50,11 @@ const buttonVariants = cva(
         // Outline — refined with subtle glassmorphism
         outline: [
           "relative font-medium",
-          "text-foreground bg-muted/70 backdrop-blur-sm",
-          "border border-border/70",
+          "text-foreground bg-card",
+          "border border-border",
           "shadow-sm",
           "hover:bg-muted hover:border-border-hover",
-          "active:scale-[0.985]",
+          "active:scale-[0.99]",
           "dark:bg-surface-raised/90 dark:border-border-hover dark:hover:bg-surface-raised",
           "transition-[background-color,border-color,color,transform] duration-200 ease-out",
         ].join(" "),
@@ -62,9 +62,9 @@ const buttonVariants = cva(
         // Outline flat — transparent with thin border, no fill or shadow
         "outline-flat": [
           "font-medium",
-          "text-muted-foreground/70 bg-transparent",
-          "border border-border/50",
-          "hover:text-foreground/80 hover:border-border hover:bg-foreground/3",
+          "text-muted-foreground bg-transparent",
+          "border border-border/70",
+          "hover:text-foreground hover:border-border-hover hover:bg-muted",
           "active:scale-[0.98]",
           "dark:border-white/10 dark:hover:bg-white/5 dark:hover:border-white/15",
         ].join(" "),
@@ -73,26 +73,26 @@ const buttonVariants = cva(
         secondary: [
           "relative font-medium",
           "text-foreground bg-secondary",
-          "border border-border/50",
+          "border border-transparent",
           "hover:bg-muted",
-          "active:scale-[0.98]",
+          "active:scale-[0.99]",
           "dark:text-foreground/90 dark:bg-white/8 dark:border-white/5 dark:hover:bg-white/12",
         ].join(" "),
 
         // Ghost — uses design tokens
         ghost: [
           "font-medium",
-          "text-foreground",
-          "hover:bg-muted",
-          "active:scale-[0.98]",
+          "text-foreground/85",
+          "hover:bg-muted hover:text-foreground",
+          "active:scale-[0.99]",
           "dark:text-foreground/90 dark:hover:bg-white/8",
         ].join(" "),
 
         // Link — uses design tokens
         link: [
           "font-medium",
-          "text-primary",
-          "hover:text-primary/80 hover:underline",
+          "text-foreground/70",
+          "hover:text-foreground hover:underline",
           "underline-offset-4",
         ].join(" "),
 
@@ -109,10 +109,10 @@ const buttonVariants = cva(
         ].join(" "),
       },
       size: {
-        default: "h-10 px-4 py-2",
+        default: "h-9 px-4 py-2",
         sm: "h-8 px-3 text-xs gap-1.5",
-        lg: "h-12 px-6 text-sm",
-        icon: "size-10",
+        lg: "h-10 px-5 text-sm",
+        icon: "size-9",
       },
     },
     defaultVariants: {

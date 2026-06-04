@@ -1,4 +1,4 @@
-const IDLE_UPLOAD_TRANSCRIPTION_STATE = Object.freeze({
+export const IDLE_UPLOAD_TRANSCRIPTION_STATE = Object.freeze({
   state: "idle",
   file: null,
   result: null,
@@ -9,14 +9,14 @@ const IDLE_UPLOAD_TRANSCRIPTION_STATE = Object.freeze({
   selectedFolderId: "",
 });
 
-function createInitialUploadTranscriptionState(overrides = {}) {
+export function createInitialUploadTranscriptionState(overrides = {}) {
   return {
     ...IDLE_UPLOAD_TRANSCRIPTION_STATE,
     ...overrides,
   };
 }
 
-function startUploadTask(current, file, options = {}) {
+export function startUploadTask(current, file, options = {}) {
   return {
     ...current,
     state: "transcribing",
@@ -30,7 +30,7 @@ function startUploadTask(current, file, options = {}) {
   };
 }
 
-function selectUploadFile(current, file) {
+export function selectUploadFile(current, file) {
   return {
     ...current,
     state: "selected",
@@ -43,7 +43,7 @@ function selectUploadFile(current, file) {
   };
 }
 
-function completeUploadTask(current, options) {
+export function completeUploadTask(current, options) {
   return {
     ...current,
     state: "complete",
@@ -56,7 +56,7 @@ function completeUploadTask(current, options) {
   };
 }
 
-function failUploadTask(current, error) {
+export function failUploadTask(current, error) {
   return {
     ...current,
     state: "error",
@@ -66,13 +66,13 @@ function failUploadTask(current, error) {
   };
 }
 
-function resetUploadTask(_current, options = {}) {
+export function resetUploadTask(_current, options = {}) {
   return createInitialUploadTranscriptionState({
     selectedFolderId: options.defaultFolderId ?? "",
   });
 }
 
-function buildUploadNoteSaveArgs({ title, transcript, fileName, folderId }) {
+export function buildUploadNoteSaveArgs({ title, transcript, fileName, folderId }) {
   return {
     title,
     content: transcript,
@@ -84,7 +84,7 @@ function buildUploadNoteSaveArgs({ title, transcript, fileName, folderId }) {
   };
 }
 
-module.exports = {
+export default {
   IDLE_UPLOAD_TRANSCRIPTION_STATE,
   createInitialUploadTranscriptionState,
   selectUploadFile,

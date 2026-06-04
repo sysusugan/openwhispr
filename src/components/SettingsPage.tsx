@@ -144,7 +144,7 @@ function SettingsPanel({
 }) {
   return (
     <div
-      className={`rounded-lg border border-border/50 dark:border-border-subtle/70 bg-card/50 dark:bg-surface-2/50 backdrop-blur-sm divide-y divide-border/30 dark:divide-border-subtle/50 ${className}`}
+      className={`ow-panel divide-y divide-border/50 dark:divide-white/8 ${className}`}
     >
       {children}
     </div>
@@ -160,17 +160,15 @@ function SettingsPanelRow({
 }) {
   const { isCompact } = useSettingsLayout();
 
-  return (
-    <div className={`${isCompact ? "px-3 py-2.5" : "px-4 py-3"} ${className}`}>{children}</div>
-  );
+  return <div className={`${isCompact ? "px-3 py-2.5" : "px-4 py-3.5"} ${className}`}>{children}</div>;
 }
 
 function SectionHeader({ title, description }: { title: string; description?: string }) {
   return (
     <div className="mb-3">
-      <h3 className="text-xs font-semibold text-foreground tracking-tight">{title}</h3>
+      <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
       {description && (
-        <p className="text-xs text-muted-foreground/80 mt-0.5 leading-relaxed">{description}</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
       )}
     </div>
   );
@@ -1514,7 +1512,7 @@ export default function SettingsPage({
                 <SettingsPanel>
                   <SettingsPanelRow>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-primary/10 dark:bg-primary/15">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-foreground/[0.06] dark:bg-white/[0.08]">
                         {user.image ? (
                           <img
                             src={user.image}
@@ -1522,7 +1520,7 @@ export default function SettingsPage({
                             className="w-10 h-10 rounded-full object-cover"
                           />
                         ) : (
-                          <UserCircle className="w-5 h-5 text-primary" />
+                          <UserCircle className="w-5 h-5 text-foreground/55" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1589,10 +1587,10 @@ export default function SettingsPage({
                   </SettingsPanelRow>
                 </SettingsPanel>
 
-                <div className="rounded-lg border border-primary/20 dark:border-primary/15 bg-primary/3 dark:bg-primary/6 p-4">
+                <div className="rounded-md border border-border/60 bg-background p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
-                      <Sparkles className="w-4 h-4 text-primary" />
+                    <div className="w-8 h-8 rounded-md bg-foreground/[0.04] border border-border/70 flex items-center justify-center shrink-0 mt-0.5">
+                      <Sparkles className="w-4 h-4 text-foreground/45" />
                     </div>
                     <div className="min-w-0 flex-1 space-y-2.5">
                       <div>
@@ -1603,7 +1601,7 @@ export default function SettingsPage({
                           {t("settingsPage.account.trialCta.description")}
                         </p>
                       </div>
-                      <Button onClick={startOnboarding} size="sm" className="w-full">
+                      <Button onClick={startOnboarding} variant="outline" size="sm" className="w-full">
                         <UserCircle className="mr-1.5 h-3.5 w-3.5" />
                         {t("settingsPage.account.trialCta.button")}
                       </Button>
@@ -1656,8 +1654,8 @@ export default function SettingsPage({
                     className={cn(
                       "rounded-md p-2.5 flex flex-col",
                       !usage?.isSubscribed && !usage?.isTrial
-                        ? "border-2 border-primary/30 bg-primary/3 dark:border-primary/20 dark:bg-primary/5"
-                        : "border border-border/50 dark:border-border-subtle/60 bg-card/30 dark:bg-surface-2/30"
+                        ? "border-2 border-border-hover bg-foreground/[0.03] dark:border-white/15 dark:bg-white/[0.04]"
+                        : "border border-border/60 dark:border-border-subtle/60 bg-background dark:bg-surface-2/30"
                     )}
                   >
                     <p className="text-xs font-semibold text-foreground">
@@ -1689,7 +1687,7 @@ export default function SettingsPage({
                             key={i}
                             className="flex items-start gap-1 text-[10px] text-muted-foreground leading-tight"
                           >
-                            <Check size={9} className="mt-[2px] text-primary/70 shrink-0" />
+                            <Check size={9} className="mt-[2px] text-foreground/55 shrink-0" />
                             {feature}
                           </li>
                         )
@@ -1715,7 +1713,7 @@ export default function SettingsPage({
                       </Button>
                     ) : (
                       <div className="mt-2 text-center">
-                        <span className="text-[9px] font-medium text-primary/70">
+                        <span className="text-[9px] font-medium text-foreground/60">
                           {t("settingsPage.account.pricing.currentPlan")}
                         </span>
                       </div>
@@ -1727,8 +1725,8 @@ export default function SettingsPage({
                     className={cn(
                       "rounded-md border-2 p-2.5 flex flex-col",
                       usage?.isSubscribed && usage?.plan === "pro"
-                        ? "border-primary/40 bg-primary/5 dark:border-primary/30 dark:bg-primary/8"
-                        : "border-primary/20 bg-primary/2 dark:border-primary/15 dark:bg-primary/3"
+                        ? "border-border-hover bg-foreground/[0.04] dark:border-white/15 dark:bg-white/[0.06]"
+                        : "border-border/70 bg-background dark:border-white/10 dark:bg-white/[0.03]"
                     )}
                   >
                     <p className="text-xs font-semibold text-foreground">
@@ -1741,7 +1739,7 @@ export default function SettingsPage({
                       className="flex items-center gap-1.5 mt-1"
                     >
                       <div
-                        className={`relative w-7 h-4 rounded-full transition-colors ${billingState.pro ? "bg-primary" : "bg-muted"}`}
+                        className={`relative w-7 h-4 rounded-full transition-colors ${billingState.pro ? "bg-foreground/70" : "bg-muted"}`}
                       >
                         <div
                           className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${billingState.pro ? "translate-x-3" : ""}`}
@@ -1774,7 +1772,7 @@ export default function SettingsPage({
                           key={i}
                           className="flex items-start gap-1 text-[10px] text-muted-foreground leading-tight"
                         >
-                          <Check size={9} className="mt-[2px] text-primary shrink-0" />
+                          <Check size={9} className="mt-[2px] text-foreground/55 shrink-0" />
                           {feature}
                         </li>
                       ))}
@@ -1782,7 +1780,7 @@ export default function SettingsPage({
                     {(usage?.isSubscribed && usage?.plan === "pro" && !usage?.isTrial) ||
                     usage?.isTrial ? (
                       <div className="mt-2 text-center">
-                        <span className="text-[9px] font-medium text-primary">
+                        <span className="text-[9px] font-medium text-foreground/60">
                           {t("settingsPage.account.pricing.currentPlan")}
                         </span>
                       </div>
@@ -1821,8 +1819,8 @@ export default function SettingsPage({
                   </div>
 
                   {/* Business */}
-                  <div className="rounded-md border-2 border-primary/50 bg-primary/8 dark:border-primary/40 dark:bg-primary/10 p-2.5 flex flex-col relative">
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[8px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-sm">
+                  <div className="rounded-md border-2 border-border-hover bg-foreground/[0.04] dark:border-white/15 dark:bg-white/[0.06] p-2.5 flex flex-col relative">
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-foreground text-background text-[8px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap shadow-sm">
                       {t("settingsPage.account.pricing.business.badge")}
                     </span>
                     <p className="text-xs font-semibold text-foreground">
@@ -1837,7 +1835,7 @@ export default function SettingsPage({
                       className="flex items-center gap-1.5 mt-1"
                     >
                       <div
-                        className={`relative w-7 h-4 rounded-full transition-colors ${billingState.business ? "bg-primary" : "bg-muted"}`}
+                        className={`relative w-7 h-4 rounded-full transition-colors ${billingState.business ? "bg-foreground/70" : "bg-muted"}`}
                       >
                         <div
                           className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white transition-transform ${billingState.business ? "translate-x-3" : ""}`}
@@ -1870,14 +1868,14 @@ export default function SettingsPage({
                           key={i}
                           className="flex items-start gap-1 text-[10px] text-muted-foreground leading-tight"
                         >
-                          <Check size={9} className="mt-[2px] text-primary shrink-0" />
+                          <Check size={9} className="mt-[2px] text-foreground/55 shrink-0" />
                           {feature}
                         </li>
                       ))}
                     </ul>
                     {usage?.isSubscribed && usage?.plan === "business" && !usage?.isTrial ? (
                       <div className="mt-2 text-center">
-                        <span className="text-[9px] font-medium text-primary">
+                        <span className="text-[9px] font-medium text-foreground/60">
                           {t("settingsPage.account.pricing.currentPlan")}
                         </span>
                       </div>
@@ -2160,7 +2158,7 @@ export default function SettingsPage({
                                     ? "[&>div]:bg-destructive"
                                     : usage.isApproachingLimit
                                       ? "[&>div]:bg-warning"
-                                      : "[&>div]:bg-primary"
+                                      : "[&>div]:bg-foreground/55"
                                 )}
                               />
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -2307,7 +2305,7 @@ export default function SettingsPage({
                     label={t("settingsPage.general.appearance.theme")}
                     description={t("settingsPage.general.appearance.themeDescription")}
                   >
-                    <div className="inline-flex items-center gap-px p-0.5 bg-muted/60 dark:bg-surface-2 rounded-md">
+                    <div className="ow-segmented inline-flex items-center gap-0.5">
                       {(
                         [
                           {
@@ -2333,17 +2331,9 @@ export default function SettingsPage({
                           <button
                             key={option.value}
                             onClick={() => setTheme(option.value)}
-                            className={`
-                              flex items-center gap-1 px-2.5 py-1 rounded-[5px] text-xs font-medium
-                              transition-colors duration-100
-                              ${
-                                isSelected
-                                  ? "bg-background dark:bg-surface-raised text-foreground shadow-sm"
-                                  : "text-muted-foreground hover:text-foreground"
-                              }
-                            `}
+                            className={`ow-segmented-item ${isSelected ? "ow-segmented-item-active" : ""}`}
                           >
-                            <Icon className={`w-3 h-3 ${isSelected ? "text-primary" : ""}`} />
+                            <Icon className="w-3 h-3" />
                             {option.label}
                           </button>
                         );
@@ -2571,7 +2561,7 @@ export default function SettingsPage({
                           e.target.value as "bottom-right" | "center" | "bottom-left"
                         )
                       }
-                      className="h-7 rounded border border-border/70 bg-surface-1/80 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:border-border-hover hover:bg-surface-2/70 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:ring-offset-1 transition-colors duration-200"
+                      className="h-7 rounded border border-border/70 bg-surface-1/80 px-2.5 text-xs font-medium text-foreground shadow-sm hover:border-border-hover hover:bg-surface-2/70 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:ring-offset-1 transition-colors duration-200"
                     >
                       <option value="bottom-right">
                         {t("settingsPage.general.floatingIcon.bottomRight")}
@@ -3045,7 +3035,7 @@ EOF`,
                         </SettingsPanel>
                       ) : (
                         <>
-                          <div className="rounded-xl border border-border overflow-hidden">
+                          <div className="rounded-md border border-border/70 bg-background overflow-hidden">
                             <div className="divide-y divide-border">
                               {checks.map((item) => (
                                 <div key={item.key} className="px-4 py-3">
@@ -3113,7 +3103,7 @@ EOF`,
                                 {activeGuide.steps.map((step, i) => (
                                   <div key={i}>
                                     <div className="flex items-start gap-3">
-                                      <span className="shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                                      <span className="shrink-0 w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-semibold">
                                         {i + 1}
                                       </span>
                                       <div className="flex-1 min-w-0">
@@ -3355,7 +3345,7 @@ EOF`,
                       </div>
                       <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
                         <div
-                          className="h-full bg-primary transition-all duration-300 ease-out"
+                          className="h-full bg-foreground/55 transition-all duration-300 ease-out"
                           style={{ width: `${(migration.done / migration.total) * 100}%` }}
                         />
                       </div>
@@ -3426,7 +3416,7 @@ EOF`,
                     <select
                       value={audioRetentionDays}
                       onChange={(e) => setAudioRetentionDays(parseInt(e.target.value, 10))}
-                      className="h-7 rounded border border-border/70 bg-surface-1/80 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm hover:border-border-hover hover:bg-surface-2/70 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:ring-offset-1 transition-colors duration-200"
+                      className="h-7 rounded border border-border/70 bg-surface-1/80 px-2.5 text-xs font-medium text-foreground shadow-sm hover:border-border-hover hover:bg-surface-2/70 focus:outline-none focus:ring-2 focus:ring-ring/30 focus:ring-offset-1 transition-colors duration-200"
                     >
                       <option value={0}>{t("settingsPage.privacy.audioRetentionDisabled")}</option>
                       <option value={7}>

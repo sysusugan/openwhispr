@@ -73,7 +73,7 @@ export default function ActionProcessingOverlay({
           isSuccess
             ? "bg-success/6 dark:bg-success/8 border-success/12 dark:border-success/15"
             : "bg-accent/6 dark:bg-accent/8 border-accent/12 dark:border-accent/15",
-          "backdrop-blur-xl border rounded-xl px-6 py-3 shadow-elevated",
+          "border rounded-md px-6 py-3 shadow-lg",
           "transition-colors duration-300"
         )}
       >

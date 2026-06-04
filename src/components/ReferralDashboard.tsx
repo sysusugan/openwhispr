@@ -176,7 +176,7 @@ function StatGauge({
       className={cn(
         "stat-gauge rounded-md px-3 py-2.5",
         "bg-foreground/3 border border-foreground/6",
-        "backdrop-blur-sm"
+        ""
       )}
       data-active={mounted && value > 0 ? "true" : "false"}
     >
@@ -335,21 +335,7 @@ export function ReferralDashboard() {
   }
 
   return (
-    <div className="relative bg-card">
-      {/* Animated mesh gradient background */}
-      <div className="referral-mesh-bg">
-        <div
-          className="absolute w-50 h-50 rounded-full blur-[80px] opacity-3"
-          style={{
-            background: "oklch(0.55 0.2 320)",
-            top: "40%",
-            left: "15%",
-            animation: "mesh-drift 25s ease-in-out infinite alternate",
-            animationDelay: "-8s",
-          }}
-        />
-      </div>
-
+    <div className="relative bg-background">
       <div className="relative z-10 px-7 pt-7 pb-6">
         <h2 className="text-xl font-bold tracking-tight leading-tight text-foreground">
           {t("referral.title")}

@@ -9,10 +9,10 @@ interface ToggleProps {
 export const Toggle = ({ checked, onChange, disabled = false }: ToggleProps) => {
   const getTrackClasses = () => {
     if (disabled) {
-      return checked ? "bg-primary/40" : "bg-muted";
+      return checked ? "bg-foreground/30" : "bg-muted";
     }
     return checked
-      ? "bg-primary hover:bg-primary/90"
+      ? "bg-foreground/75 hover:bg-foreground/85 dark:bg-white/45 dark:hover:bg-white/55"
       : "bg-muted-foreground/30 hover:bg-muted-foreground/40 dark:bg-surface-raised dark:hover:bg-surface-3";
   };
 

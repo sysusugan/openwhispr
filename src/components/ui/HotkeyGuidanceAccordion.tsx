@@ -166,7 +166,7 @@ export function HotkeyGuidanceAccordion({
   };
 
   return (
-    <div className={`border border-gray-200 rounded-xl bg-gray-50 p-4 ${className}`}>
+    <div className={`border border-gray-200 rounded-md bg-gray-50 p-4 ${className}`}>
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-gray-900">{t("hotkeyGuidance.title")}</h3>
         <p className="text-xs text-gray-600">{t("hotkeyGuidance.description")}</p>

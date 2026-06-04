@@ -150,6 +150,12 @@ export function useChatStreaming({
       setAgentState("streaming");
 
       try {
+        if (chatAgentMode === "openwhispr" && !settings.isSignedIn) {
+          throw new Error(
+            "聊天当前配置为 OpenWhispr 云端，但当前没有有效登录态。请登录，或在设置里把聊天模型切到 Providers/本地模型。"
+          );
+        }
+
         let fullContent = "";
         let contentAfterToolResult = "";
         let sawToolResult = false;
@@ -315,12 +321,17 @@ export function useChatStreaming({
 
         onStreamComplete?.(assistantId, fullContent, toolCallsSnapshot);
       } catch (error) {
+        const rawMessage = (error as Error).message;
+        const routedMessage =
+          chatAgentMode === "providers" && settings.chatAgentProvider
+            ? `${settings.chatAgentProvider} / ${settings.chatAgentModel}: ${rawMessage}`
+            : rawMessage;
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
               ? {
                   ...m,
-                  content: `${t("agentMode.chat.errorPrefix")}: ${(error as Error).message}`,
+                  content: `${t("agentMode.chat.errorPrefix")}: ${routedMessage}`,
                   isStreaming: false,
                 }
               : m

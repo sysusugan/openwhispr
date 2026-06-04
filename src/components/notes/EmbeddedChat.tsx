@@ -203,7 +203,7 @@ export default function EmbeddedChat({
   const chatContent = (
     <>
       {header}
-      <div className="flex-1 min-h-0 flex flex-col **:data-chat-bubble:max-w-full">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col overflow-x-hidden **:data-chat-bubble:max-w-full">
         <ChatMessages
           messages={messages}
           emptyState={<EmptyState />}
@@ -234,14 +234,13 @@ export default function EmbeddedChat({
     return (
       <div
         className={cn(
-          "absolute bottom-4 left-5 right-5 z-20",
+          "absolute bottom-4 left-5 right-5 z-20 max-w-[calc(100%-2.5rem)]",
           "max-h-[calc(100%-2rem)] min-h-50",
-          "flex flex-col",
+          "flex min-w-0 flex-col overflow-hidden",
           "bg-background/95 dark:bg-surface-2/95",
           "border border-border/20 dark:border-white/8",
-          "rounded-xl",
-          "shadow-elevated",
-          "backdrop-blur-2xl",
+          "rounded-md",
+          "shadow-lg",
           "animate-[scale-in_200ms_ease-out]"
         )}
       >
@@ -253,10 +252,10 @@ export default function EmbeddedChat({
   return (
     <div
       className={cn(
-        "w-85 shrink-0",
+        "w-85 max-w-[40%] shrink-0",
         "border-l border-border/25 dark:border-white/10",
         "bg-surface-1 dark:bg-surface-2",
-        "flex flex-col",
+        "flex min-w-0 flex-col overflow-hidden",
         "min-h-0"
       )}
     >

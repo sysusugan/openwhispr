@@ -173,7 +173,7 @@ function GpuStatusBadge() {
       <div className="flex items-center gap-2 mt-2 px-1">
         <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary transition-all"
+            className="h-full bg-foreground/55 transition-all"
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
@@ -209,7 +209,7 @@ function GpuStatusBadge() {
   if (activating) {
     return (
       <div className="flex items-center gap-1.5 mt-2 px-1">
-        <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0 bg-primary animate-pulse" />
+        <span className="inline-block w-1.5 h-1.5 rounded-full shrink-0 bg-foreground/55 animate-pulse" />
         <span className="text-xs text-muted-foreground">{t("gpu.activating")}</span>
       </div>
     );
@@ -247,7 +247,7 @@ function GpuStatusBadge() {
     return (
       <div className="flex items-center gap-1.5 mt-2 px-1">
         <span
-          className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${isGpu ? "bg-success" : "bg-primary"}`}
+          className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${isGpu ? "bg-success" : "bg-foreground/55"}`}
         />
         <span className="text-xs text-muted-foreground">
           {isGpu ? t("gpu.active") : t("gpu.ready")}
@@ -266,16 +266,16 @@ function GpuStatusBadge() {
   // State 7: GPU available, not downloaded — show banner
   if (gpuResult?.available && !dismissed) {
     return (
-      <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 p-2.5">
+      <div className="mt-2 rounded-md border border-border/70 bg-muted/30 p-2.5">
         <div className="flex items-start gap-2.5">
-          <Zap size={13} className="text-primary shrink-0 mt-0.5" />
+          <Zap size={13} className="text-foreground/45 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-foreground">{t("gpu.reasoningBanner")}</p>
             <div className="flex items-center gap-2 mt-1.5">
               <Button
                 onClick={handleDownload}
                 size="sm"
-                variant="default"
+                variant="outline"
                 className="h-6 px-2.5 text-xs"
               >
                 {t("gpu.enableButton")}

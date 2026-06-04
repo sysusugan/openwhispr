@@ -1,8 +1,6 @@
 import type { ReasoningConfig } from "../BaseReasoningService";
 import { getCloudModel, getLocalModel } from "../../models/ModelRegistry";
-import thinkingSuppressionPolicy from "./thinkingSuppressionPolicy.js";
-
-const { applyThinkingSuppressionFields } = thinkingSuppressionPolicy;
+import { applyThinkingSuppressionFields } from "./thinkingSuppressionPolicyCompat";
 
 // Strict OpenAI-compatible servers (DeepSeek, LM Studio, vLLM, LocalAI) reject
 // unknown fields like `think` with "property 'think' is unsupported". Only

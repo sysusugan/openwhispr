@@ -39,13 +39,13 @@ export default function PermissionCard({
             "w-8 h-8 rounded-md flex items-center justify-center shrink-0 transition-colors duration-150",
             granted
               ? "bg-success/10 dark:bg-success/15"
-              : "bg-primary/10 dark:bg-primary/15 group-hover:bg-primary/15"
+              : "bg-foreground/[0.04] border border-border/70 group-hover:bg-foreground/[0.06]"
           )}
         >
           {granted ? (
             <Check className="w-4 h-4 text-success" strokeWidth={2.5} />
           ) : (
-            <Icon className="w-4 h-4 text-primary" />
+            <Icon className="w-4 h-4 text-foreground/45" />
           )}
         </div>
 
@@ -62,7 +62,7 @@ export default function PermissionCard({
         </div>
 
         {!granted && (
-          <Button onClick={onRequest} size="sm" className="h-7 px-3 text-xs shrink-0">
+          <Button onClick={onRequest} variant="outline" size="sm" className="h-7 px-3 text-xs shrink-0">
             {buttonText}
           </Button>
         )}

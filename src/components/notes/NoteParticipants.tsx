@@ -172,9 +172,9 @@ export default function NoteParticipants({ noteId, participants }: NoteParticipa
       }}
     >
       <PopoverTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 text-[11px] px-1.5 py-0.5 rounded-md border border-border/70 dark:border-white/25 text-foreground/50 dark:text-foreground/35 hover:text-foreground/60 hover:border-border/60 hover:bg-foreground/3 dark:hover:text-foreground/40 dark:hover:border-white/10 dark:hover:bg-white/3 transition-all duration-150 cursor-pointer outline-none">
+        <button className="inline-flex h-6 max-w-40 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors duration-150 hover:border-border hover:bg-muted/70 hover:text-foreground cursor-pointer outline-none">
           <Users size={11} className="shrink-0" />
-          {chipLabel}
+          <span className="truncate">{chipLabel}</span>
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0">

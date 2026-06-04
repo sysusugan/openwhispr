@@ -1,7 +1,13 @@
 import React, { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
-import { Download, RefreshCw, Loader2, AlertTriangle, Zap, ChevronLeft } from "lucide-react";
+import {
+  Download,
+  RefreshCw,
+  Loader2,
+  AlertTriangle,
+  Zap,
+} from "lucide-react";
 import UpgradePrompt from "./UpgradePrompt";
 import PostMigrationOnboarding from "./PostMigrationOnboarding";
 import { ConfirmDialog, AlertDialog } from "./ui/dialog";
@@ -28,7 +34,7 @@ import {
 import ControlPanelSidebar, { type ControlPanelView } from "./ControlPanelSidebar";
 import MeetingRecordingMount from "./MeetingRecordingMount";
 import MeetingRecordingPill from "./notes/MeetingRecordingPill";
-import WindowControls from "./WindowControls";
+import { cn } from "./lib/utils";
 
 import { getCachedPlatform } from "../utils/platform";
 import { isAccessibilitySkipped } from "../utils/permissions";
@@ -77,6 +83,7 @@ export default function ControlPanel() {
   const [showSearch, setShowSearch] = useState(false);
   const [showCloudMigrationBanner, setShowCloudMigrationBanner] = useState(false);
   const [activeView, setActiveView] = useState<ControlPanelView>("home");
+  const [isPrimarySidebarCollapsed, setIsPrimarySidebarCollapsed] = useState(false);
   const isMeetingMode = useIsMeetingMode();
   const isNarrowWindow = useIsNarrowWindow();
   const activeNoteId = useActiveNoteId();
@@ -371,10 +378,6 @@ export default function ControlPanel() {
     () => setMeetingRecordingRequest(null),
     []
   );
-
-  const handleExitMeetingMode = useCallback(() => {
-    window.electronAPI?.restoreFromMeetingMode?.();
-  }, []);
 
   const copyToClipboard = useCallback(
     async (text: string) => {
@@ -709,14 +712,18 @@ export default function ControlPanel() {
         </Suspense>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 overflow-hidden">
         <div
-          className="shrink-0 overflow-hidden transition-[width] duration-300 ease-out"
-          style={{ width: isSidePanelLayout ? 0 : undefined }}
+          className="shrink-0 overflow-hidden transition-[width] duration-300 ease-out border-r border-border bg-sidebar"
+          style={{
+            width: isSidePanelLayout ? 0 : isPrimarySidebarCollapsed ? "4.5rem" : "14rem",
+          }}
         >
           <ControlPanelSidebar
             activeView={activeView}
             onViewChange={setActiveView}
+            collapsed={isPrimarySidebarCollapsed}
+            onCollapsedChange={setIsPrimarySidebarCollapsed}
             onOpenSearch={() => setShowSearch(true)}
             onOpenSettings={() => {
               setSettingsSection(undefined);
@@ -754,35 +761,17 @@ export default function ControlPanel() {
             }
           />
         </div>
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="min-w-0 flex-1 flex flex-col overflow-hidden bg-background">
           <div
-            className="flex items-center justify-between w-full h-10 shrink-0"
+            className="h-10 shrink-0 bg-background"
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+          />
+          <div
+            className={cn(
+              "min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background",
+              activeView === "chat" || activeView === "personal-notes" ? "p-0" : "p-5"
+            )}
           >
-            {isSidePanelLayout && (
-              <div
-                className={platform === "darwin" ? "ml-[84px] mt-[16px]" : "ml-2"}
-                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
-              >
-                <Button
-                  variant="outline-flat"
-                  size="sm"
-                  onClick={handleExitMeetingMode}
-                  className="h-7 px-2.5 pl-1.5 gap-1"
-                >
-                  <ChevronLeft size={14} strokeWidth={1.8} />
-                  {t("controlPanel.backToNotes")}
-                </Button>
-              </div>
-            )}
-            <div className="flex-1" />
-            {platform !== "darwin" && (
-              <div className="pr-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
-                <WindowControls />
-              </div>
-            )}
-          </div>
-          <div className="flex-1 overflow-y-auto pt-1">
             {usage?.isPastDue && activeView === "home" && (
               <div className="max-w-3xl mx-auto w-full mb-3">
                 <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 p-3">
@@ -800,7 +789,7 @@ export default function ControlPanel() {
                         })}
                       </p>
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="sm"
                         className="h-7 text-xs"
                         onClick={() => {
@@ -819,10 +808,10 @@ export default function ControlPanel() {
               activeView === "home" &&
               !gpuBannerDismissed && (
                 <div className="max-w-3xl mx-auto w-full mb-3">
-                  <div className="rounded-lg border border-primary/20 dark:border-primary/15 bg-primary/5 p-3">
+                  <div className="rounded-md border border-border/70 bg-background p-3">
                     <div className="flex items-start gap-3">
-                      <div className="shrink-0 w-8 h-8 rounded-md bg-primary/10 dark:bg-primary/15 flex items-center justify-center">
-                        <Zap size={16} className="text-primary" />
+                      <div className="shrink-0 w-8 h-8 rounded-md bg-muted border border-border/60 flex items-center justify-center">
+                        <Zap size={16} className="text-muted-foreground" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-foreground mb-0.5">
@@ -833,7 +822,7 @@ export default function ControlPanel() {
                         </p>
                         <div className="flex items-center gap-3">
                           <Button
-                            variant="default"
+                            variant="outline"
                             size="sm"
                             className="h-7 text-xs"
                             onClick={() => {

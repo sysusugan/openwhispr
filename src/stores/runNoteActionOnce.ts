@@ -1,6 +1,11 @@
 import reasoningService from "../services/ReasoningService";
+import type { ReasoningConfig } from "../services/BaseReasoningService";
 import type { ActionItem, NoteItem } from "../types/electron";
-import { getSettings } from "./settingsStore";
+import {
+  getSettings,
+  selectIsCloudNoteFormattingMode,
+  selectResolvedNoteFormatting,
+} from "./settingsStore";
 import { buildNoteActionSystemPrompt } from "./noteActionPrompt";
 import { generateNoteTitle } from "../utils/generateTitle";
 import { buildNoteActionInput } from "../components/notes/noteActionInput";
@@ -29,10 +34,6 @@ export async function runNoteActionOnce({
   isCloudMode,
   speakerLabels,
 }: RunNoteActionOnceInput): Promise<RunNoteActionOnceResult> {
-  if (!modelId && !isCloudMode) {
-    throw new Error("No AI model selected");
-  }
-
   const actionInput = buildNoteActionInput({
     noteContent: note.content,
     rawTranscript: note.transcript,
@@ -43,17 +44,44 @@ export async function runNoteActionOnce({
   }
 
   const settings = getSettings();
+  const resolvedFormatting = selectResolvedNoteFormatting(settings);
+  const isOpenWhisprCloud = isCloudMode || selectIsCloudNoteFormattingMode(settings);
+  const selectedModel = modelId || resolvedFormatting.model;
   const systemPrompt = buildNoteActionSystemPrompt(action.prompt, {
     isMeetingNote: actionInput.isMeetingNote,
     customDictionary: settings.customDictionary,
     uiLanguage: settings.uiLanguage,
   });
 
-  const generatedContent = await reasoningService.processText(actionInput.content, modelId, null, {
+  const reasoningConfig: ReasoningConfig = {
     systemPrompt,
     temperature: 0.3,
     disableThinking: settings.noteFormattingDisableThinking,
-  });
+  };
+
+  if (isOpenWhisprCloud) {
+    reasoningConfig.provider = "openwhispr";
+  } else if (resolvedFormatting.mode === "self-hosted" && resolvedFormatting.remoteUrl) {
+    reasoningConfig.lanUrl = resolvedFormatting.remoteUrl;
+  } else if (resolvedFormatting.mode === "providers" || resolvedFormatting.mode === "enterprise") {
+    reasoningConfig.provider = resolvedFormatting.provider || undefined;
+  }
+
+  if (resolvedFormatting.provider === "custom") {
+    reasoningConfig.baseUrl = resolvedFormatting.cloudBaseUrl;
+    reasoningConfig.customApiKey = settings.noteFormattingCustomApiKey;
+  }
+
+  if (!selectedModel && !isOpenWhisprCloud && !reasoningConfig.lanUrl) {
+    throw new Error("No AI model selected");
+  }
+
+  const generatedContent = await reasoningService.processText(
+    actionInput.content,
+    selectedModel,
+    null,
+    reasoningConfig
+  );
 
   const updates = buildActionOutputUpdates({
     outputTarget: action.output_target,
@@ -68,9 +96,10 @@ export async function runNoteActionOnce({
   if (settings.autoGenerateNoteTitle && shouldAutoGenerateActionTitle(note.title)) {
     const title = await generateNoteTitle(
       generatedContent,
-      modelId,
+      selectedModel,
       settings.customDictionary,
-      settings.uiLanguage
+      settings.uiLanguage,
+      reasoningConfig
     );
     if (title) updates.title = title;
   }

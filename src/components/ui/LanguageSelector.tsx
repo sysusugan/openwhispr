@@ -159,12 +159,12 @@ export default function LanguageSelector({
           group relative w-full flex items-center justify-between gap-2
           h-7 px-2.5 text-left
           rounded text-xs font-medium
-          border shadow-sm backdrop-blur-sm
+          border shadow-sm
           transition-[background-color,border-color,transform] duration-200 ease-out
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:ring-offset-1
           ${
             isOpen
-              ? "border-border-active bg-surface-2/90 shadow ring-1 ring-primary/20"
+              ? "border-border-active bg-surface-2/90 shadow ring-1 ring-border-hover"
               : "border-border/70 bg-surface-1/80 hover:border-border-hover hover:bg-surface-2/70 hover:shadow active:scale-[0.985]"
           }
         `}
@@ -179,7 +179,7 @@ export default function LanguageSelector({
         </span>
         <ChevronDown
           className={`w-3.5 h-3.5 shrink-0 text-muted-foreground transition-[color,transform] duration-200 ${
-            isOpen ? "rotate-180 text-primary" : "group-hover:text-foreground"
+            isOpen ? "rotate-180 text-foreground" : "group-hover:text-foreground"
           }`}
         />
       </button>
@@ -196,7 +196,7 @@ export default function LanguageSelector({
               left: `${dropdownPosition.left}px`,
               width: `${dropdownPosition.width}px`,
             }}
-            className="z-9999 bg-popover/95 backdrop-blur-xl border border-border/70 rounded shadow-xl overflow-hidden"
+            className="z-9999 bg-popover border border-border/70 rounded-md shadow-lg overflow-hidden"
           >
             {showSearch && (
               <div className="px-2 pt-2 pb-1.5 border-b border-border/50">
@@ -247,7 +247,7 @@ export default function LanguageSelector({
                           rounded transition-[background-color,color,transform] duration-150 ease-out
                           ${
                             isSelected
-                              ? "bg-primary/15 text-primary shadow-sm"
+                              ? "bg-foreground/[0.06] text-foreground shadow-sm"
                               : isHighlighted
                                 ? "bg-muted/70 text-foreground"
                                 : "text-foreground hover:bg-muted/50 active:scale-[0.98]"

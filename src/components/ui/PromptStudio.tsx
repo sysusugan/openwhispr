@@ -190,8 +190,8 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
       />
 
       {/* Tab Navigation + Content in a single panel */}
-      <div className="rounded-xl border border-border/60 dark:border-border-subtle bg-card dark:bg-surface-2 overflow-hidden">
-        <div className="flex border-b border-border/40 dark:border-border-subtle">
+      <div className="ow-panel">
+        <div className="grid grid-cols-3 gap-0.5 border-b ow-panel-section bg-muted/35 p-1 dark:bg-white/[0.03]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -199,14 +199,14 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-medium transition-colors duration-150 border-b-2 ${
+                className={`ow-segmented-item h-9 w-full px-3 ${
                   isActive
-                    ? "border-primary text-foreground bg-primary/5 dark:bg-primary/3"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-black/2 dark:hover:bg-white/2"
+                    ? "ow-segmented-item-active"
+                    : "hover:bg-background/80 dark:hover:bg-white/[0.06]"
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
-                {tab.label}
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
@@ -214,7 +214,7 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
 
         {/* ── View Tab ── */}
         {activeTab === "current" && (
-          <div className="divide-y divide-border/40 dark:divide-border-subtle">
+          <div className="divide-y ow-panel-section">
             <div className="px-5 py-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
                       : t("promptStudio.view.defaultPrompt")}
                   </p>
                   {isCustomPrompt && (
-                    <span className="text-xs font-semibold uppercase tracking-wider px-1.5 py-px rounded-full bg-primary/10 text-primary">
+                    <span className="text-xs font-semibold uppercase tracking-wider px-1.5 py-px rounded-full bg-foreground/[0.06] text-foreground/70">
                       {t("promptStudio.view.modified")}
                     </span>
                   )}
@@ -247,7 +247,7 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
                   )}
                 </Button>
               </div>
-              <div className="bg-muted/30 dark:bg-surface-raised/30 border border-border/30 rounded-lg p-4 max-h-80 overflow-y-auto">
+              <div className="rounded-md border border-border/50 bg-muted/30 p-4 max-h-80 overflow-y-auto dark:bg-surface-raised/30">
                 <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap leading-relaxed">
                   {currentPrompt.replace(/\{\{agentName\}\}/g, agentName)}
                 </pre>
@@ -258,7 +258,7 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
 
         {/* ── Edit Tab ── */}
         {activeTab === "edit" && (
-          <div className="divide-y divide-border/40 dark:divide-border-subtle">
+          <div className="divide-y ow-panel-section">
             <div className="px-5 py-4">
               <p className="text-xs text-muted-foreground leading-relaxed">
                 <span className="font-medium text-warning">
@@ -322,10 +322,10 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
                 : providerConfig.label;
 
             return (
-              <div className="divide-y divide-border/40 dark:divide-border-subtle">
+              <div className="divide-y ow-panel-section">
                 {!useCleanupModel && (
                   <div className="px-5 py-4">
-                    <div className="rounded-lg border border-warning/20 bg-warning/5 dark:bg-warning/10 px-4 py-3">
+                    <div className="rounded-md border border-border/60 bg-muted/30 px-4 py-3">
                       <div className="flex items-start gap-2.5">
                         <AlertTriangle className="w-3.5 h-3.5 text-warning mt-0.5 shrink-0" />
                         <p className="text-xs text-muted-foreground leading-relaxed">
@@ -369,7 +369,7 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
                       <span
                         className={`text-xs font-medium uppercase tracking-wider px-1.5 py-px rounded ${
                           isAgentAddressed
-                            ? "bg-primary/10 text-primary dark:bg-primary/15"
+                            ? "bg-foreground/[0.06] text-foreground/75 dark:bg-white/[0.08]"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -418,7 +418,7 @@ export default function PromptStudio({ className = "", kind = "cleanup" }: Promp
                         <Copy className="w-3 h-3 text-muted-foreground" />
                       </Button>
                     </div>
-                    <div className="bg-muted/30 dark:bg-surface-raised/30 border border-border/30 rounded-lg p-4 max-h-48 overflow-y-auto">
+                    <div className="rounded-md border border-border/50 bg-muted/30 p-4 max-h-48 overflow-y-auto dark:bg-surface-raised/30">
                       <pre className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
                         {testResult}
                       </pre>

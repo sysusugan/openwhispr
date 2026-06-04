@@ -29,12 +29,12 @@ export function DownloadProgressBar({
       <div className="flex items-center gap-2 mb-2">
         <div className="relative flex items-center justify-center h-6 min-w-6 px-1.5 shrink-0">
           <div
-            className={`absolute inset-0 rounded-md bg-primary/15 ${isInstalling || indeterminate ? "animate-pulse" : ""}`}
+            className={`absolute inset-0 rounded-md bg-foreground/[0.06] dark:bg-white/[0.08] ${isInstalling || indeterminate ? "animate-pulse" : ""}`}
           />
           {isInstalling ? (
-            <Loader2 className="relative w-3.5 h-3.5 text-primary animate-spin" />
+            <Loader2 className="relative w-3.5 h-3.5 text-muted-foreground animate-spin" />
           ) : (
-            <span className="relative text-xs font-bold text-primary tabular-nums">
+            <span className="relative text-xs font-bold text-muted-foreground tabular-nums">
               {indeterminate ? "···" : `${pct}%`}
             </span>
           )}
@@ -69,10 +69,10 @@ export function DownloadProgressBar({
         style={{ height: 4 }}
       >
         {indeterminate ? (
-          <div className="h-full w-1/3 rounded-full bg-primary shadow-[0_0_8px_oklch(0.62_0.22_260/0.4)] animate-[indeterminate_1.5s_ease-in-out_infinite]" />
+          <div className="h-full w-1/3 rounded-full bg-foreground/45 animate-[indeterminate_1.5s_ease-in-out_infinite]" />
         ) : (
           <div
-            className={`${isInstalling ? "animate-pulse" : ""} bg-primary shadow-[0_0_8px_oklch(0.62_0.22_260/0.4)]`}
+            className={`${isInstalling ? "animate-pulse" : ""} bg-foreground/45`}
             style={{
               height: "100%",
               width: `${isInstalling ? 100 : Math.min(percentage, 100)}%`,

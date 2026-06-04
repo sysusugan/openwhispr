@@ -83,7 +83,7 @@ export default function WorkspaceSection({ initialSubTab }: Props) {
             {t("settingsPage.workspace.description")}
           </p>
         </div>
-        <div className="rounded-lg border border-border/50 dark:border-border-subtle/70 bg-card/50 dark:bg-surface-2/50 p-6 text-center">
+        <div className="rounded-md border border-border/60 bg-background dark:border-border-subtle/70 dark:bg-surface-2/50 p-6 text-center">
           <Users className="w-5 h-5 text-muted-foreground/60 mx-auto mb-2" />
           <p className="text-xs font-medium text-foreground mb-1">
             {t("settingsPage.workspace.empty.title")}
@@ -91,7 +91,7 @@ export default function WorkspaceSection({ initialSubTab }: Props) {
           <p className="text-xs text-muted-foreground mb-4">
             {t("settingsPage.workspace.empty.description")}
           </p>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" variant="outline" onClick={() => setCreateOpen(true)}>
             <UserPlus className="mr-1.5 h-3.5 w-3.5" />
             {t("settingsPage.workspace.empty.create")}
           </Button>
@@ -112,7 +112,7 @@ export default function WorkspaceSection({ initialSubTab }: Props) {
               <DropdownMenuTrigger
                 className={cn(
                   "group flex items-center gap-1.5 outline-none rounded-md px-2 -mx-2 py-0.5",
-                  "hover:bg-foreground/5 dark:hover:bg-white/5 focus-visible:ring-1 focus-visible:ring-primary/30"
+                  "hover:bg-foreground/5 dark:hover:bg-white/5 focus-visible:ring-1 focus-visible:ring-ring/30"
                 )}
               >
                 <h2 className="text-sm font-semibold text-foreground truncate">{workspace.name}</h2>
@@ -155,13 +155,13 @@ export default function WorkspaceSection({ initialSubTab }: Props) {
               onClick={() => setTab(id)}
               className={cn(
                 "px-3 h-8 text-xs font-medium outline-none transition-colors relative",
-                "focus-visible:ring-1 focus-visible:ring-primary/30 rounded-md",
+                "focus-visible:ring-1 focus-visible:ring-ring/30 rounded-md",
                 tab === id ? "text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               {t(`settingsPage.workspace.tab.${id}`)}
               {tab === id && (
-                <span className="absolute -bottom-px left-2 right-2 h-px bg-primary" />
+                <span className="absolute -bottom-px left-2 right-2 h-px bg-foreground/50" />
               )}
             </button>
           ))}
@@ -235,7 +235,7 @@ function GeneralTab({ workspace }: { workspace: Workspace }) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3 rounded-lg border border-border/50 dark:border-border-subtle/70 bg-card/50 dark:bg-surface-2/50 p-4">
+      <div className="space-y-3 rounded-md border border-border/60 bg-background dark:border-border-subtle/70 dark:bg-surface-2/50 p-4">
         <div className="space-y-1.5">
           <Label htmlFor="ws-name" className="text-xs font-medium">
             {t("settingsPage.workspace.general.nameLabel")}
@@ -265,14 +265,14 @@ function GeneralTab({ workspace }: { workspace: Workspace }) {
           </p>
         </div>
         <div className="pt-1">
-          <Button onClick={handleSave} size="sm" disabled={!dirty || saving}>
+          <Button onClick={handleSave} variant="outline" size="sm" disabled={!dirty || saving}>
             {saving ? t("common.saving") : t("common.save")}
           </Button>
         </div>
       </div>
 
       {isOwner && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/3 dark:bg-destructive/6 p-4 space-y-3">
+        <div className="rounded-md border border-destructive/30 bg-destructive/3 dark:bg-destructive/6 p-4 space-y-3">
           <div>
             <p className="text-xs font-medium text-foreground">
               {t("settingsPage.workspace.general.dangerTitle")}
@@ -308,6 +308,7 @@ function GeneralTab({ workspace }: { workspace: Workspace }) {
             <Button
               onClick={handleDelete}
               disabled={saving}
+              variant="outline"
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {saving ? t("common.saving") : t("settingsPage.workspace.general.delete")}

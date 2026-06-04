@@ -89,7 +89,7 @@ function ToolCallStep({
           size={12}
           className={cn(
             "shrink-0 transition-colors duration-300",
-            isExecuting && "text-primary/70",
+            isExecuting && "text-foreground/60",
             isCompleted && !isError && !isClipboard && "text-muted-foreground/50",
             isClipboard && "text-emerald-500/70",
             isError && "text-destructive/60"
@@ -151,7 +151,7 @@ function ToolCallStep({
           <button
             type="button"
             onClick={() => onConfirm?.(toolCall)}
-            className="h-6 px-2 rounded-md bg-primary/10 text-primary text-[11px] font-medium hover:bg-primary/15 transition-colors"
+            className="h-6 px-2 rounded-md bg-foreground/[0.06] text-foreground/70 text-[11px] font-medium hover:bg-foreground/[0.08] transition-colors"
           >
             {t("embeddedChat.confirmation.confirm")}
           </button>
@@ -186,15 +186,15 @@ function NoteCard({
       }
       className={cn(
         "flex items-center gap-2 w-full mt-2 px-2.5 py-2 rounded-md",
-        "bg-primary/6 border border-primary/12",
-        "hover:bg-primary/10 hover:border-primary/20",
+        "bg-foreground/[0.04] border border-border/60",
+        "hover:bg-foreground/[0.06] hover:border-border-hover",
         "active:scale-[0.99]",
         "transition-all duration-150",
         "text-left group/note"
       )}
     >
-      <div className={cn("shrink-0 p-1 rounded", "bg-primary/10")}>
-        <FileText size={12} className="text-primary/70" />
+      <div className={cn("shrink-0 p-1 rounded", "bg-foreground/[0.06]")}>
+        <FileText size={12} className="text-foreground/60" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[12px] font-medium text-foreground truncate">{title}</p>
@@ -202,7 +202,7 @@ function NoteCard({
       </div>
       <ChevronRight
         size={12}
-        className="text-muted-foreground/30 group-hover/note:text-primary/50 shrink-0 transition-colors duration-150"
+        className="text-muted-foreground/30 group-hover/note:text-foreground/50 shrink-0 transition-colors duration-150"
       />
     </button>
   );
@@ -276,7 +276,7 @@ export function ChatMessage({
           data-chat-bubble
           className={cn(
             "max-w-[80%] px-3 py-2 rounded-lg rounded-br-sm",
-            "bg-primary/90 text-primary-foreground",
+            "bg-foreground text-background",
             "text-[13px] leading-relaxed"
           )}
         >
@@ -391,7 +391,7 @@ export function ChatMessage({
                   type="button"
                   disabled={isWriting}
                   onClick={() => handleWrite("enhanced_content", "append")}
-                  className="h-6 px-2 rounded-md bg-primary/10 text-primary hover:bg-primary/15 disabled:opacity-50"
+                  className="h-6 px-2 rounded-md bg-foreground/[0.06] text-foreground/70 hover:bg-foreground/[0.08] disabled:opacity-50"
                 >
                   {t("embeddedChat.writeAnswer.appendEnhanced")}
                 </button>

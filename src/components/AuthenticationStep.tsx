@@ -399,7 +399,7 @@ export default function AuthenticationStep({
             <button
               type="button"
               onClick={handleForgotPassword}
-              className="text-xs text-primary hover:text-primary/80 transition-colors text-left"
+              className="text-xs text-foreground/70 hover:text-foreground transition-colors text-left"
               disabled={isSubmitting}
             >
               {t("auth.passwordForm.forgotPassword")}
@@ -443,14 +443,14 @@ export default function AuthenticationStep({
             {authMode === "sign-in" ? (
               <>
                 {t("auth.passwordForm.newHere")}{" "}
-                <span className="font-medium text-primary">
+                <span className="font-medium text-foreground">
                   {t("auth.passwordForm.createAccountLink")}
                 </span>
               </>
             ) : (
               <>
                 {t("auth.passwordForm.haveAccount")}{" "}
-                <span className="font-medium text-primary">
+                <span className="font-medium text-foreground">
                   {t("auth.passwordForm.signInLink")}
                 </span>
               </>

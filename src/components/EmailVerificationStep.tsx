@@ -103,8 +103,8 @@ export default function EmailVerificationStep({ email, onVerified }: EmailVerifi
           alt="OpenWhispr"
           className="w-12 h-12 mx-auto mb-2.5 rounded-lg shadow-sm"
         />
-        <div className="w-8 h-8 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
-          <Mail className="w-4 h-4 text-primary" />
+        <div className="w-8 h-8 mx-auto bg-foreground/[0.06] rounded-full flex items-center justify-center mb-3">
+          <Mail className="w-4 h-4 text-foreground/65" />
         </div>
         <p className="text-lg font-semibold text-foreground tracking-tight leading-tight">
           {t("emailVerification.checkEmailTitle")}

@@ -112,7 +112,7 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
   }, [setGcalAccounts]);
 
   return (
-    <div className="max-w-lg mx-auto w-full px-6 py-6 space-y-5">
+    <div className="max-w-3xl mx-auto w-full px-8 py-7 space-y-6">
       <div>
         <h2 className="text-base font-semibold text-foreground">{t("integrations.title")}</h2>
         <p className="text-xs text-muted-foreground/70 mt-0.5">{t("integrations.description")}</p>
@@ -141,6 +141,7 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
               </div>
               {!hasAccounts && (
                 <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleConnect}
                   disabled={isConnecting}
@@ -201,7 +202,7 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
               <button
                 onClick={handleConnect}
                 disabled={isConnecting}
-                className="flex items-center gap-2 pl-12 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 pl-12 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
               >
                 {isConnecting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -220,8 +221,8 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
         <SettingsPanel>
           <SettingsPanelRow>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/5 dark:bg-primary/10 flex items-center justify-center shrink-0">
-                <Code2 className="h-4 w-4 text-primary/80" strokeWidth={2} />
+              <div className="w-9 h-9 rounded-lg bg-muted border border-border/60 flex items-center justify-center shrink-0">
+                <Code2 className="h-4 w-4 text-muted-foreground" strokeWidth={2} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-foreground">
@@ -241,7 +242,7 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
                   {t("integrations.api.manage")}
                 </Button>
               ) : (
-                <Button size="sm" onClick={onUpgrade} className="shrink-0">
+                <Button variant="outline" size="sm" onClick={onUpgrade} className="shrink-0">
                   {t("integrations.api.viewPlans")}
                 </Button>
               )}
@@ -261,8 +262,8 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
       </div>
 
       {!hasAccounts && (
-        <div className="rounded-lg border border-border/40 dark:border-border-subtle/40 bg-muted/20 dark:bg-surface-2/30 p-4 flex items-start gap-3">
-          <Info size={15} className="text-primary/60 shrink-0 mt-0.5" />
+        <div className="rounded-md border border-border/60 bg-background px-4 py-3 flex items-start gap-3">
+          <Info size={15} className="text-foreground/40 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-foreground/80">
               {t("integrations.notABot.title")}
@@ -284,7 +285,7 @@ export default function IntegrationsView({ isPaid, onUpgrade }: IntegrationsView
                 <span className="mx-1.5 text-muted-foreground/30">·</span>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1 text-primary/80 hover:text-primary transition-colors"
+                  className="inline-flex items-center gap-1 text-foreground/65 hover:text-foreground transition-colors"
                   onClick={() => window.electronAPI?.openExternal?.(API_DOCS_URL)}
                 >
                   {t("apiKeysSection.docsLink")}

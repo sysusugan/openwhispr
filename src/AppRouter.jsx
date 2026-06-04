@@ -14,6 +14,11 @@ const ControlPanel = React.lazy(() => import("./components/ControlPanel.tsx"));
 const OnboardingFlow = React.lazy(() => import("./components/OnboardingFlow.tsx"));
 const AgentOverlay = React.lazy(() => import("./components/AgentOverlay.tsx"));
 
+const isDevPreviewBypassEnabled = () =>
+  import.meta.env.DEV &&
+  window.location.search.includes("panel=true") &&
+  import.meta.env.VITE_OPENWHISPR_DEV_PREVIEW_BYPASS !== "false";
+
 export default function AppRouter() {
   useTheme();
   const params = window.location.search;
@@ -45,6 +50,7 @@ function MainApp() {
     !isAgentPanel &&
     (window.location.pathname.includes("control") || window.location.search.includes("panel=true"));
   const isDictationPanel = !isControlPanel && !isAgentPanel;
+  const devPreviewBypass = isDevPreviewBypassEnabled();
 
   useEffect(() => {
     if (isAgentPanel) {
@@ -52,13 +58,20 @@ function MainApp() {
     } else if (isControlPanel) {
       import("./components/ControlPanel.tsx").catch(() => {});
 
-      if (!localStorage.getItem("onboardingCompleted")) {
+      if (!devPreviewBypass && !localStorage.getItem("onboardingCompleted")) {
         import("./components/OnboardingFlow.tsx").catch(() => {});
       }
     }
-  }, [isAgentPanel, isControlPanel]);
+  }, [devPreviewBypass, isAgentPanel, isControlPanel]);
 
   useEffect(() => {
+    if (devPreviewBypass) {
+      setShowOnboarding(false);
+      setNeedsReauth(false);
+      setIsLoading(false);
+      return;
+    }
+
     if (!authLoaded) return;
 
     const onboardingCompleted = localStorage.getItem("onboardingCompleted") === "true";
@@ -92,7 +105,7 @@ function MainApp() {
     }
 
     setIsLoading(false);
-  }, [authLoaded, isControlPanel, isDictationPanel, isGracePeriodOnly, isSignedIn]);
+  }, [authLoaded, devPreviewBypass, isControlPanel, isDictationPanel, isGracePeriodOnly, isSignedIn]);
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -137,7 +150,7 @@ function MainApp() {
         </div>
         <div className="flex-1 px-6 overflow-y-auto flex items-center">
           <div className="w-full max-w-sm mx-auto">
-            <Card className="bg-card/90 backdrop-blur-2xl border border-border/50 dark:border-white/5 shadow-lg rounded-xl overflow-hidden">
+            <Card className="bg-background border border-border/70 shadow-none rounded-md overflow-hidden">
               <CardContent className="p-6">
                 <AuthenticationStep
                   onContinueWithoutAccount={() => {

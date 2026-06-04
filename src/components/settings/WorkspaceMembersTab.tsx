@@ -110,14 +110,14 @@ export default function WorkspaceMembersTab({ workspace }: Props) {
           </p>
         </div>
         {canManage && (
-          <Button size="sm" onClick={() => setInviteOpen(true)}>
+          <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
             <Mail className="mr-1.5 h-3.5 w-3.5" />
             {t("settingsPage.workspace.members.invite")}
           </Button>
         )}
       </div>
 
-      <div className="rounded-lg border border-border/50 dark:border-border-subtle/70 divide-y divide-border/30 dark:divide-border-subtle/50 bg-card/50 dark:bg-surface-2/50">
+      <div className="rounded-md border border-border/60 dark:border-border-subtle/70 divide-y divide-border/40 dark:divide-border-subtle/50 bg-background dark:bg-surface-2/50">
         {members.map((member) => (
           <div key={member.user_id} className="flex items-center gap-3 px-4 h-14">
             {member.image ? (
@@ -127,7 +127,7 @@ export default function WorkspaceMembersTab({ workspace }: Props) {
                 className="w-7 h-7 rounded-full object-cover shrink-0"
               />
             ) : (
-              <span className="w-7 h-7 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center shrink-0">
+              <span className="w-7 h-7 rounded-full bg-foreground/[0.06] text-foreground/70 text-[10px] font-semibold flex items-center justify-center shrink-0">
                 {(member.name || member.email).slice(0, 2).toUpperCase()}
               </span>
             )}
@@ -143,7 +143,7 @@ export default function WorkspaceMembersTab({ workspace }: Props) {
               className={cn(
                 "text-[10px] font-medium px-2 py-0.5 rounded-md uppercase tracking-wide",
                 member.role === "owner"
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-foreground/[0.06] text-foreground/70"
                   : "bg-foreground/6 text-foreground/65"
               )}
             >
@@ -152,7 +152,7 @@ export default function WorkspaceMembersTab({ workspace }: Props) {
             {canManage && member.role !== "owner" && (
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5 outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/5 outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
                   aria-label={t("common.actions")}
                 >
                   <MoreVertical className="w-3.5 h-3.5" />
@@ -197,7 +197,7 @@ export default function WorkspaceMembersTab({ workspace }: Props) {
           <h4 className="text-xs font-semibold text-foreground mb-2">
             {t("settingsPage.workspace.invites.title")}
           </h4>
-          <div className="rounded-lg border border-border/50 dark:border-border-subtle/70 divide-y divide-border/30 dark:divide-border-subtle/50 bg-card/50 dark:bg-surface-2/50">
+          <div className="rounded-md border border-border/60 dark:border-border-subtle/70 divide-y divide-border/40 dark:divide-border-subtle/50 bg-background dark:bg-surface-2/50">
             {invitations.map((inv) => (
               <div key={inv.id} className="flex items-center gap-3 px-4 h-12">
                 <Mail className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -219,7 +219,7 @@ export default function WorkspaceMembersTab({ workspace }: Props) {
                   type="button"
                   onClick={() => handleRevoke(inv.id)}
                   aria-label={t("settingsPage.workspace.invites.revoke")}
-                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-primary/30"
+                  className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/8 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring/30"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

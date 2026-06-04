@@ -9,7 +9,7 @@ import { syncService } from "../services/SyncService.js";
 
 const NOTE_TYPE_COLORS: Record<NoteItem["note_type"], string> = {
   personal: "bg-foreground/5 text-foreground/50",
-  meeting: "bg-blue-500/8 text-blue-500/60 dark:bg-blue-400/10 dark:text-blue-400/60",
+  meeting: "bg-foreground/[0.06] text-foreground/60 dark:bg-white/[0.08] dark:text-white/60",
   upload: "bg-amber-500/8 text-amber-600/60 dark:bg-amber-400/10 dark:text-amber-400/60",
 };
 

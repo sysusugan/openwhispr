@@ -494,7 +494,7 @@ export function HotkeyInput({
             disabled
               ? "bg-muted/30 border-border cursor-not-allowed opacity-50"
               : isCapturing
-                ? "bg-primary/5 border-primary/30 shadow-[0_0_0_2px_rgba(37,99,212,0.1)]"
+                ? "bg-foreground/[0.04] border-border-hover shadow-[0_0_0_2px_rgba(0,0,0,0.04)]"
                 : "bg-surface-1 border-border hover:border-border-hover hover:bg-surface-2"
           }
         `}
@@ -503,8 +503,8 @@ export function HotkeyInput({
         {isCapturing ? (
           <div className="flex flex-col items-center gap-3">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-              <span className="text-xs font-medium text-primary">{t("hotkeyInput.listening")}</span>
+              <div className="w-2 h-2 bg-foreground/60 rounded-full animate-pulse" />
+              <span className="text-xs font-medium text-foreground/70">{t("hotkeyInput.listening")}</span>
             </div>
             {activeModifiers.size > 0 ? (
               <div className="flex flex-col items-center gap-1.5">
@@ -512,12 +512,12 @@ export function HotkeyInput({
                   {Array.from(activeModifiers).map((mod) => (
                     <kbd
                       key={mod}
-                      className="px-2.5 py-1 bg-primary/10 border border-primary/20 rounded-sm text-xs font-semibold text-primary"
+                      className="px-2.5 py-1 bg-foreground/[0.06] border border-border/70 rounded-sm text-xs font-semibold text-foreground/70"
                     >
                       {mod}
                     </kbd>
                   ))}
-                  <span className="text-primary/50 text-sm font-medium">+</span>
+                  <span className="text-muted-foreground text-sm font-medium">+</span>
                 </div>
                 {isFnHeld && (
                   <span className="text-xs text-muted-foreground">
@@ -598,13 +598,13 @@ export function HotkeyInput({
           disabled
             ? "bg-muted/30 border-border cursor-not-allowed opacity-50"
             : isCapturing
-              ? "bg-primary/5 border-primary/30 shadow-[0_0_0_2px_rgba(37,99,212,0.1)]"
+              ? "bg-foreground/[0.04] border-border-hover shadow-[0_0_0_2px_rgba(0,0,0,0.04)]"
               : "bg-surface-1 border-border hover:border-border-hover hover:bg-surface-2"
         }
       `}
     >
       {isCapturing && (
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary animate-pulse" />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-foreground/45 animate-pulse" />
       )}
 
       <div className="px-4 py-3">
@@ -612,7 +612,7 @@ export function HotkeyInput({
           <>
             <div className="flex items-center justify-center gap-3">
               <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                <div className="w-1.5 h-1.5 bg-foreground/60 rounded-full animate-pulse" />
                 <span className="text-xs font-medium text-muted-foreground">
                   {t("hotkeyInput.recording")}
                 </span>
@@ -622,12 +622,12 @@ export function HotkeyInput({
                   {Array.from(activeModifiers).map((mod) => (
                     <kbd
                       key={mod}
-                      className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-sm text-xs font-semibold text-primary"
+                      className="px-2 py-0.5 bg-foreground/[0.06] border border-border/70 rounded-sm text-xs font-semibold text-foreground/70"
                     >
                       {mod}
                     </kbd>
                   ))}
-                  <span className="text-primary/40 text-xs">
+                  <span className="text-muted-foreground text-xs">
                     {isFnHeld ? t("hotkeyInput.fnCaptureHint") : t("hotkeyInput.keyHint")}
                   </span>
                 </div>

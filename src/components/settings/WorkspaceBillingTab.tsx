@@ -71,7 +71,7 @@ export default function WorkspaceBillingTab({ workspace }: Props) {
         </p>
       </div>
 
-      <div className="rounded-lg border border-border/50 dark:border-border-subtle/70 bg-card/50 dark:bg-surface-2/50 p-4 space-y-3">
+      <div className="rounded-md border border-border/60 bg-background dark:border-border-subtle/70 dark:bg-surface-2/50 p-4 space-y-3">
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">
@@ -105,7 +105,7 @@ export default function WorkspaceBillingTab({ workspace }: Props) {
             </span>
           </div>
           <div className="h-1.5 rounded-full bg-foreground/5 dark:bg-white/5 overflow-hidden">
-            <div className="h-full bg-primary/70 dark:bg-primary/80" style={{ width: `${pct}%` }} />
+            <div className="h-full bg-foreground/45" style={{ width: `${pct}%` }} />
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export default function WorkspaceBillingTab({ workspace }: Props) {
               {t("settingsPage.workspace.billing.manageStripe")}
             </Button>
           ) : (
-            <Button onClick={handleCheckout} disabled={busy} size="sm">
+            <Button onClick={handleCheckout} disabled={busy} size="sm" variant="outline">
               {t("settingsPage.workspace.billing.startSubscription")}
             </Button>
           )}

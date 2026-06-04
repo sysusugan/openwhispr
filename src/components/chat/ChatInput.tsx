@@ -15,8 +15,8 @@ interface ChatInputProps {
 function RecordingIndicator() {
   return (
     <div className="relative flex items-center justify-center w-5 h-5 shrink-0">
-      <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-pulse" />
-      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+      <div className="absolute inset-0 rounded-full border-2 border-foreground/25 animate-pulse" />
+      <div className="w-2.5 h-2.5 rounded-full bg-foreground/55" />
     </div>
   );
 }
@@ -82,13 +82,13 @@ export function ChatInput({
   }, [isIdle]);
 
   return (
-    <div className="shrink-0 px-3 pb-3 pt-1">
+    <div className="shrink-0 border-t border-border bg-card px-3 pb-3 pt-3">
       <div
         className={cn(
-          "flex items-center gap-2 min-h-11 px-3 rounded-lg",
-          "bg-surface-1 border border-border/30",
+          "flex items-center gap-2 min-h-11 px-3 rounded-md",
+          "bg-background border border-border shadow-sm",
           "transition-colors duration-150",
-          isIdle && "focus-within:border-primary/30"
+          isIdle && "focus-within:border-border-hover focus-within:ring-2 focus-within:ring-ring/15"
         )}
       >
         {isListening && (
@@ -122,9 +122,9 @@ export function ChatInput({
               placeholder={t("agentMode.input.typeMessage")}
               className={cn(
                 "input-inline flex-1 outline-none bg-transparent",
-                "text-[13px] text-foreground placeholder:text-muted-foreground/40",
+                "text-[13px] text-foreground placeholder:text-muted-foreground/70",
                 "min-w-0 p-0",
-                isBusy && "text-muted-foreground/30 cursor-not-allowed"
+                isBusy && "text-muted-foreground cursor-not-allowed"
               )}
             />
             {isBusy && onCancel ? (
@@ -132,7 +132,7 @@ export function ChatInput({
                 onClick={onCancel}
                 className={cn(
                   "p-1 rounded-sm shrink-0",
-                  "text-muted-foreground/60 hover:text-foreground hover:bg-foreground/8",
+                  "text-muted-foreground hover:text-foreground hover:bg-muted",
                   "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
                   "transition-colors duration-100"
                 )}
@@ -148,8 +148,8 @@ export function ChatInput({
                   "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
                   "transition-colors duration-100",
                   inputText.trim()
-                    ? "text-primary hover:text-primary/80"
-                    : "text-muted-foreground/25 cursor-default"
+                    ? "text-foreground hover:bg-muted"
+                    : "text-muted-foreground/70 cursor-default"
                 )}
               >
                 <SendHorizontal size={14} />

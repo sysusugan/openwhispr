@@ -21,14 +21,14 @@ export default function PasteToolsInfo({
       <div className="border border-border rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Terminal className="w-6 h-6 text-primary" />
+            <Terminal className="w-6 h-6 text-muted-foreground" />
             <div>
               <h3 className="font-semibold text-foreground">{t("pasteToolsInfo.title")}</h3>
               <p className="text-sm text-muted-foreground">{t("pasteToolsInfo.checking")}</p>
             </div>
           </div>
           {isChecking && (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-foreground/45"></div>
           )}
         </div>
       </div>

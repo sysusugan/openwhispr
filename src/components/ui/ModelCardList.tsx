@@ -39,13 +39,13 @@ const COLOR_CONFIG: Record<
 > = {
   purple: {
     selected:
-      "border-primary/30 bg-primary/8 dark:bg-primary/6 dark:border-primary/20 shadow-[0_0_0_1px_oklch(0.62_0.22_260/0.12),0_0_10px_-3px_oklch(0.62_0.22_260/0.18)]",
+      "border-border-hover bg-foreground/[0.04] dark:bg-white/[0.05] dark:border-white/15 shadow-sm",
     default:
       "border-border bg-surface-1 hover:border-border-hover hover:bg-muted dark:border-white/5 dark:bg-white/3 dark:hover:border-white/20 dark:hover:bg-white/8",
   },
   blue: {
     selected:
-      "border-primary/30 bg-primary/10 dark:bg-primary/6 shadow-[0_0_0_1px_oklch(0.62_0.22_260/0.15),0_0_12px_-3px_oklch(0.62_0.22_260/0.2)]",
+      "border-border-hover bg-foreground/[0.04] dark:bg-white/[0.05] dark:border-white/15 shadow-sm",
     default:
       "border-border bg-surface-1 hover:border-border-hover hover:bg-muted dark:border-white/5 dark:bg-white/3 dark:hover:border-white/20 dark:hover:bg-white/8",
   },
@@ -96,12 +96,12 @@ export default function ModelCardList({
         const getStatusDotClass = () => {
           if (!isLocalMode) {
             return isSelected
-              ? "bg-primary shadow-[0_0_6px_oklch(0.62_0.22_260/0.6)]"
+              ? "bg-foreground/60 shadow-sm"
               : "bg-muted-foreground/30";
           }
           if (isDownloaded) {
             return isSelected
-              ? "bg-primary shadow-[0_0_6px_oklch(0.62_0.22_260/0.6)]"
+              ? "bg-foreground/60 shadow-sm"
               : "bg-success shadow-[0_0_4px_rgba(34,197,94,0.5)]";
           }
           if (isDownloading) {
@@ -155,7 +155,7 @@ export default function ModelCardList({
                 <a
                   href={model.specUrl}
                   onClick={createExternalLinkHandler(model.specUrl)}
-                  className="inline-flex items-center gap-0.5 text-xs text-primary/60 hover:text-primary transition-colors shrink-0"
+                  className="inline-flex items-center gap-0.5 text-xs text-foreground/55 hover:text-foreground transition-colors shrink-0"
                 >
                   {t("models.learnMore")}
                   <ExternalLink size={9} />
@@ -164,7 +164,7 @@ export default function ModelCardList({
 
               {/* Recommended badge */}
               {model.recommended && (
-                <span className="text-xs font-medium text-primary px-1.5 py-0.5 bg-primary/10 rounded-sm shrink-0">
+                <span className="text-xs font-medium text-foreground/70 px-1.5 py-0.5 bg-foreground/[0.06] rounded-sm shrink-0">
                   Recommended
                 </span>
               )}
@@ -173,7 +173,7 @@ export default function ModelCardList({
               <div className="ml-auto flex items-center gap-1.5 shrink-0">
                 {/* Selected/Active badge */}
                 {isSelected && (
-                  <span className="text-xs font-medium text-primary px-2 py-0.5 bg-primary/10 rounded-sm">
+                  <span className="text-xs font-medium text-foreground/70 px-2 py-0.5 bg-foreground/[0.06] rounded-sm">
                     Active
                   </span>
                 )}
@@ -214,7 +214,7 @@ export default function ModelCardList({
                           onDownload?.(model.value);
                         }}
                         size="sm"
-                        variant="default"
+                        variant="outline"
                         className="h-6 px-2.5 text-xs"
                       >
                         <Download size={11} className="mr-1" />
