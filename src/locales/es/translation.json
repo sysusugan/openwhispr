@@ -1963,7 +1963,8 @@
       "daysAgo": "hace {{count}}d",
       "sort": "Ordenar",
       "sortUpdated": "Por actualización",
-      "sortCreated": "Por creación"
+      "sortCreated": "Por creación",
+      "sortRecorded": "Fecha de registro"
     },
     "editor": {
       "untitled": "Sin título",
@@ -2012,7 +2013,13 @@
       "transcriptMatchCount": "{{count}} match",
       "transcriptMatchCount_plural": "{{count}} matches",
       "transcriptNoSearch": "Enter text to find",
-      "transcriptEditDisabledRecording": "Stop recording before editing the transcript"
+      "transcriptEditDisabledRecording": "Stop recording before editing the transcript",
+      "recordedDate": "Fecha de registro",
+      "editRecordedDate": "Editar fecha de registro",
+      "recordedDateTitle": "Fecha de registro: {{date}}",
+      "recordedDateDescription": "Define cuándo ocurrió esta transcripción o reunión.",
+      "recordedDateInvalid": "Introduce una fecha de registro válida",
+      "recordedDateSaveFailed": "No se pudo actualizar la fecha de registro"
     },
     "bulkExport": {
       "select": "Select",

@@ -2122,7 +2122,8 @@
       "daysAgo": "{{count}}d",
       "sort": "Sort",
       "sortUpdated": "Updated time",
-      "sortCreated": "Created time"
+      "sortCreated": "Created time",
+      "sortRecorded": "Recorded date"
     },
     "editor": {
       "untitled": "Untitled",
@@ -2171,7 +2172,13 @@
       "transcriptMatchCount": "{{count}} match",
       "transcriptMatchCount_plural": "{{count}} matches",
       "transcriptNoSearch": "Enter text to find",
-      "transcriptEditDisabledRecording": "Stop recording before editing the transcript"
+      "transcriptEditDisabledRecording": "Stop recording before editing the transcript",
+      "recordedDate": "Recorded date",
+      "editRecordedDate": "Edit recorded date",
+      "recordedDateTitle": "Recorded date: {{date}}",
+      "recordedDateDescription": "Set when this transcription or meeting happened.",
+      "recordedDateInvalid": "Enter a valid recorded date",
+      "recordedDateSaveFailed": "Could not update recorded date"
     },
     "bulkExport": {
       "select": "Select",

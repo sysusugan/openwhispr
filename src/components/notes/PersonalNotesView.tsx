@@ -80,6 +80,7 @@ import {
   setActiveNoteId,
   setActiveFolderId,
   removeNote,
+  updateNoteInStore,
 } from "../../stores/noteStore";
 import {
   useMeetingRecordingStore,
@@ -106,9 +107,8 @@ const NOTE_SORT_STORAGE_KEY = "noteSortBy";
 
 function readNoteSortBy(): NoteSortBy {
   if (typeof window === "undefined") return "updatedAt";
-  return window.localStorage.getItem(NOTE_SORT_STORAGE_KEY) === "createdAt"
-    ? "createdAt"
-    : "updatedAt";
+  const value = window.localStorage.getItem(NOTE_SORT_STORAGE_KEY);
+  return value === "createdAt" || value === "recordedAt" ? value : "updatedAt";
 }
 
 function formatAudioDuration(seconds: number | null): string {
@@ -298,7 +298,8 @@ export default function PersonalNotesView({
 
   const handleNoteSortChange = useCallback(
     async (value: string) => {
-      const nextSortBy: NoteSortBy = value === "createdAt" ? "createdAt" : "updatedAt";
+      const nextSortBy: NoteSortBy =
+        value === "createdAt" || value === "recordedAt" ? value : "updatedAt";
       setNoteSortByState(nextSortBy);
       window.localStorage.setItem(NOTE_SORT_STORAGE_KEY, nextSortBy);
       if (activeFolderId) {
@@ -306,6 +307,18 @@ export default function PersonalNotesView({
       }
     },
     [activeFolderId]
+  );
+
+  const handleRecordedAtChange = useCallback(
+    async (noteId: number, recordedAt: string) => {
+      const result = await window.electronAPI.updateNote(noteId, { recorded_at: recordedAt });
+      if (!result.success || !result.note) {
+        throw new Error(t("notes.editor.recordedDateSaveFailed"));
+      }
+      updateNoteInStore(result.note);
+      await initializeNotes(null, 50, activeFolderId, noteSortBy);
+    },
+    [activeFolderId, noteSortBy, t]
   );
 
   const handleExportSelectedNotes = useCallback(async () => {
@@ -1104,6 +1117,12 @@ export default function PersonalNotesView({
                         >
                           {t("notes.list.sortCreated")}
                         </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem
+                          value="recordedAt"
+                          className="text-xs gap-2 rounded-md py-1"
+                        >
+                          {t("notes.list.sortRecorded")}
+                        </DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1222,7 +1241,13 @@ export default function PersonalNotesView({
                     dragHandlers={noteDragHandlers(note.id, note.title)}
                     isDragging={dragState.draggingNoteId === note.id}
                     noteFilesEnabled={noteFilesEnabled}
-                    timestamp={noteSortBy === "createdAt" ? note.created_at : note.updated_at}
+                    timestamp={
+                      noteSortBy === "createdAt"
+                        ? note.created_at
+                        : noteSortBy === "recordedAt"
+                          ? note.recorded_at || note.created_at
+                          : note.updated_at
+                    }
                   />
                 ))
               )}
@@ -1292,6 +1317,7 @@ export default function PersonalNotesView({
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
               onCreateFolderAndMove={handleCreateFolderAndMove}
+              onRecordedAtChange={handleRecordedAtChange}
               actionProcessingState={actionProcessingState}
               actionName={actionName}
               actionOutputTarget={actionOutputTarget}

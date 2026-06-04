@@ -55,6 +55,7 @@ export interface NoteItem {
   diarization_enabled: number | null;
   expected_speaker_count: number | null;
   cloud_id: string | null;
+  recorded_at: string | null;
   created_at: string;
   updated_at: string;
   client_note_id: string;
@@ -64,7 +65,7 @@ export interface NoteItem {
   team_id?: string | null;
 }
 
-export type NoteSortBy = "updatedAt" | "createdAt";
+export type NoteSortBy = "updatedAt" | "createdAt" | "recordedAt";
 
 export type NoteExportField = "transcript" | "content" | "enhanced_content";
 export type NoteExportFormat = "md" | "txt";
@@ -617,6 +618,7 @@ declare global {
           participants?: string | null;
           diarization_enabled?: number | null;
           expected_speaker_count?: number | null;
+          recorded_at?: string | null;
         }
       ) => Promise<{ success: boolean; note?: NoteItem }>;
       deleteNote: (id: number) => Promise<{ success: boolean }>;

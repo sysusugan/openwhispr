@@ -1910,7 +1910,8 @@
       "daysAgo": "{{count}} 天前",
       "sort": "排序",
       "sortUpdated": "依更新時間",
-      "sortCreated": "依建立時間"
+      "sortCreated": "依建立時間",
+      "sortRecorded": "記錄日期"
     },
     "editor": {
       "untitled": "未命名",
@@ -1959,7 +1960,13 @@
       "transcriptMatchCount": "{{count}} 個相符項目",
       "transcriptMatchCount_plural": "{{count}} 個相符項目",
       "transcriptNoSearch": "輸入要尋找的內容",
-      "transcriptEditDisabledRecording": "停止錄音後才能編輯轉錄"
+      "transcriptEditDisabledRecording": "停止錄音後才能編輯轉錄",
+      "recordedDate": "記錄日期",
+      "editRecordedDate": "修改記錄日期",
+      "recordedDateTitle": "記錄日期：{{date}}",
+      "recordedDateDescription": "設定這次轉錄或會議實際發生的時間。",
+      "recordedDateInvalid": "請輸入有效的記錄日期",
+      "recordedDateSaveFailed": "無法更新記錄日期"
     },
     "bulkExport": {
       "select": "選擇",

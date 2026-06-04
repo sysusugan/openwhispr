@@ -34,6 +34,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useToast } from "../ui/useToast";
 import { cn } from "../lib/utils";
 import type { NoteItem, FolderItem } from "../../types/electron";
 import type { ActionProcessingState } from "../../hooks/useActionProcessing";
@@ -81,6 +83,22 @@ function formatShortDate(dateStr: string): string {
   const date = normalizeDbDate(dateStr);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatDateTimeLocalValue(dateStr: string): string {
+  const date = normalizeDbDate(dateStr);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
+
+function parseDateTimeLocalValue(value: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
 }
 
 export interface Enhancement {
@@ -142,6 +160,7 @@ interface NoteEditorProps {
   folders?: FolderItem[];
   onMoveToFolder?: (noteId: number, folderId: number) => void;
   onCreateFolderAndMove?: (noteId: number, folderName: string) => void;
+  onRecordedAtChange?: (noteId: number, recordedAt: string) => Promise<void>;
 }
 
 export default function NoteEditor({
@@ -182,13 +201,18 @@ export default function NoteEditor({
   folders,
   onMoveToFolder,
   onCreateFolderAndMove,
+  onRecordedAtChange,
 }: NoteEditorProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<MeetingViewMode>("raw");
   const [chatMode, setChatMode] = useState<EmbeddedChatMode>("hidden");
   const [folderSearch, setFolderSearch] = useState("");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [isRecordedDateOpen, setIsRecordedDateOpen] = useState(false);
+  const [recordedDateInput, setRecordedDateInput] = useState("");
+  const [isSavingRecordedDate, setIsSavingRecordedDate] = useState(false);
   const [isDiarizing, setIsDiarizing] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false);
@@ -1009,8 +1033,36 @@ export default function NoteEditor({
     }
   }, [chatMode]);
 
-  const noteDate = formatNoteDate(note.created_at);
-  const shortDate = formatShortDate(note.created_at);
+  const recordedDateSource = note.recorded_at || note.created_at;
+  const noteDate = formatNoteDate(recordedDateSource);
+  const shortDate = formatShortDate(recordedDateSource);
+  const openRecordedDateEditor = useCallback(() => {
+    setRecordedDateInput(formatDateTimeLocalValue(recordedDateSource));
+    setIsRecordedDateOpen(true);
+  }, [recordedDateSource]);
+  const handleSaveRecordedDate = useCallback(async () => {
+    const nextRecordedAt = parseDateTimeLocalValue(recordedDateInput);
+    if (!nextRecordedAt) {
+      toast({
+        title: t("notes.editor.recordedDateInvalid"),
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setIsSavingRecordedDate(true);
+      await onRecordedAtChange?.(note.id, nextRecordedAt);
+      setIsRecordedDateOpen(false);
+    } catch (err) {
+      toast({
+        title: t("notes.editor.recordedDateSaveFailed"),
+        description: err instanceof Error ? err.message : undefined,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingRecordedDate(false);
+    }
+  }, [note.id, onRecordedAtChange, recordedDateInput, t, toast]);
   const showFindBar = isFindOpen || (isTranscriptEditing && viewMode === "transcript");
   const showReplaceControls =
     (viewMode === "raw" && actionProcessingState !== "processing") ||
@@ -1041,13 +1093,55 @@ export default function NoteEditor({
           />
           <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
               {shortDate && (
-                <span
-                  className="inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground"
-                  title={noteDate}
-                >
-                  <Calendar size={11} className="shrink-0" />
-                  {shortDate}
-                </span>
+                <Popover open={isRecordedDateOpen} onOpenChange={setIsRecordedDateOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground"
+                      title={t("notes.editor.recordedDateTitle", { date: noteDate })}
+                      aria-label={t("notes.editor.editRecordedDate")}
+                      onClick={openRecordedDateEditor}
+                    >
+                      <Calendar size={11} className="shrink-0" />
+                      {shortDate}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" sideOffset={6} className="w-64 p-3">
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs font-medium text-foreground">
+                          {t("notes.editor.recordedDate")}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {t("notes.editor.recordedDateDescription")}
+                        </p>
+                      </div>
+                      <input
+                        type="datetime-local"
+                        value={recordedDateInput}
+                        onChange={(event) => setRecordedDateInput(event.target.value)}
+                        className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-ring/50"
+                      />
+                      <div className="flex justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setIsRecordedDateOpen(false)}
+                          className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveRecordedDate}
+                          disabled={isSavingRecordedDate}
+                          className="h-7 rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                        >
+                          {isSavingRecordedDate ? t("common.saving") : t("common.save")}
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
               {calendarEventName && (
                 <span className="inline-flex h-6 min-w-0 max-w-44 items-center gap-1.5 rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground">

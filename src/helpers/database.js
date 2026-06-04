@@ -9,14 +9,11 @@ const { isRetainedAudioFile, parseMeetingAudioFilename } = require("./audioStora
 const NOTE_ORDER_BY = {
   updatedAt: "updated_at DESC, id DESC",
   createdAt: "created_at DESC, id DESC",
+  recordedAt: "COALESCE(recorded_at, created_at) DESC, id DESC",
 };
 
 function getNoteOrderByClause(sortBy = "updatedAt") {
-  const orderBy = NOTE_ORDER_BY[sortBy || "updatedAt"];
-  if (!orderBy) {
-    throw new Error(`Invalid note sort key: ${sortBy}`);
-  }
-  return orderBy;
+  return NOTE_ORDER_BY[sortBy || "updatedAt"] || NOTE_ORDER_BY.updatedAt;
 }
 
 function buildFolderReorderPlan(existingIds, requestedIds) {
@@ -171,6 +168,7 @@ class DatabaseManager {
           note_type TEXT NOT NULL DEFAULT 'personal',
           source_file TEXT,
           audio_duration_seconds REAL,
+          recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
@@ -456,6 +454,12 @@ class DatabaseManager {
 
       try {
         this.db.exec("ALTER TABLE notes ADD COLUMN transcript TEXT");
+      } catch (err) {
+        if (!err.message.includes("duplicate column")) throw err;
+      }
+      try {
+        this.db.exec("ALTER TABLE notes ADD COLUMN recorded_at DATETIME");
+        this.db.exec("UPDATE notes SET recorded_at = created_at WHERE recorded_at IS NULL");
       } catch (err) {
         if (!err.message.includes("duplicate column")) throw err;
       }
@@ -887,7 +891,7 @@ class DatabaseManager {
       }
       const clientNoteId = randomUUID();
       const stmt = this.db.prepare(
-        "INSERT INTO notes (title, content, note_type, source_file, audio_duration_seconds, folder_id, client_note_id, transcript) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO notes (title, content, note_type, source_file, audio_duration_seconds, folder_id, client_note_id, transcript, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)"
       );
       const result = stmt.run(
         title,
@@ -966,6 +970,7 @@ class DatabaseManager {
         "expected_speaker_count",
         "source_file",
         "audio_duration_seconds",
+        "recorded_at",
         "sync_status",
         "deleted_at",
         "client_note_id",
@@ -2620,8 +2625,8 @@ class DatabaseManager {
         INSERT INTO notes (client_note_id, cloud_id, title, content, enhanced_content,
           enhancement_prompt, enhanced_at_content_hash, note_type, source_file,
           audio_duration_seconds, transcript, folder_id, participants, calendar_event_id,
-          diarization_enabled, expected_speaker_count, sync_status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?)
+          diarization_enabled, expected_speaker_count, sync_status, recorded_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)
         ON CONFLICT(client_note_id) DO UPDATE SET
           cloud_id = excluded.cloud_id,
           title = excluded.title,
@@ -2655,6 +2660,7 @@ class DatabaseManager {
         cloudNote.calendar_event_id || null,
         cloudNote.diarization_enabled ?? null,
         cloudNote.expected_speaker_count ?? null,
+        cloudNote.created_at,
         cloudNote.created_at,
         cloudNote.updated_at
       );

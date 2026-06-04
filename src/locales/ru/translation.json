@@ -1915,7 +1915,8 @@
       "daysAgo": "{{count}} дн. назад",
       "sort": "Сортировка",
       "sortUpdated": "По обновлению",
-      "sortCreated": "По созданию"
+      "sortCreated": "По созданию",
+      "sortRecorded": "Дата записи"
     },
     "editor": {
       "untitled": "Без названия",
@@ -1964,7 +1965,13 @@
       "transcriptMatchCount": "{{count}} match",
       "transcriptMatchCount_plural": "{{count}} matches",
       "transcriptNoSearch": "Enter text to find",
-      "transcriptEditDisabledRecording": "Stop recording before editing the transcript"
+      "transcriptEditDisabledRecording": "Stop recording before editing the transcript",
+      "recordedDate": "Дата записи",
+      "editRecordedDate": "Изменить дату записи",
+      "recordedDateTitle": "Дата записи: {{date}}",
+      "recordedDateDescription": "Укажите, когда произошла эта транскрипция или встреча.",
+      "recordedDateInvalid": "Введите корректную дату записи",
+      "recordedDateSaveFailed": "Не удалось обновить дату записи"
     },
     "bulkExport": {
       "select": "Select",

@@ -1865,7 +1865,13 @@
       "transcriptMatchCount": "{{count}} match",
       "transcriptMatchCount_plural": "{{count}} matches",
       "transcriptNoSearch": "Enter text to find",
-      "transcriptEditDisabledRecording": "Stop recording before editing the transcript"
+      "transcriptEditDisabledRecording": "Stop recording before editing the transcript",
+      "recordedDate": "記録日",
+      "editRecordedDate": "記録日を編集",
+      "recordedDateTitle": "記録日: {{date}}",
+      "recordedDateDescription": "この文字起こしまたは会議が実際に行われた日時を設定します。",
+      "recordedDateInvalid": "有効な記録日を入力してください",
+      "recordedDateSaveFailed": "記録日を更新できませんでした"
     },
     "bulkExport": {
       "select": "Select",
@@ -1981,7 +1987,8 @@
       "daysAgo": "{{count}}日前",
       "sort": "並べ替え",
       "sortUpdated": "更新日時順",
-      "sortCreated": "作成日時順"
+      "sortCreated": "作成日時順",
+      "sortRecorded": "記録日"
     },
     "upload": {
       "title": "音声をアップロード",
