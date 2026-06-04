@@ -187,11 +187,11 @@ function LoadingFallback({ message }) {
       <div className="flex flex-col items-center gap-4 animate-[scale-in_300ms_ease-out]">
         <svg
           viewBox="0 0 1024 1024"
-          className="w-12 h-12 drop-shadow-[0_2px_8px_rgba(37,99,235,0.18)] dark:drop-shadow-[0_2px_12px_rgba(100,149,237,0.25)]"
+          className="w-12 h-12 drop-shadow-[0_2px_8px_rgba(15,98,254,0.18)] dark:drop-shadow-[0_2px_12px_rgba(120,169,255,0.25)]"
           aria-label="OpenWhispr"
         >
-          <rect width="1024" height="1024" rx="241" fill="#2056DF" />
-          <circle cx="512" cy="512" r="314" fill="#2056DF" stroke="white" strokeWidth="74" />
+          <rect width="1024" height="1024" rx="241" fill="#0F62FE" />
+          <circle cx="512" cy="512" r="314" fill="#0F62FE" stroke="white" strokeWidth="74" />
           <path d="M512 383V641" stroke="white" strokeWidth="74" strokeLinecap="round" />
           <path d="M627 457V568" stroke="white" strokeWidth="74" strokeLinecap="round" />
           <path d="M397 457V568" stroke="white" strokeWidth="74" strokeLinecap="round" />

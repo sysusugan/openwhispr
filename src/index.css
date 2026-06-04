@@ -3,47 +3,48 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* OpenWhispr dashboard theme — tuned for the v0/shadcn reference shell. */
-  --color-primary: #2563eb;
+  /* OpenWhispr IBM-blue desktop theme.
+     Carbon-inspired: crisp blue accent, cool-blue canvas, stronger hairlines. */
+  --color-primary: #0f62fe;
   --color-primary-foreground: #ffffff;
-  --color-secondary: #f3f4f6;
-  --color-secondary-foreground: #171717;
-  --color-muted: #eef1f5;
-  --color-muted-foreground: #4b5563;
-  --color-accent: #eff6ff;
-  --color-accent-foreground: #1d4ed8;
+  --color-secondary: #eaf1fb;
+  --color-secondary-foreground: #0f172a;
+  --color-muted: #eaf1fb;
+  --color-muted-foreground: #4b5f7a;
+  --color-accent: #dceaff;
+  --color-accent-foreground: #0f3d99;
   --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
-  --color-border: #d9dee7;
+  --color-border: #c7d3e3;
   --color-input: #ffffff;
-  --color-ring: #2563eb;
-  --color-background: #f6f7f9;
-  --color-foreground: #111827;
+  --color-ring: #0f62fe;
+  --color-background: #f3f7fc;
+  --color-foreground: #0f172a;
   --color-card: #ffffff;
-  --color-card-foreground: #111827;
+  --color-card-foreground: #0f172a;
   --color-popover: #ffffff;
-  --color-popover-foreground: #111827;
-  --color-link: #2563eb;
+  --color-popover-foreground: #0f172a;
+  --color-link: #0f62fe;
   --color-success: #16a34a;
   --color-success-foreground: #ffffff;
   --color-warning: #d97706;
   --color-warning-foreground: #ffffff;
-  --color-info: #2563eb;
+  --color-info: #0f62fe;
   --color-info-foreground: #ffffff;
 
   /* Surface hierarchy — light mode equivalents */
-  --color-surface-0: #f9fafb;
+  --color-surface-0: #f3f7fc;
   --color-surface-1: #ffffff;
-  --color-surface-2: #ffffff;
-  --color-surface-3: #f3f4f6;
+  --color-surface-2: #f8fbff;
+  --color-surface-3: #eaf1fb;
   --color-surface-raised: #ffffff;
-  --color-sidebar: #ffffff;
-  --color-sidebar-foreground: #111827;
+  --color-sidebar: #f8fbff;
+  --color-sidebar-foreground: #0f172a;
 
   /* Border states — light mode equivalents */
-  --color-border-subtle: #e3e7ee;
-  --color-border-hover: #b9c0cc;
-  --color-border-active: #2563eb;
+  --color-border-subtle: #d7e1ee;
+  --color-border-hover: #8da2bf;
+  --color-border-active: #0f62fe;
 }
 
 :root {
@@ -65,17 +66,17 @@
   --radius-xl: 0.75rem;
 
   /* App shell tokens */
-  --color-app-shell: #f9fafb;
-  --color-sidebar: #ffffff;
-  --color-sidebar-active: #dbeafe;
-  --color-sidebar-active-foreground: #1d4ed8;
-  --color-sidebar-hover: #f3f4f6;
-  --color-panel-border: #d9dee7;
-  --color-brand-primary: #111827;
-  --color-brand-accent: #2563eb;
-  --color-brand-highlight: #5eead4;
-  --color-brand-link: #2563eb;
-  --color-pattern: #eef0f3;
+  --color-app-shell: #f3f7fc;
+  --color-sidebar: #f8fbff;
+  --color-sidebar-active: #dbe9ff;
+  --color-sidebar-active-foreground: #003a8c;
+  --color-sidebar-hover: #eaf1fb;
+  --color-panel-border: #c7d3e3;
+  --color-brand-primary: #0f172a;
+  --color-brand-accent: #0f62fe;
+  --color-brand-highlight: #78a9ff;
+  --color-brand-link: #0f62fe;
+  --color-pattern: #dfe9f6;
 
   /* Model picker premium effects (light mode) */
   --shadow-metallic-light: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(15, 23, 42, 0.06);
@@ -185,7 +186,7 @@
 
 @layer components {
   .ow-panel {
-    @apply overflow-hidden rounded-md border border-border bg-background shadow-none dark:border-white/10 dark:bg-surface-2;
+    @apply overflow-hidden rounded-md border border-border bg-card shadow-none dark:border-white/10 dark:bg-surface-2;
   }
 
   .ow-panel-section {
@@ -193,7 +194,7 @@
   }
 
   .ow-segmented {
-    @apply rounded-md border border-border bg-muted p-0.5 text-muted-foreground shadow-sm dark:border-white/10 dark:bg-surface-1;
+    @apply rounded-md border border-border bg-surface-3 p-0.5 text-muted-foreground shadow-sm dark:border-white/10 dark:bg-surface-1;
   }
 
   .ow-segmented-item {
@@ -201,7 +202,7 @@
   }
 
   .ow-segmented-item-active {
-    @apply bg-card text-foreground shadow-sm ring-1 ring-border dark:bg-surface-raised dark:ring-white/15;
+    @apply bg-card text-primary shadow-sm ring-1 ring-border-active/30 dark:bg-surface-raised dark:text-primary dark:ring-white/15;
   }
 
   .ow-workspace-page {
@@ -217,7 +218,7 @@
   }
 
   .ow-page-block {
-    @apply rounded-md border border-border bg-background dark:border-white/10 dark:bg-surface-2;
+    @apply rounded-md border border-border bg-card dark:border-white/10 dark:bg-surface-2;
   }
 
   .ow-page-block-header {
@@ -225,11 +226,11 @@
   }
 
   .ow-inner-sidebar {
-    @apply flex h-full min-w-0 flex-col bg-background dark:bg-surface-2;
+    @apply flex h-full min-w-0 flex-col bg-surface-2 dark:bg-surface-2;
   }
 
   .ow-collapsible-pane {
-    @apply relative shrink-0 bg-background transition-[width] duration-200 ease-out;
+    @apply relative shrink-0 bg-surface-2 transition-[width] duration-200 ease-out;
   }
 
   .ow-collapsible-pane::after {
@@ -245,7 +246,7 @@
   }
 
   .ow-pane-toggle {
-    @apply absolute right-0 top-1/2 z-20 flex h-9 w-4 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors duration-150 hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30;
+    @apply absolute right-0 top-1/2 z-20 flex h-9 w-4 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors duration-150 hover:border-border-active hover:bg-accent hover:text-primary focus:outline-none focus-visible:ring-1 focus-visible:ring-ring/30;
   }
 
   .ow-inner-nav-item {
@@ -253,7 +254,7 @@
   }
 
   .ow-inner-nav-item-active {
-    @apply bg-muted text-foreground;
+    @apply bg-accent text-accent-foreground;
   }
 
   .ow-list-row {
@@ -261,7 +262,7 @@
   }
 
   .ow-list-row-active {
-    @apply bg-muted text-foreground;
+    @apply bg-accent text-foreground ring-1 ring-border-active/15;
   }
 
   .ow-list-row-idle {

@@ -16,14 +16,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Primary CTA — neutral, Typeless-like emphasis without saturated color
+        // Primary CTA — IBM-blue action, aligned with the app-level theme tokens.
         default: [
-          "relative text-background font-semibold tracking-[0.005em]",
-          "bg-foreground",
-          "border border-foreground",
+          "relative text-primary-foreground font-semibold tracking-[0.005em]",
+          "bg-primary",
+          "border border-primary",
           "shadow-sm",
-          "hover:bg-foreground/90 hover:shadow",
-          "active:bg-foreground/85 active:scale-[0.99]",
+          "hover:bg-primary/90 hover:shadow",
+          "active:bg-primary/85 active:scale-[0.99]",
           "transition-[background-color,border-color,color,transform] duration-200 ease-out",
         ].join(" "),
 
