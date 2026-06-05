@@ -12,6 +12,7 @@ interface NoteBottomBarProps {
   onStartRecording: () => void;
   onStopRecording: () => void;
   onAskSubmit: (text: string) => void;
+  onInputFocus?: () => void;
   askDisabled?: boolean;
   actionPicker?: React.ReactNode;
   hideInput?: boolean;
@@ -24,6 +25,7 @@ export default function NoteBottomBar({
   onStartRecording,
   onStopRecording,
   onAskSubmit,
+  onInputFocus,
   askDisabled,
   actionPicker,
   hideInput,
@@ -71,7 +73,8 @@ export default function NoteBottomBar({
 
   const handleInputFocus = useCallback(() => {
     setIsExpanded(true);
-  }, []);
+    onInputFocus?.();
+  }, [onInputFocus]);
 
   useEffect(() => {
     if (!isExpanded) return;

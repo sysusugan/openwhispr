@@ -71,7 +71,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
       localStorage.getItem("uploadSetupComplete") === "true" ||
       localStorage.getItem("notesOnboardingComplete") === "true"
   );
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(true);
   const [providerReady, setProviderReady] = useState<boolean | null>(null);
 
   const { isSignedIn } = useAuth();

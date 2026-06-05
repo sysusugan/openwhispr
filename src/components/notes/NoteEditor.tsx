@@ -1308,6 +1308,11 @@ export default function NoteEditor({
     },
     [chatMode, embeddedChat]
   );
+  const handleAskInputFocus = useCallback(() => {
+    if (chatMode === "hidden") {
+      setChatMode("floating");
+    }
+  }, [chatMode]);
 
   const recordedDateSource = note.recorded_at || note.created_at;
   const noteDate = formatNoteDate(recordedDateSource);
@@ -2014,6 +2019,7 @@ export default function NoteEditor({
             onStartRecording={onStartRecording}
             onStopRecording={onStopRecording}
             onAskSubmit={handleAskSubmit}
+            onInputFocus={handleAskInputFocus}
             actionPicker={isRecording ? undefined : actionPicker}
             hideInput={chatMode !== "hidden"}
             recordingStartedAt={recordingStartedAt}
