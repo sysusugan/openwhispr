@@ -80,3 +80,23 @@ test("cleanupExpiredAudio reports deleted retained note audio filenames to datab
   assert.deepEqual(deletedFilenames, [expired]);
   assert.deepEqual(remainingFilenames, [retained]);
 });
+
+test("deleteRetainedAudioFiles deletes safe retained audio and rejects unsafe names", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "openwhispr-audio-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+
+  const audioDir = path.join(root, "audio");
+  const storage = new AudioStorageManager({ audioDir });
+  const existing = "OpenWhispr-meeting-2026-05-29-06-07-08-12.wav";
+  const missing = "OpenWhispr-meeting-2026-05-29-06-07-09-12.wav";
+  const unsafe = "../secret.wav";
+  fs.writeFileSync(path.join(audioDir, existing), Buffer.from("wav"));
+
+  const result = storage.deleteRetainedAudioFiles([existing, missing, unsafe]);
+
+  assert.equal(result.success, false);
+  assert.deepEqual(result.deleted, [existing]);
+  assert.deepEqual(result.missing, [missing]);
+  assert.deepEqual(result.failed, [{ filename: unsafe, error: "Invalid audio filename" }]);
+  assert.equal(fs.existsSync(path.join(audioDir, existing)), false);
+});

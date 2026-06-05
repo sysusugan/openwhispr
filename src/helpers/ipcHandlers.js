@@ -8523,8 +8523,24 @@ class IPCHandlers {
   }
 
   deleteNoteInternal(id) {
+    const audioFiles = this.databaseManager.getNoteAudioFiles?.(id) || [];
     const result = this.databaseManager.deleteNote(id);
     if (result?.success) {
+      const audioFilenames = audioFiles.map((file) => file.filename).filter(Boolean);
+      if (audioFilenames.length > 0) {
+        const deleteResult = this.audioStorageManager.deleteRetainedAudioFiles(audioFilenames);
+        const removedFilenames = [...deleteResult.deleted, ...deleteResult.missing];
+        if (removedFilenames.length > 0) {
+          this.databaseManager.removeNoteAudioFilesByFilename?.(removedFilenames);
+        }
+        if (deleteResult.failed.length > 0) {
+          debugLogger.warn(
+            "Some note audio files could not be deleted",
+            { noteId: id, failed: deleteResult.failed },
+            "audio-storage"
+          );
+        }
+      }
       setImmediate(() => this.broadcastToWindows("note-deleted", { id }));
       this._asyncVectorDelete(id);
       this._asyncMirrorDelete(id);

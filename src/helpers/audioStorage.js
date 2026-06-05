@@ -170,6 +170,51 @@ class AudioStorageManager {
     }
   }
 
+  deleteRetainedAudioFiles(filenames = []) {
+    const uniqueFilenames = [...new Set((filenames || []).filter(Boolean))];
+    const result = { success: true, deleted: [], missing: [], failed: [] };
+
+    for (const filename of uniqueFilenames) {
+      const filePath = resolveRetainedAudioPath(this.audioDir, filename);
+      if (!filePath) {
+        result.failed.push({ filename, error: "Invalid audio filename" });
+        result.success = false;
+        continue;
+      }
+
+      try {
+        if (!fs.existsSync(filePath)) {
+          result.missing.push(filename);
+          continue;
+        }
+        fs.unlinkSync(filePath);
+        result.deleted.push(filename);
+      } catch (error) {
+        result.failed.push({ filename, error: error.message });
+        result.success = false;
+        debugLogger.error(
+          "Failed to delete retained audio file",
+          { filename, error: error.message },
+          "audio-storage"
+        );
+      }
+    }
+
+    if (result.deleted.length > 0 || result.missing.length > 0 || result.failed.length > 0) {
+      debugLogger.info(
+        "Retained audio delete complete",
+        {
+          deleted: result.deleted.length,
+          missing: result.missing.length,
+          failed: result.failed.length,
+        },
+        "audio-storage"
+      );
+    }
+
+    return result;
+  }
+
   cleanupExpiredAudio(retentionDays, databaseManager) {
     try {
       const cutoffMs = Date.now() - retentionDays * 86400000;
