@@ -30,6 +30,15 @@ import type { Editor } from "@tiptap/react";
 import { MeetingTranscriptChat, SelectionBar } from "./MeetingTranscriptChat";
 import type { TranscriptSegment } from "../../stores/meetingRecordingStore";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Button } from "../ui/button";
+import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -114,6 +123,7 @@ export interface Enhancement {
 }
 
 type MeetingViewMode = "raw" | "transcript" | "enhanced";
+type ImportTarget = "transcript" | "note";
 
 type SpeakerNameEntry = {
   id: number;
@@ -336,6 +346,8 @@ export default function NoteEditor({
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false);
   const [isTranscriptSaving, setIsTranscriptSaving] = useState(false);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [isImportingNote, setIsImportingNote] = useState(false);
   const [editableTranscriptText, setEditableTranscriptText] = useState("");
   const [editableTranscriptSegments, setEditableTranscriptSegments] = useState<TranscriptSegment[]>(
     []
@@ -368,7 +380,7 @@ export default function NoteEditor({
   const editorRef = useRef<Editor | null>(null);
   const findInputRef = useRef<HTMLInputElement>(null);
   const plainTranscriptTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const transcriptImportInputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const replaceRequestIdRef = useRef(0);
   const displaySegmentsRef = useRef<TranscriptSegment[]>([]);
   const effectiveTranscript = selectEmbeddedChatTranscript({
@@ -448,7 +460,7 @@ export default function NoteEditor({
   );
   const hasTranscriptEditControls = !!effectiveTranscript;
   const canEditTranscript = hasTranscriptEditControls && !isRecording;
-  const canImportTranscript = !isRecording && !isTranscriptEditing;
+  const canImportFile = !isRecording && !isTranscriptEditing;
 
   const knownSpeakers = useMemo<SpeakerOption[]>(() => {
     const seen = new Set<string>();
@@ -1055,7 +1067,8 @@ export default function NoteEditor({
 
   const importTranscriptFile = useCallback(
     async (file: File) => {
-      if (!file.name.toLowerCase().endsWith(".txt")) {
+      const name = file.name.toLowerCase();
+      if (!name.endsWith(".txt") && !name.endsWith(".md") && !name.endsWith(".markdown")) {
         toast({
           title: t("notes.editor.transcriptImportUnsupported"),
           variant: "destructive",
@@ -1067,18 +1080,68 @@ export default function NoteEditor({
     [importTranscriptText, t, toast]
   );
 
-  const handleTranscriptImportInput = useCallback(
+  const importNoteFile = useCallback(
+    async (file: File) => {
+      const filePath = window.electronAPI?.getPathForFile?.(file);
+      if (!filePath) {
+        toast({
+          title: t("notes.editor.noteImportFailed"),
+          description: t("notes.editor.noteImportNoFilePath"),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setIsImportingNote(true);
+      try {
+        const result = await window.electronAPI?.importNoteFile?.(note.id, filePath);
+        if (!result?.success || !result.note) {
+          toast({
+            title: t("notes.editor.noteImportFailed"),
+            description: result?.error,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setViewMode("raw");
+        toast({
+          title: t("notes.editor.noteImportSuccess", {
+            count: result.imported?.imageCount ?? 0,
+          }),
+        });
+      } finally {
+        setIsImportingNote(false);
+      }
+    },
+    [note.id, t, toast]
+  );
+
+  const handleImportInput = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       event.target.value = "";
-      if (file) void importTranscriptFile(file);
+      if (file) setPendingImportFile(file);
     },
-    [importTranscriptFile]
+    []
+  );
+
+  const handleChooseImportTarget = useCallback(
+    async (target: ImportTarget) => {
+      if (!pendingImportFile) return;
+      if (target === "transcript") {
+        await importTranscriptFile(pendingImportFile);
+      } else {
+        await importNoteFile(pendingImportFile);
+      }
+      setPendingImportFile(null);
+    },
+    [importNoteFile, importTranscriptFile, pendingImportFile]
   );
 
   const handleNoteDragOver = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (!canImportTranscript) return;
+      if (!canImportFile) return;
       const hasFile = Array.from(event.dataTransfer.items || []).some(
         (item) => item.kind === "file"
       );
@@ -1086,20 +1149,18 @@ export default function NoteEditor({
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
     },
-    [canImportTranscript]
+    [canImportFile]
   );
 
   const handleNoteDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (!canImportTranscript) return;
-      const file = Array.from(event.dataTransfer.files || []).find((candidate) =>
-        candidate.name.toLowerCase().endsWith(".txt")
-      );
+      if (!canImportFile) return;
+      const file = Array.from(event.dataTransfer.files || [])[0];
       if (!file) return;
       event.preventDefault();
-      void importTranscriptFile(file);
+      setPendingImportFile(file);
     },
-    [canImportTranscript, importTranscriptFile]
+    [canImportFile]
   );
 
   const handleStartTranscriptEdit = useCallback(() => {
@@ -1627,19 +1688,19 @@ export default function NoteEditor({
                 )}
               </div>
               <input
-                ref={transcriptImportInputRef}
+                ref={importInputRef}
                 type="file"
-                accept=".txt,text/plain"
+                accept=".txt,.md,.markdown,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 className="hidden"
-                onChange={handleTranscriptImportInput}
+                onChange={handleImportInput}
               />
               <button
                 type="button"
-                onClick={() => transcriptImportInputRef.current?.click()}
-                disabled={!canImportTranscript}
+                onClick={() => importInputRef.current?.click()}
+                disabled={!canImportFile}
                 className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
-                aria-label={t("notes.editor.importTranscript")}
-                title={t("notes.editor.importTranscript")}
+                aria-label={t("notes.editor.importFile")}
+                title={t("notes.editor.importFile")}
               >
                 <FileUp size={11} />
               </button>
@@ -1954,12 +2015,12 @@ export default function NoteEditor({
                 </p>
                 <button
                   type="button"
-                  onClick={() => transcriptImportInputRef.current?.click()}
-                  disabled={!canImportTranscript}
+                  onClick={() => importInputRef.current?.click()}
+                  disabled={!canImportFile}
                   className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                 >
                   <FileUp size={13} />
-                  {t("notes.editor.importTranscript")}
+                  {t("notes.editor.importFile")}
                 </button>
               </div>
             ) : viewMode === "enhanced" && enhancement ? (
@@ -2066,6 +2127,66 @@ export default function NoteEditor({
           onWriteAssistantMessage={embeddedChat.writeAssistantMessage}
         />
       )}
+      <Dialog
+        open={!!pendingImportFile}
+        onOpenChange={(open) => {
+          if (!open && !isImportingNote) setPendingImportFile(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-105 p-6 gap-5">
+          <DialogHeader>
+            <DialogTitle>{t("notes.editor.importTargetTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("notes.editor.importTargetDescription", {
+                file: pendingImportFile?.name || "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <button
+              type="button"
+              onClick={() => void handleChooseImportTarget("transcript")}
+              disabled={isImportingNote}
+              className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60 disabled:opacity-50"
+            >
+              <MessageSquareText size={18} className="text-primary" />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-foreground">
+                  {t("notes.editor.importToTranscript")}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {t("notes.editor.importToTranscriptDescription")}
+                </span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleChooseImportTarget("note")}
+              disabled={isImportingNote}
+              className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60 disabled:opacity-50"
+            >
+              <AlignLeft size={18} className="text-primary" />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-foreground">
+                  {t("notes.editor.importToNote")}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {t("notes.editor.importToNoteDescription")}
+                </span>
+              </span>
+            </button>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setPendingImportFile(null)}
+              disabled={isImportingNote}
+            >
+              {t("common.cancel")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {SHARING_ENABLED && note.cloud_id && (
         <ShareNoteDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} note={note} />
       )}

@@ -1054,6 +1054,36 @@ class IPCHandlers {
       }
     });
 
+    ipcMain.handle("import-note-file", async (_event, noteId, filePath) => {
+      try {
+        const note = this.databaseManager.getNote(noteId);
+        if (!note) return { success: false, error: "Note not found" };
+
+        const { buildImportedNoteUpdates, readImportedNoteFile } = require("./noteImport");
+        const imported = await readImportedNoteFile(this.databaseManager, noteId, filePath);
+        const updates = buildImportedNoteUpdates(note, imported);
+        const result = this.databaseManager.updateNote(noteId, updates);
+
+        if (result?.success && result?.note) {
+          setImmediate(() => this.broadcastToWindows("note-updated", result.note));
+          this._asyncVectorUpsert(result.note);
+          this._asyncMirrorWrite(result.note);
+        }
+
+        return {
+          success: !!result?.success,
+          note: result?.note,
+          imported: {
+            title: imported.title,
+            imageCount: imported.imageCount,
+          },
+        };
+      } catch (error) {
+        debugLogger.error("Error importing note file", { error: error.message }, "notes");
+        return { success: false, error: error.message };
+      }
+    });
+
     ipcMain.handle("db-search-notes", async (event, query, limit) => {
       return this.databaseManager.searchNotes(query, limit);
     });

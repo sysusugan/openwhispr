@@ -640,6 +640,18 @@ declare global {
         error?: string;
       }>;
       deleteNoteImageAsset: (assetId: string) => Promise<{ success: boolean; error?: string }>;
+      importNoteFile: (
+        noteId: number,
+        filePath: string
+      ) => Promise<{
+        success: boolean;
+        note?: NoteItem;
+        imported?: {
+          title?: string;
+          imageCount: number;
+        };
+        error?: string;
+      }>;
       exportNote: (
         noteId: number,
         format: "txt" | "md" | "pdf"
