@@ -29,7 +29,7 @@ function readHtmlAttribute(attrs, name) {
 }
 
 function hasNoteAssetImage(markdown) {
-  return isNoteAssetUrl(String(markdown || ""));
+  return String(markdown || "").includes("openwhispr-note-asset://");
 }
 
 function replaceNoteAssetImageReferences(markdown, replacer) {
