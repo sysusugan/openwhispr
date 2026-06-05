@@ -462,7 +462,8 @@ export default function NoteEditor({
   );
   const hasTranscriptEditControls = !!effectiveTranscript;
   const canEditTranscript = hasTranscriptEditControls && !isRecording;
-  const canImportFile = !isRecording && !isTranscriptEditing;
+  const canImportNoteFile = !isTranscriptEditing;
+  const canImportTranscriptFile = !isRecording && !isTranscriptEditing;
 
   const knownSpeakers = useMemo<SpeakerOption[]>(() => {
     const seen = new Set<string>();
@@ -1143,15 +1144,22 @@ export default function NoteEditor({
     [importNoteFile, importTranscriptFile]
   );
 
-  const openImportFilePicker = useCallback((target: ImportTarget) => {
-    queuedImportTargetRef.current = target;
-    setQueuedImportTarget(target);
-    window.requestAnimationFrame(() => importInputRef.current?.click());
-  }, []);
+  const openImportFilePicker = useCallback(
+    (target: ImportTarget) => {
+      if (target === "transcript" && !canImportTranscriptFile) return;
+      if (target === "note" && !canImportNoteFile) return;
+      queuedImportTargetRef.current = target;
+      setQueuedImportTarget(target);
+      window.requestAnimationFrame(() => importInputRef.current?.click());
+    },
+    [canImportNoteFile, canImportTranscriptFile]
+  );
 
   const handleChooseImportTarget = useCallback(
     async (target: ImportTarget) => {
       if (!pendingImportFile) return;
+      if (target === "transcript" && !canImportTranscriptFile) return;
+      if (target === "note" && !canImportNoteFile) return;
       if (target === "transcript") {
         await importTranscriptFile(pendingImportFile);
       } else {
@@ -1159,12 +1167,18 @@ export default function NoteEditor({
       }
       setPendingImportFile(null);
     },
-    [importNoteFile, importTranscriptFile, pendingImportFile]
+    [
+      canImportNoteFile,
+      canImportTranscriptFile,
+      importNoteFile,
+      importTranscriptFile,
+      pendingImportFile,
+    ]
   );
 
   const handleNoteDragOver = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (!canImportFile) return;
+      if (!canImportNoteFile) return;
       const hasFile = Array.from(event.dataTransfer.items || []).some(
         (item) => item.kind === "file"
       );
@@ -1172,18 +1186,18 @@ export default function NoteEditor({
       event.preventDefault();
       event.dataTransfer.dropEffect = "copy";
     },
-    [canImportFile]
+    [canImportNoteFile]
   );
 
   const handleNoteDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (!canImportFile) return;
+      if (!canImportNoteFile) return;
       const file = Array.from(event.dataTransfer.files || [])[0];
       if (!file) return;
       event.preventDefault();
       setPendingImportFile(file);
     },
-    [canImportFile]
+    [canImportNoteFile]
   );
 
   const handleStartTranscriptEdit = useCallback(() => {
@@ -1725,7 +1739,7 @@ export default function NoteEditor({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    disabled={!canImportFile}
+                    disabled={!canImportNoteFile}
                     className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
                     aria-label={t("notes.editor.importFile")}
                     title={t("notes.editor.importFile")}
@@ -1736,6 +1750,7 @@ export default function NoteEditor({
                 <DropdownMenuContent align="end" sideOffset={4}>
                   <DropdownMenuItem
                     onClick={() => openImportFilePicker("transcript")}
+                    disabled={!canImportTranscriptFile}
                     className="text-xs gap-2"
                   >
                     <MessageSquareText size={13} className="text-foreground/40" />
@@ -2062,7 +2077,7 @@ export default function NoteEditor({
                 <button
                   type="button"
                   onClick={() => openImportFilePicker("transcript")}
-                  disabled={!canImportFile}
+                  disabled={!canImportTranscriptFile}
                   className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                 >
                   <FileUp size={13} />
@@ -2192,7 +2207,7 @@ export default function NoteEditor({
             <button
               type="button"
               onClick={() => void handleChooseImportTarget("transcript")}
-              disabled={isImportingNote}
+              disabled={isImportingNote || !canImportTranscriptFile}
               className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60 disabled:opacity-50"
             >
               <MessageSquareText size={18} className="text-primary" />
@@ -2208,7 +2223,7 @@ export default function NoteEditor({
             <button
               type="button"
               onClick={() => void handleChooseImportTarget("note")}
-              disabled={isImportingNote}
+              disabled={isImportingNote || !canImportNoteFile}
               className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/60 disabled:opacity-50"
             >
               <AlignLeft size={18} className="text-primary" />
