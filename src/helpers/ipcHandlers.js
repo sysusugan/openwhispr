@@ -1444,6 +1444,7 @@ class IPCHandlers {
         const path = require("path");
         const os = require("os");
         const {
+          appendUnreferencedNoteAssets,
           copyNoteAssetsForMarkdown,
           inlineNoteAssetsForHtml,
           markdownToHtml,
@@ -1481,6 +1482,11 @@ class IPCHandlers {
         } else {
           exportContent = selectNoteExportContent(note);
         }
+        exportContent = appendUnreferencedNoteAssets(
+          exportContent,
+          this.databaseManager,
+          note.id
+        );
 
         if (format === "pdf") {
           const markdown = inlineNoteAssetsForHtml(exportContent, this.databaseManager);

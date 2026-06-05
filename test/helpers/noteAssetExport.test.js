@@ -14,7 +14,11 @@ Module._load = function load(request, parent, isMain) {
   return originalLoad.call(this, request, parent, isMain);
 };
 
-const { hasNoteAssetImage, selectNoteExportContent } = require("../../src/helpers/noteAssetExport");
+const {
+  appendUnreferencedNoteAssets,
+  hasNoteAssetImage,
+  selectNoteExportContent,
+} = require("../../src/helpers/noteAssetExport");
 
 Module._load = originalLoad;
 
@@ -26,4 +30,19 @@ test("detects note asset images embedded inside markdown content", () => {
   assert.equal(hasNoteAssetImage(content), true);
   assert.equal(hasNoteAssetImage(enhancedContent), false);
   assert.equal(selectNoteExportContent({ content, enhanced_content: enhancedContent }), content);
+});
+
+test("appends note assets when editor markdown lost image references", () => {
+  const content = "纪要\n\n会议背景";
+  const databaseManager = {
+    getNoteAssets: () => [
+      { id: "asset-a", filename: "image.png" },
+      { id: "asset-b", filename: "diagram.png" },
+    ],
+  };
+
+  const result = appendUnreferencedNoteAssets(content, databaseManager, 34);
+
+  assert.match(result, /!\[image\.png\]\(openwhispr-note-asset:\/\/asset-a\)/);
+  assert.match(result, /!\[diagram\.png\]\(openwhispr-note-asset:\/\/asset-b\)/);
 });

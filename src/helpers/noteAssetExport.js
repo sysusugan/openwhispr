@@ -32,6 +32,32 @@ function hasNoteAssetImage(markdown) {
   return String(markdown || "").includes("openwhispr-note-asset://");
 }
 
+function collectNoteAssetIds(markdown) {
+  return new Set(
+    Array.from(String(markdown || "").matchAll(/openwhispr-note-asset:\/\/([A-Za-z0-9_-]+)/g)).map(
+      (match) => match[1]
+    )
+  );
+}
+
+function appendUnreferencedNoteAssets(markdown, databaseManager, noteId) {
+  const content = String(markdown || "");
+  if (!databaseManager?.getNoteAssets || !noteId) return content;
+
+  const assets = databaseManager.getNoteAssets(noteId);
+  if (!assets.length) return content;
+
+  const existingAssetIds = collectNoteAssetIds(content);
+  const missingAssets = assets.filter((asset) => asset?.id && !existingAssetIds.has(asset.id));
+  if (!missingAssets.length) return content;
+
+  const imageMarkdown = missingAssets
+    .map((asset) => `![${safeMarkdownAlt(asset.filename)}](openwhispr-note-asset://${asset.id})`)
+    .join("\n\n");
+
+  return `${content.trimEnd()}\n\n${imageMarkdown}`;
+}
+
 function replaceNoteAssetImageReferences(markdown, replacer) {
   let content = String(markdown || "").replace(
     /!\[([^\]]*)\]\(([^)\s]+(?:\s+"[^"]*")?)\)/g,
@@ -193,7 +219,9 @@ function markdownToHtml(markdown, title) {
 }
 
 module.exports = {
+  appendUnreferencedNoteAssets,
   copyNoteAssetsForMarkdown,
+  collectNoteAssetIds,
   hasNoteAssetImage,
   inlineNoteAssetsForHtml,
   markdownToHtml,
