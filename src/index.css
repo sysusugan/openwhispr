@@ -1116,6 +1116,51 @@ body:has(.agent-overlay-window) #root {
   margin: 0.75rem 0;
 }
 
+.rich-text-editor-content .tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.rich-text-editor-content table {
+  width: 100%;
+  min-width: max-content;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.rich-text-editor-content th,
+.rich-text-editor-content td {
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.5rem 0.625rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.rich-text-editor-content th:last-child,
+.rich-text-editor-content td:last-child {
+  border-right: none;
+}
+
+.rich-text-editor-content tr:last-child td {
+  border-bottom: none;
+}
+
+.rich-text-editor-content th {
+  background: oklch(0.5 0 0 / 0.05);
+  font-weight: 600;
+}
+
+.rich-text-editor-content th p,
+.rich-text-editor-content td p {
+  margin-bottom: 0;
+}
+
 .rich-text-editor-content ::selection {
   background: oklch(0.62 0.22 260 / 0.15);
 }
@@ -1203,6 +1248,10 @@ body:has(.agent-overlay-window) #root {
 
 .dark .rich-text-editor-content code {
   background: oklch(0.8 0 0 / 0.08);
+}
+
+.dark .rich-text-editor-content th {
+  background: oklch(0.8 0 0 / 0.07);
 }
 
 .dark .rich-text-editor-content ul[data-type="taskList"] li > label input[type="checkbox"] {

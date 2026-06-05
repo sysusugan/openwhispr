@@ -10,7 +10,11 @@ function safeExportName(value) {
 }
 
 function safeMarkdownAlt(value) {
-  return String(value || "image").replace(/[\[\]\r\n]/g, " ").trim() || "image";
+  return (
+    String(value || "image")
+      .replace(/[\[\]\r\n]/g, " ")
+      .trim() || "image"
+  );
 }
 
 function decodeHtmlAttribute(value) {
@@ -62,7 +66,9 @@ function replaceNoteAssetImageReferences(markdown, replacer) {
   let content = String(markdown || "").replace(
     /!\[([^\]]*)\]\(([^)\s]+(?:\s+"[^"]*")?)\)/g,
     (match, alt, rawSrc) => {
-      const src = String(rawSrc || "").trim().replace(/\s+"[^"]*"$/, "");
+      const src = String(rawSrc || "")
+        .trim()
+        .replace(/\s+"[^"]*"$/, "");
       if (!isNoteAssetUrl(src)) return match;
       const nextSrc = replacer(src);
       return nextSrc ? `![${safeMarkdownAlt(alt)}](${nextSrc})` : `![${safeMarkdownAlt(alt)}]()`;
@@ -141,6 +147,103 @@ function inlineMarkdown(text) {
     .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
+function splitMarkdownTableRow(line) {
+  const trimmed = String(line || "")
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "");
+  const cells = [];
+  let cell = "";
+  let escaped = false;
+
+  for (const char of trimmed) {
+    if (escaped) {
+      cell += char;
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === "|") {
+      cells.push(cell.trim());
+      cell = "";
+      continue;
+    }
+    cell += char;
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
+function parseMarkdownTableSeparator(line) {
+  const cells = splitMarkdownTableRow(line);
+  if (cells.length === 0) return null;
+  const alignments = [];
+
+  for (const cell of cells) {
+    const compact = cell.replace(/\s+/g, "");
+    if (!/^:?-{3,}:?$/.test(compact)) return null;
+    alignments.push(
+      compact.startsWith(":") && compact.endsWith(":")
+        ? "center"
+        : compact.endsWith(":")
+          ? "right"
+          : compact.startsWith(":")
+            ? "left"
+            : ""
+    );
+  }
+
+  return alignments;
+}
+
+function isMarkdownTableStart(lines, index) {
+  const line = lines[index];
+  const separator = lines[index + 1];
+  if (!line || !separator || !line.includes("|") || !separator.includes("|")) return false;
+  const headerCells = splitMarkdownTableRow(line);
+  const alignments = parseMarkdownTableSeparator(separator);
+  return !!alignments && headerCells.length === alignments.length;
+}
+
+function renderMarkdownTable(lines, startIndex) {
+  const headers = splitMarkdownTableRow(lines[startIndex]);
+  const alignments = parseMarkdownTableSeparator(lines[startIndex + 1]) || [];
+  const rows = [];
+  let index = startIndex + 2;
+
+  while (index < lines.length && lines[index].trim() && lines[index].includes("|")) {
+    rows.push(splitMarkdownTableRow(lines[index]));
+    index += 1;
+  }
+
+  const alignStyle = (alignment) => (alignment ? ` style="text-align:${alignment}"` : "");
+  const html = [
+    '<div class="table-wrapper"><table>',
+    `<thead><tr>${headers
+      .map(
+        (cell, cellIndex) => `<th${alignStyle(alignments[cellIndex])}>${inlineMarkdown(cell)}</th>`
+      )
+      .join("")}</tr></thead>`,
+    "<tbody>",
+    ...rows.map(
+      (row) =>
+        `<tr>${headers
+          .map(
+            (_header, cellIndex) =>
+              `<td${alignStyle(alignments[cellIndex])}>${inlineMarkdown(row[cellIndex] || "")}</td>`
+          )
+          .join("")}</tr>`
+    ),
+    "</tbody>",
+    "</table></div>",
+  ];
+
+  return { html: html.join("\n"), nextIndex: index };
+}
+
 function markdownToHtml(markdown, title) {
   const lines = String(markdown || "").split(/\r?\n/);
   const html = [];
@@ -152,9 +255,17 @@ function markdownToHtml(markdown, title) {
     listType = null;
   };
 
-  for (const line of lines) {
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
     if (!line.trim()) {
       closeList();
+      continue;
+    }
+    if (isMarkdownTableStart(lines, index)) {
+      closeList();
+      const table = renderMarkdownTable(lines, index);
+      html.push(table.html);
+      index = table.nextIndex - 1;
       continue;
     }
     const heading = line.match(/^(#{1,3})\s+(.+)$/);
@@ -209,6 +320,12 @@ function markdownToHtml(markdown, title) {
     li { margin: 3px 0; }
     code { background: #f3f4f6; border-radius: 3px; padding: 1px 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     img { display: block; max-width: 100%; height: auto; margin: 14px 0; border: 1px solid #e5e7eb; border-radius: 8px; }
+    .table-wrapper { overflow-x: auto; margin: 16px 0; border: 1px solid #d1d5db; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-right: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db; padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; }
+    th:last-child, td:last-child { border-right: none; }
+    tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
