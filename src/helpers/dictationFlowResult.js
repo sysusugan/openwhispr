@@ -78,7 +78,53 @@ function resolveStreamingDictationText({ finalText, stopText, partialText } = {}
   };
 }
 
+async function settleStreamingStop(stopProvider, { timeoutMs = 2500 } = {}) {
+  let timeoutId;
+  try {
+    const result = await Promise.race([
+      Promise.resolve().then(() => stopProvider()),
+      new Promise((resolve) => {
+        timeoutId = setTimeout(
+          () =>
+            resolve({
+              success: false,
+              text: "",
+              warning: "streaming_stop_timeout",
+              timedOut: true,
+            }),
+          timeoutMs
+        );
+      }),
+    ]);
+
+    if (timeoutId) clearTimeout(timeoutId);
+    if (result?.timedOut) return result;
+    return {
+      ...result,
+      warning: result?.warning ?? null,
+      timedOut: false,
+    };
+  } catch (error) {
+    if (timeoutId) clearTimeout(timeoutId);
+    return {
+      success: false,
+      text: "",
+      error: error?.message || String(error),
+      warning: "streaming_stop_failed",
+      timedOut: false,
+    };
+  }
+}
+
+function pickDictationWarning(...warnings) {
+  const priority = ["cleanup_failed", "partial_result", "streaming_stop_timeout", "streaming_stop_failed"];
+  const present = warnings.filter(Boolean);
+  return priority.find((warning) => present.includes(warning)) || present[0] || null;
+}
+
 module.exports = {
   normalizeDictationResult,
   resolveStreamingDictationText,
+  settleStreamingStop,
+  pickDictationWarning,
 };

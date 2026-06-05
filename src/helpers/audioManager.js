@@ -15,7 +15,12 @@ import { detectAgentName } from "../config/agentDetection";
 import { resolvePrompt } from "../config/prompts";
 import { buildDictionaryPrompt } from "../config/dictionaryPrompt.js";
 import { syncService } from "../services/SyncService.js";
-import { normalizeDictationResult, resolveStreamingDictationText } from "./dictationFlowResult";
+import {
+  normalizeDictationResult,
+  pickDictationWarning,
+  resolveStreamingDictationText,
+  settleStreamingStop,
+} from "./dictationFlowResult";
 
 const REASONING_CACHE_TTL = 30000; // 30 seconds
 const REALTIME_MODELS = new Set(["gpt-4o-mini-transcribe", "gpt-4o-transcribe"]);
@@ -2532,10 +2537,14 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     await new Promise((resolve) => setTimeout(resolve, 300));
     const tForceEndpoint = performance.now();
 
-    const stopResult = await provider.stop().catch((e) => {
-      logger.debug("Streaming disconnect error", { error: e.message }, "streaming");
-      return { success: false };
-    });
+    const stopResult = await settleStreamingStop(() => provider.stop(), { timeoutMs: 2500 });
+    if (stopResult.warning) {
+      logger.debug(
+        "Streaming stop settled with warning",
+        { warning: stopResult.warning, error: stopResult.error },
+        "streaming"
+      );
+    }
     const tTerminate = performance.now();
 
     const streamingText = resolveStreamingDictationText({
@@ -2570,7 +2579,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     const streamingSttWordCount = finalText ? finalText.split(/\s+/).filter(Boolean).length : 0;
 
     let usedCloudReasoning = false;
-    let processingWarning = streamingText.warning;
+    let processingWarning = pickDictationWarning(streamingText.warning, stopResult.warning);
     if (finalText && !this.skipReasoning) {
       const reasoningStart = performance.now();
       const agentName = localStorage.getItem("agentName") || null;
@@ -2652,7 +2661,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
           { error: reasonError.message },
           "streaming"
         );
-        processingWarning = "cleanup_failed";
+        processingWarning = pickDictationWarning("cleanup_failed", processingWarning);
       }
     }
 
@@ -2678,6 +2687,7 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
           logger.info("Batch fallback succeeded", { textLength: finalText.length }, "streaming");
         }
       } catch (fallbackErr) {
+        processingWarning = pickDictationWarning(processingWarning, "streaming_stop_failed");
         logger.error("Batch fallback failed", { error: fallbackErr.message }, "streaming");
       }
     }

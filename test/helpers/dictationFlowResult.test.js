@@ -4,6 +4,8 @@ const assert = require("node:assert/strict");
 const {
   normalizeDictationResult,
   resolveStreamingDictationText,
+  settleStreamingStop,
+  pickDictationWarning,
 } = require("../../src/helpers/dictationFlowResult");
 
 test("normalizes a successful dictation result with raw and refined text", () => {
@@ -118,4 +120,51 @@ test("marks streaming partial fallback as partial result", () => {
     warning: "partial_result",
     source: "partial",
   });
+});
+
+test("settles streaming stop with provider result before timeout", async () => {
+  const result = await settleStreamingStop(() => Promise.resolve({ success: true, text: "done" }), {
+    timeoutMs: 20,
+  });
+
+  assert.deepEqual(result, {
+    success: true,
+    text: "done",
+    warning: null,
+    timedOut: false,
+  });
+});
+
+test("settles streaming stop with timeout warning", async () => {
+  const result = await settleStreamingStop(
+    () => new Promise((resolve) => setTimeout(() => resolve({ success: true, text: "late" }), 30)),
+    { timeoutMs: 1 }
+  );
+
+  assert.deepEqual(result, {
+    success: false,
+    text: "",
+    warning: "streaming_stop_timeout",
+    timedOut: true,
+  });
+});
+
+test("settles streaming stop with failure warning", async () => {
+  const result = await settleStreamingStop(() => Promise.reject(new Error("socket closed")), {
+    timeoutMs: 20,
+  });
+
+  assert.deepEqual(result, {
+    success: false,
+    text: "",
+    error: "socket closed",
+    warning: "streaming_stop_failed",
+    timedOut: false,
+  });
+});
+
+test("keeps the most user-visible dictation warning", () => {
+  assert.equal(pickDictationWarning("partial_result", "streaming_stop_timeout"), "partial_result");
+  assert.equal(pickDictationWarning(null, "streaming_stop_timeout"), "streaming_stop_timeout");
+  assert.equal(pickDictationWarning("cleanup_failed", "partial_result"), "cleanup_failed");
 });
