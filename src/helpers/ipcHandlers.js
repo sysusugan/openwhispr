@@ -1451,17 +1451,22 @@ class IPCHandlers {
         } = require("./noteAssetExport");
         const ext = format === "txt" ? "txt" : format === "pdf" ? "pdf" : "md";
         const safeName = (note.title || "Untitled").replace(/[/\\?%*:|"<>]/g, "-");
+        const filterByFormat = {
+          md: { name: "Markdown", extensions: ["md"] },
+          txt: { name: "Text", extensions: ["txt"] },
+          pdf: { name: "PDF", extensions: ["pdf"] },
+        };
 
         const result = await dialog.showSaveDialog({
           defaultPath: `${safeName}.${ext}`,
-          filters: [
-            { name: "PDF", extensions: ["pdf"] },
-            { name: "Markdown", extensions: ["md"] },
-            { name: "Text", extensions: ["txt"] },
-          ],
+          filters: [filterByFormat[format] || filterByFormat.md],
         });
 
         if (result.canceled || !result.filePath) return { success: false };
+        const outputPath =
+          path.extname(result.filePath).toLowerCase() === `.${ext}`
+            ? result.filePath
+            : `${result.filePath.replace(/\.[^.\\/]+$/, "")}.${ext}`;
 
         let exportContent;
         if (format === "txt") {
@@ -1499,7 +1504,7 @@ class IPCHandlers {
                 marginType: "default",
               },
             });
-            fs.writeFileSync(result.filePath, pdf);
+            fs.writeFileSync(outputPath, pdf);
           } finally {
             if (!win.isDestroyed()) win.destroy();
             try {
@@ -1510,12 +1515,12 @@ class IPCHandlers {
           const markdownExport = copyNoteAssetsForMarkdown(
             exportContent,
             this.databaseManager,
-            result.filePath,
+            outputPath,
             safeName
           );
-          fs.writeFileSync(result.filePath, markdownExport.content, "utf-8");
+          fs.writeFileSync(outputPath, markdownExport.content, "utf-8");
         } else {
-          fs.writeFileSync(result.filePath, exportContent, "utf-8");
+          fs.writeFileSync(outputPath, exportContent, "utf-8");
         }
         return { success: true };
       } catch (error) {
