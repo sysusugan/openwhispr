@@ -15,13 +15,17 @@ test("ordinary note actions include dictionary instructions", () => {
   assert.match(prompt, /ASR/i);
 });
 
-test("meeting note actions include dictionary instructions", () => {
-  const prompt = buildNoteActionSystemPrompt("Generate meeting notes.", {
+test("meeting note actions keep action prompt in control of output structure", () => {
+  const prompt = buildNoteActionSystemPrompt("Generate transcript chapters.", {
     isMeetingNote: true,
     customDictionary: ["Navy"],
     uiLanguage: "en",
   });
 
-  assert.match(prompt, /professional meeting notes assistant/i);
+  assert.match(prompt, /dual-speaker transcript/i);
+  assert.match(prompt, /Generate transcript chapters/);
+  assert.doesNotMatch(prompt, /Key Discussion Points/i);
+  assert.doesNotMatch(prompt, /Decisions Made/i);
+  assert.doesNotMatch(prompt, /Action Items/i);
   assert.match(prompt, /Navy/);
 });
