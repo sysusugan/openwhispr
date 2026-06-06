@@ -1,3 +1,5 @@
+const { applyDictionaryCorrections } = require("../utils/dictionaryCorrectionCore.cjs");
+
 function normalizeDurationMs(metadata = {}) {
   if (Number.isFinite(metadata.durationMs)) return Math.round(metadata.durationMs);
   if (Number.isFinite(metadata.audioDurationMs)) return Math.round(metadata.audioDurationMs);
@@ -9,28 +11,75 @@ function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function uniqueCorrections(corrections) {
+  const seen = new Set();
+  const unique = [];
+  for (const correction of corrections) {
+    const key = `${correction.from}\u0000${correction.to}\u0000${correction.kind}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(correction);
+  }
+  return unique;
+}
+
+function correctResultText(rawText, refinedText, displayText, metadata = {}) {
+  const options = {
+    dictionary: metadata.customDictionary,
+    aliases: metadata.customDictionaryAliases,
+  };
+  const corrections = [];
+
+  const raw = applyDictionaryCorrections(rawText, options);
+  corrections.push(...raw.replacements);
+
+  const refined = refinedText
+    ? applyDictionaryCorrections(refinedText, options)
+    : { text: refinedText, replacements: [] };
+  corrections.push(...refined.replacements);
+
+  const display =
+    displayText && displayText !== refinedText && displayText !== rawText
+      ? applyDictionaryCorrections(displayText, options)
+      : { text: displayText === refinedText ? refined.text : displayText, replacements: [] };
+  corrections.push(...display.replacements);
+
+  return {
+    rawText: raw.text,
+    refinedText: refined.text,
+    displayText: display.text || refined.text || raw.text,
+    corrections: uniqueCorrections(corrections),
+  };
+}
+
 function normalizeTranscriptionResult(result = {}, metadata = {}) {
   const success = result.success !== false;
   const rawText = cleanText(result.rawText) || cleanText(result.text);
   const refinedText = cleanText(result.rawText) ? cleanText(result.refinedText ?? result.text) : "";
   const displayText = cleanText(result.displayText) || refinedText || rawText;
+  const corrected = correctResultText(rawText, refinedText, displayText, metadata);
+  const hasDictionaryCorrections = corrected.corrections.length > 0;
 
   return {
     ...result,
     success,
     mode: metadata.mode ?? result.mode ?? "transcription",
     stage: success ? "complete" : "error",
-    rawText,
-    refinedText,
-    displayText,
-    text: displayText,
+    rawText: corrected.rawText,
+    refinedText: corrected.refinedText,
+    displayText: corrected.displayText,
+    text: corrected.displayText,
     provider: metadata.provider ?? result.provider ?? result.source ?? null,
     model: metadata.model ?? result.model ?? null,
     language: metadata.language ?? result.language ?? null,
     audioDurationMs: normalizeDurationMs(metadata) ?? result.audioDurationMs ?? null,
     timings: result.timings ?? metadata.timings ?? null,
-    warning: result.warning ?? metadata.warning ?? null,
+    warning: pickDictationWarning(
+      result.warning ?? metadata.warning ?? null,
+      hasDictionaryCorrections ? "dictionary_corrected" : null
+    ),
     partial: Boolean(result.partial ?? metadata.partial ?? false),
+    dictionaryCorrections: hasDictionaryCorrections ? corrected.corrections : undefined,
     clientTranscriptionId: result.clientTranscriptionId ?? metadata.clientTranscriptionId,
     chunksTotal: result.chunksTotal ?? metadata.chunksTotal,
     chunksSucceeded: result.chunksSucceeded ?? metadata.chunksSucceeded,
@@ -130,6 +179,7 @@ function pickDictationWarning(...warnings) {
   const priority = [
     "cleanup_failed",
     "dictionary_prompt_truncated",
+    "dictionary_corrected",
     "partial_result",
     "streaming_stop_timeout",
     "streaming_stop_failed",

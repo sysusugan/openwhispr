@@ -2264,7 +2264,13 @@
     "peopleUsage": "Wird beim Zuordnen von Sprechern in Transkripten und Meeting-Notizen genutzt; diese Namen machen die Zuordnung schneller und konsistenter.",
     "addPerson": "Add person",
     "addPersonPlaceholder": "Add a speaker name...",
-    "removePerson": "Remove {{name}}"
+    "removePerson": "Remove {{name}}",
+    "aliasesTitle": "Häufige Fehl-Erkennungen",
+    "aliasesDescription": "Korrigiert wiederkehrende ASR-Fehler zur exakten Wörterbuchschreibweise, z. B. Antibus -> EntVerse.",
+    "aliasFromPlaceholder": "Falscher Text",
+    "aliasToPlaceholder": "Korrekter Begriff",
+    "aliasAdd": "Hinzufügen",
+    "removeAlias": "{{from}} zu {{to}} entfernen"
   },
   "sidebar": {
     "home": "Startseite",

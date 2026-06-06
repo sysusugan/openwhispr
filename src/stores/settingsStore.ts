@@ -23,6 +23,7 @@ import type {
   PrivacySettings,
   ThemeSettings,
   ChatAgentSettings,
+  DictionaryAlias,
 } from "../hooks/useSettings";
 
 let _ReasoningService: typeof import("../services/ReasoningService").default | null = null;
@@ -52,6 +53,25 @@ function readStringArray(key: string, fallback: string[]): string[] {
   } catch {
     return fallback;
   }
+}
+
+function normalizeDictionaryAliasList(aliases: DictionaryAlias[] = []): DictionaryAlias[] {
+  return Array.isArray(aliases)
+    ? aliases
+        .map((alias) => ({
+          from: String(alias?.from || "").trim(),
+          to: String(alias?.to || "").trim(),
+        }))
+        .filter((alias) => alias.from && alias.to)
+    : [];
+}
+
+function dictionaryAliasesEqual(left: DictionaryAlias[] = [], right: DictionaryAlias[] = []) {
+  if (left.length !== right.length) return false;
+  return left.every((alias, index) => {
+    const other = right[index];
+    return alias.from === other?.from && alias.to === other?.to;
+  });
 }
 
 // One-time migration for legacy `meetingFollows{Transcription,Reasoning}` flags.
@@ -139,7 +159,7 @@ const BOOLEAN_SETTINGS = new Set([
   "gcalPrimaryOnly",
 ]);
 
-const ARRAY_SETTINGS = new Set(["customDictionary", "gcalAccounts"]);
+const ARRAY_SETTINGS = new Set(["customDictionary", "customDictionaryAliases", "gcalAccounts"]);
 
 const NUMERIC_SETTINGS = new Set([
   "audioRetentionDays",
@@ -480,6 +500,7 @@ export interface SettingsState
   setCleanupCloudMode: (value: string) => void;
   setCleanupCloudBaseUrl: (value: string) => void;
   setCustomDictionary: (words: string[]) => void;
+  setCustomDictionaryAliases: (aliases: DictionaryAlias[]) => void;
   setAssemblyAiStreaming: (value: boolean) => void;
   setAutoGenerateNoteTitle: (value: boolean) => void;
   setUseCleanupModel: (value: boolean) => void;
@@ -709,6 +730,10 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   cleanupCloudMode: readString("cleanupCloudMode", "openwhispr"),
   cleanupCloudBaseUrl: readString("cleanupCloudBaseUrl", API_ENDPOINTS.OPENAI_BASE),
   customDictionary: readStringArray("customDictionary", []),
+  customDictionaryAliases: readStringArray(
+    "customDictionaryAliases",
+    []
+  ) as unknown as DictionaryAlias[],
   assemblyAiStreaming: readBoolean("assemblyAiStreaming", true),
 
   autoGenerateNoteTitle: readBoolean("autoGenerateNoteTitle", true),
@@ -1026,6 +1051,20 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     window.electronAPI?.setDictionary(words).catch((err) => {
       logger.warn(
         "Failed to sync dictionary to SQLite",
+        { error: (err as Error).message },
+        "settings"
+      );
+    });
+  },
+
+  setCustomDictionaryAliases: (aliases: DictionaryAlias[]) => {
+    const normalized = normalizeDictionaryAliasList(aliases);
+    if (dictionaryAliasesEqual(get().customDictionaryAliases, normalized)) return;
+    if (isBrowser) localStorage.setItem("customDictionaryAliases", JSON.stringify(normalized));
+    set({ customDictionaryAliases: normalized });
+    window.electronAPI?.setDictionaryAliases?.(normalized).catch((err) => {
+      logger.warn(
+        "Failed to sync dictionary aliases to SQLite",
         { error: (err as Error).message },
         "settings"
       );
@@ -1421,6 +1460,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (settings.cloudTranscriptionMode !== undefined)
       s.setCloudTranscriptionMode(settings.cloudTranscriptionMode);
     if (settings.customDictionary !== undefined) s.setCustomDictionary(settings.customDictionary);
+    if (settings.customDictionaryAliases !== undefined)
+      s.setCustomDictionaryAliases(settings.customDictionaryAliases);
     if (settings.assemblyAiStreaming !== undefined)
       s.setAssemblyAiStreaming(settings.assemblyAiStreaming);
     if (settings.showTranscriptionPreview !== undefined)
@@ -1792,6 +1833,25 @@ export async function initializeSettings(): Promise<void> {
     } catch (err) {
       logger.warn(
         "Failed to sync dictionary on startup",
+        { error: (err as Error).message },
+        "settings"
+      );
+    }
+
+    try {
+      if (window.electronAPI.getDictionaryAliases && window.electronAPI.setDictionaryAliases) {
+        const currentAliases = useSettingsStore.getState().customDictionaryAliases;
+        const dbAliases = await window.electronAPI.getDictionaryAliases();
+        if (dbAliases.length === 0 && currentAliases.length > 0) {
+          await window.electronAPI.setDictionaryAliases(currentAliases);
+        } else if (dbAliases.length > 0 && currentAliases.length === 0) {
+          if (isBrowser) localStorage.setItem("customDictionaryAliases", JSON.stringify(dbAliases));
+          useSettingsStore.setState({ customDictionaryAliases: dbAliases });
+        }
+      }
+    } catch (err) {
+      logger.warn(
+        "Failed to sync dictionary aliases on startup",
         { error: (err as Error).message },
         "settings"
       );

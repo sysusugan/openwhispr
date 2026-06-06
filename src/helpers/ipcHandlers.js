@@ -64,6 +64,19 @@ const ALLOWED_MEETING_PROVIDERS = new Set([
   "deepgram-realtime",
 ]);
 
+function buildRuntimeDictionaryPrompt(words) {
+  if (!Array.isArray(words) || words.length === 0) return null;
+  const seen = new Set();
+  const normalized = [];
+  for (const word of words) {
+    const trimmed = String(word || "").trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    normalized.push(trimmed);
+  }
+  return normalized.length ? normalized.join(", ") : null;
+}
+
 function parseAttendees(raw) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -992,6 +1005,19 @@ class IPCHandlers {
       return this.databaseManager.setDictionary(words);
     });
 
+    ipcMain.handle("db-get-dictionary-aliases", async () => {
+      return this.databaseManager.getDictionaryAliases();
+    });
+
+    ipcMain.handle("db-set-dictionary-aliases", async (_event, aliases) => {
+      if (!Array.isArray(aliases)) {
+        throw new Error("aliases must be an array");
+      }
+      const result = this.databaseManager.setDictionaryAliases(aliases);
+      this.broadcastToWindows("dictionary-aliases-updated", this.databaseManager.getDictionaryAliases());
+      return result;
+    });
+
     ipcMain.handle("undo-learned-corrections", async (_event, words) => {
       try {
         if (!Array.isArray(words) || words.length === 0) {
@@ -1903,7 +1929,16 @@ class IPCHandlers {
           const provider = options.provider === "nvidia" ? "nvidia" : "whisper";
           const model = options.model;
           const language = options.language;
-          const { provider: _ignoredProvider, ...whisperOptions } = options;
+          const dictionaryPrompt = buildRuntimeDictionaryPrompt(options.customDictionary);
+          const {
+            provider: _ignoredProvider,
+            customDictionary: _ignoredDictionary,
+            customDictionaryAliases: _ignoredAliases,
+            ...whisperOptions
+          } = options;
+          if (dictionaryPrompt && !whisperOptions.initialPrompt) {
+            whisperOptions.initialPrompt = dictionaryPrompt;
+          }
           const vadOptions =
             provider === "whisper" ? this._resolveWhisperVadOptions("dictation") : {};
 
@@ -1948,6 +1983,8 @@ class IPCHandlers {
             provider,
             model,
             language,
+            customDictionary: options.customDictionary,
+            customDictionaryAliases: options.customDictionaryAliases,
           });
         });
       } catch (error) {
@@ -4109,6 +4146,7 @@ class IPCHandlers {
           preferredLanguage && preferredLanguage !== "auto"
             ? preferredLanguage.split("-")[0]
             : undefined;
+        const dictionaryPrompt = buildRuntimeDictionaryPrompt(settings?.customDictionary);
 
         if (settings?.useLocalWhisper) {
           if (settings.localTranscriptionProvider === "nvidia") {
@@ -4135,6 +4173,7 @@ class IPCHandlers {
                 this.whisperManager.transcribeLocalWhisper(buffer, {
                   model: settings.whisperModel,
                   language,
+                  initialPrompt: dictionaryPrompt,
                   ...vadOptions,
                   signal,
                 })
@@ -4153,6 +4192,7 @@ class IPCHandlers {
                   appVersion: app.getVersion(),
                   sessionId: this.sessionId,
                 };
+                if (dictionaryPrompt) multipartFields.prompt = dictionaryPrompt;
                 if (buffer.length > CLOUD_INLINE_LIMIT) {
                   const { text } = await chunkedCloudTranscribe({
                     buffer,
@@ -4211,6 +4251,7 @@ class IPCHandlers {
           formData.append("file", new Blob([buffer], { type: "audio/webm" }), "audio.webm");
           formData.append("model", model);
           if (language) formData.append("language", language);
+          if (dictionaryPrompt) formData.append("prompt", dictionaryPrompt);
           const headers = {};
           if (provider === "mistral") {
             headers["x-api-key"] = apiKey;
@@ -4260,6 +4301,8 @@ class IPCHandlers {
           provider: retryProvider,
           model: retryModel,
           language,
+          customDictionary: settings?.customDictionary,
+          customDictionaryAliases: settings?.customDictionaryAliases,
         });
 
         this.databaseManager.updateTranscriptionText(
@@ -6866,7 +6909,7 @@ class IPCHandlers {
       }
     });
 
-    ipcMain.handle("transcribe-audio-file-cloud", async (event, filePath) => {
+    ipcMain.handle("transcribe-audio-file-cloud", async (event, filePath, options = {}) => {
       try {
         return await this.uploadTranscriptionCoordinator.run("cloud", async ({ jobId, signal }) => {
           const apiUrl = getApiUrl();
@@ -6874,6 +6917,7 @@ class IPCHandlers {
 
           const authHeader = await getAuthHeader(event);
           if (!Object.keys(authHeader).length) throw new Error("Not authenticated");
+          const dictionaryPrompt = buildRuntimeDictionaryPrompt(options.customDictionary);
 
           const multipartFields = {
             source: "file_upload",
@@ -6882,6 +6926,7 @@ class IPCHandlers {
             clientVersion: app.getVersion(),
             sessionId: this.sessionId,
           };
+          if (dictionaryPrompt) multipartFields.prompt = dictionaryPrompt;
 
           const fileSize = fs.statSync(filePath).size;
 
@@ -6901,7 +6946,13 @@ class IPCHandlers {
             });
             return normalizeTranscriptionResult(
               { success: true, text, ...(warning ? { warning, partial: true } : {}) },
-              { mode: "upload", provider: "openwhispr", model: "cloud" }
+              {
+                mode: "upload",
+                provider: "openwhispr",
+                model: "cloud",
+                customDictionary: options.customDictionary,
+                customDictionaryAliases: options.customDictionaryAliases,
+              }
             );
           }
 
@@ -6933,6 +6984,8 @@ class IPCHandlers {
               mode: "upload",
               provider: result.sttProvider || "openwhispr",
               model: result.sttModel || "cloud",
+              customDictionary: options.customDictionary,
+              customDictionaryAliases: options.customDictionaryAliases,
             }
           );
         });
@@ -6947,7 +7000,10 @@ class IPCHandlers {
 
     ipcMain.handle(
       "transcribe-audio-file-byok",
-      async (event, { filePath, apiKey, baseUrl, model }) => {
+      async (
+        event,
+        { filePath, apiKey, baseUrl, model, customDictionary, customDictionaryAliases }
+      ) => {
         const BYOK_FILE_SIZE_LIMIT = 25 * 1024 * 1024; // 25 MB
         try {
           return await this.uploadTranscriptionCoordinator.run("byok", async ({ signal }) => {
@@ -6973,9 +7029,18 @@ class IPCHandlers {
               transcriptionUrl += "/audio/transcriptions";
             }
 
-            const { body, boundary } = buildMultipartBody(audioBuffer, fileName, contentType, {
+            const multipartFields = {
               model: model || "whisper-1",
-            });
+            };
+            const dictionaryPrompt = buildRuntimeDictionaryPrompt(customDictionary);
+            if (dictionaryPrompt) multipartFields.prompt = dictionaryPrompt;
+
+            const { body, boundary } = buildMultipartBody(
+              audioBuffer,
+              fileName,
+              contentType,
+              multipartFields
+            );
 
             const url = new URL(transcriptionUrl);
             const data = await postMultipart(
@@ -7002,7 +7067,13 @@ class IPCHandlers {
 
             return normalizeTranscriptionResult(
               { success: true, text: data.data.text },
-              { mode: "upload", provider: "byok", model: model || "whisper-1" }
+              {
+                mode: "upload",
+                provider: "byok",
+                model: model || "whisper-1",
+                customDictionary,
+                customDictionaryAliases,
+              }
             );
           });
         } catch (error) {

@@ -585,6 +585,8 @@ declare global {
           cloudTranscriptionBaseUrl?: string;
           parakeetModel: string;
           whisperModel: string;
+          customDictionary?: string[];
+          customDictionaryAliases?: Array<{ from: string; to: string }>;
           preferredLanguage?: string;
           transcriptionMode?: InferenceMode;
           remoteTranscriptionType?: SelfHostedType;
@@ -606,6 +608,13 @@ declare global {
       getDictionary: () => Promise<string[]>;
       setDictionary: (words: string[]) => Promise<{ success: boolean }>;
       onDictionaryUpdated?: (callback: (words: string[]) => void) => () => void;
+      getDictionaryAliases?: () => Promise<Array<{ from: string; to: string }>>;
+      setDictionaryAliases?: (
+        aliases: Array<{ from: string; to: string }>
+      ) => Promise<{ success: boolean }>;
+      onDictionaryAliasesUpdated?: (
+        callback: (aliases: Array<{ from: string; to: string }>) => void
+      ) => () => void;
       setAutoLearnEnabled?: (enabled: boolean) => void;
       learnReplacementCorrection?: (payload: {
         findText: string;
@@ -1330,7 +1339,13 @@ declare global {
       }>;
 
       // Cloud audio file transcription
-      transcribeAudioFileCloud?: (filePath: string) => Promise<{
+      transcribeAudioFileCloud?: (
+        filePath: string,
+        options?: {
+          customDictionary?: string[];
+          customDictionaryAliases?: Array<{ from: string; to: string }>;
+        }
+      ) => Promise<{
         success: boolean;
         text?: string;
         error?: string;
@@ -1363,6 +1378,8 @@ declare global {
         apiKey: string;
         baseUrl: string;
         model: string;
+        customDictionary?: string[];
+        customDictionaryAliases?: Array<{ from: string; to: string }>;
       }) => Promise<{
         success: boolean;
         text?: string;

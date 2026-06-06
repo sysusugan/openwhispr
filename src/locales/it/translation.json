@@ -2264,7 +2264,13 @@
     "peopleUsage": "Usato quando assegni i parlanti in trascrizioni e note riunione; questi nomi rendono l'assegnazione più rapida e coerente.",
     "addPerson": "Add person",
     "addPersonPlaceholder": "Add a speaker name...",
-    "removePerson": "Remove {{name}}"
+    "removePerson": "Remove {{name}}",
+    "aliasesTitle": "Errori frequenti",
+    "aliasesDescription": "Corregge gli errori ASR ricorrenti con la grafia esatta del dizionario, ad esempio Antibus -> EntVerse.",
+    "aliasFromPlaceholder": "Testo errato",
+    "aliasToPlaceholder": "Termine corretto",
+    "aliasAdd": "Aggiungi",
+    "removeAlias": "Rimuovi {{from}} verso {{to}}"
   },
   "sidebar": {
     "home": "Home",

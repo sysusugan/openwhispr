@@ -4,6 +4,11 @@ import logger from "../utils/logger";
 import { useLocalStorage } from "./useLocalStorage";
 import type { LocalTranscriptionProvider, InferenceMode, SelfHostedType } from "../types/electron";
 
+export interface DictionaryAlias {
+  from: string;
+  to: string;
+}
+
 export interface TranscriptionSettings {
   uiLanguage: string;
   useLocalWhisper: boolean;
@@ -22,6 +27,7 @@ export interface TranscriptionSettings {
   remoteTranscriptionType: SelfHostedType;
   remoteTranscriptionUrl: string;
   customDictionary: string[];
+  customDictionaryAliases: DictionaryAlias[];
   assemblyAiStreaming: boolean;
   showTranscriptionPreview: boolean;
 }
@@ -84,7 +90,7 @@ export interface ChatAgentSettings {
 
 function useSettingsInternal() {
   const store = useSettingsStore();
-  const { setCustomDictionary } = store;
+  const { setCustomDictionary, setCustomDictionaryAliases } = store;
 
   // One-time initialization: sync API keys, dictation key, activation mode,
   // UI language, and dictionary from the main process / SQLite.
@@ -111,6 +117,16 @@ function useSettingsInternal() {
     });
     return unsubscribe;
   }, [setCustomDictionary]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.electronAPI?.onDictionaryAliasesUpdated) return;
+    const unsubscribe = window.electronAPI.onDictionaryAliasesUpdated((aliases: DictionaryAlias[]) => {
+      if (Array.isArray(aliases)) {
+        setCustomDictionaryAliases(aliases);
+      }
+    });
+    return unsubscribe;
+  }, [setCustomDictionaryAliases]);
 
   // Auto-learn corrections from user edits in external apps
   const [autoLearnCorrections, setAutoLearnCorrectionsRaw] = useLocalStorage(
@@ -202,6 +218,7 @@ function useSettingsInternal() {
     cleanupMode: store.cleanupMode,
     cleanupRemoteUrl: store.cleanupRemoteUrl,
     customDictionary: store.customDictionary,
+    customDictionaryAliases: store.customDictionaryAliases,
     assemblyAiStreaming: store.assemblyAiStreaming,
     setAssemblyAiStreaming: store.setAssemblyAiStreaming,
     autoGenerateNoteTitle: store.autoGenerateNoteTitle,
@@ -241,6 +258,7 @@ function useSettingsInternal() {
     setCleanupMode: store.setCleanupMode,
     setCleanupRemoteUrl: store.setCleanupRemoteUrl,
     setCustomDictionary: store.setCustomDictionary,
+    setCustomDictionaryAliases: store.setCustomDictionaryAliases,
     setUseCleanupModel: store.setUseCleanupModel,
     setUseDictationAgent: store.setUseDictationAgent,
     setCleanupModel: store.setCleanupModel,

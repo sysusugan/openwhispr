@@ -2375,7 +2375,13 @@
     "peopleUsage": "Utilisé lors de l'étiquetage des intervenants dans les transcriptions et notes de réunion ; ces noms rendent l'attribution plus rapide et cohérente.",
     "addPerson": "Add person",
     "addPersonPlaceholder": "Add a speaker name...",
-    "removePerson": "Remove {{name}}"
+    "removePerson": "Remove {{name}}",
+    "aliasesTitle": "Erreurs fréquentes",
+    "aliasesDescription": "Corrige les erreurs ASR répétées vers l’orthographe exacte du dictionnaire, par exemple Antibus -> EntVerse.",
+    "aliasFromPlaceholder": "Texte incorrect",
+    "aliasToPlaceholder": "Terme correct",
+    "aliasAdd": "Ajouter",
+    "removeAlias": "Supprimer {{from}} vers {{to}}"
   },
   "support": {
     "documentation": "Documentation",

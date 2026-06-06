@@ -1077,7 +1077,12 @@
           "annualEquivalent": "$16.67",
           "includesPrefix": "所有 Pro 功能 +",
           "badge": "最受欢迎",
-          "features": ["无限会议录制", "代理模式", "与您的数据对话", "优先支持"],
+          "features": [
+            "无限会议录制",
+            "代理模式",
+            "与您的数据对话",
+            "优先支持"
+          ],
           "cta": "开始使用",
           "switchToAnnual": "切换为年付"
         },
@@ -2259,7 +2264,13 @@
     "peopleUsage": "用于转录和会议笔记里的发言人标注；这些人名会让分配发言人更快、更一致。",
     "addPerson": "添加人名",
     "addPersonPlaceholder": "添加发言人姓名...",
-    "removePerson": "移除 {{name}}"
+    "removePerson": "移除 {{name}}",
+    "aliasesTitle": "常见误识别",
+    "aliasesDescription": "把反复出现的识别错误强制纠正为词典写法，例如 Antibus -> EntVerse。",
+    "aliasFromPlaceholder": "错误识别",
+    "aliasToPlaceholder": "正确写法",
+    "aliasAdd": "添加",
+    "removeAlias": "移除 {{from}} 到 {{to}}"
   },
   "sidebar": {
     "home": "首页",

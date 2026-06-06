@@ -244,6 +244,30 @@ test("normalizes retry results with refined text fallback semantics", () => {
   assert.equal(result.audioDurationMs, 4567);
 });
 
+test("normalizes transcription results after dictionary correction", () => {
+  const result = normalizeTranscriptionResult(
+    {
+      success: true,
+      rawText: "Antibus 跟 EnlightAI 是配合的关系",
+      text: "Antibus 跟 EnlightAI 是配合的关系。",
+      source: "openai",
+    },
+    {
+      mode: "dictation",
+      customDictionary: ["EntVerse", "EnlightAI"],
+      customDictionaryAliases: [{ from: "Antibus", to: "EntVerse" }],
+    }
+  );
+
+  assert.equal(result.rawText, "EntVerse 跟 EnlightAI 是配合的关系");
+  assert.equal(result.displayText, "EntVerse 跟 EnlightAI 是配合的关系。");
+  assert.equal(result.text, "EntVerse 跟 EnlightAI 是配合的关系。");
+  assert.equal(result.warning, "dictionary_corrected");
+  assert.deepEqual(result.dictionaryCorrections, [
+    { from: "Antibus", to: "EntVerse", kind: "alias" },
+  ]);
+});
+
 test("normalizes meeting transcription segments without treating partials as errors", () => {
   const partial = normalizeMeetingSegment(
     { text: "hello", source: "mic", type: "partial", timestamp: 123 },

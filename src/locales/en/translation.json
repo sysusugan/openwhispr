@@ -2471,7 +2471,13 @@
     "peopleUsage": "Used when labeling speakers in transcripts and meeting notes; these names make speaker assignment quicker and more consistent.",
     "addPerson": "Add person",
     "addPersonPlaceholder": "Add a speaker name...",
-    "removePerson": "Remove {{name}}"
+    "removePerson": "Remove {{name}}",
+    "aliasesTitle": "Common misrecognitions",
+    "aliasesDescription": "Force repeated ASR mistakes to the correct dictionary spelling, such as Antibus -> EntVerse.",
+    "aliasFromPlaceholder": "Wrong text",
+    "aliasToPlaceholder": "Correct dictionary term",
+    "aliasAdd": "Add",
+    "removeAlias": "Remove {{from}} to {{to}}"
   },
   "support": {
     "documentation": "Documentation",

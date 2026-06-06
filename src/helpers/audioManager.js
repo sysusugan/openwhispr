@@ -619,6 +619,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         model: this.lastAudioMetadata.model,
         language: getBaseLanguageCode(settings.preferredLanguage),
         durationSeconds: metadata?.durationSeconds,
+        customDictionary: settings.customDictionary,
+        customDictionaryAliases: settings.customDictionaryAliases,
       });
 
       this.onTranscriptionComplete?.(normalizedResult);
@@ -1426,6 +1428,10 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
 
   getCustomDictionaryArray() {
     return getSettings().customDictionary;
+  }
+
+  getCustomDictionaryAliases() {
+    return getSettings().customDictionaryAliases || [];
   }
 
   getCustomPrompt() {
@@ -2732,6 +2738,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
           model: this.lastAudioMetadata.model,
           language: streamingSttLanguage || null,
           durationSeconds,
+          customDictionary: getSettings().customDictionary,
+          customDictionaryAliases: this.getCustomDictionaryAliases(),
         }
       );
       this.onTranscriptionComplete?.(normalizedResult);

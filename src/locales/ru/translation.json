@@ -2266,7 +2266,13 @@
     "peopleUsage": "Используется при разметке говорящих в транскриптах и заметках встреч; эти имена ускоряют и упорядочивают назначение говорящих.",
     "addPerson": "Add person",
     "addPersonPlaceholder": "Add a speaker name...",
-    "removePerson": "Remove {{name}}"
+    "removePerson": "Remove {{name}}",
+    "aliasesTitle": "Частые ошибки распознавания",
+    "aliasesDescription": "Исправляет повторяющиеся ошибки ASR на точное написание из словаря, например Antibus -> EntVerse.",
+    "aliasFromPlaceholder": "Ошибочный текст",
+    "aliasToPlaceholder": "Правильный термин",
+    "aliasAdd": "Добавить",
+    "removeAlias": "Удалить {{from}} на {{to}}"
   },
   "sidebar": {
     "home": "Главная",

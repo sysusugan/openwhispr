@@ -99,6 +99,8 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     groqApiKey,
     mistralApiKey,
     customTranscriptionApiKey,
+    customDictionary,
+    customDictionaryAliases,
     updateTranscriptionSettings,
   } = useSettings();
 
@@ -307,7 +309,10 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
       transcribe: async () => {
         if (isOpenWhisprCloud) {
           return withSessionRefresh(async () => {
-            const r = await window.electronAPI.transcribeAudioFileCloud!(file.path);
+            const r = await window.electronAPI.transcribeAudioFileCloud!(file.path, {
+              customDictionary,
+              customDictionaryAliases,
+            });
             if (!r.success && r.code) {
               throw Object.assign(new Error(r.error || "Cloud transcription failed"), {
                 code: r.code,
@@ -320,6 +325,8 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
           return window.electronAPI.transcribeAudioFile(file.path, {
             provider: localTranscriptionProvider as "whisper" | "nvidia",
             model: localTranscriptionProvider === "nvidia" ? parakeetModel : whisperModel,
+            customDictionary,
+            customDictionaryAliases,
           });
         }
         return window.electronAPI.transcribeAudioFileByok!({
@@ -327,6 +334,8 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
           apiKey: getActiveApiKey(),
           baseUrl: cloudTranscriptionBaseUrl || "",
           model: cloudTranscriptionModel,
+          customDictionary,
+          customDictionaryAliases,
         });
       },
       generateTitle,

@@ -225,6 +225,15 @@ class DatabaseManager {
       `);
 
       this.db.exec(`
+        CREATE TABLE IF NOT EXISTS custom_dictionary_aliases (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          from_text TEXT NOT NULL UNIQUE,
+          to_text TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      this.db.exec(`
         CREATE TABLE IF NOT EXISTS notes (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT NOT NULL DEFAULT 'Untitled Note',
@@ -934,6 +943,51 @@ class DatabaseManager {
       return { success: true };
     } catch (error) {
       debugLogger.error("Error setting dictionary", { error: error.message }, "database");
+      throw error;
+    }
+  }
+
+  getDictionaryAliases() {
+    try {
+      if (!this.db) {
+        throw new Error("Database not initialized");
+      }
+      const stmt = this.db.prepare(
+        "SELECT from_text, to_text FROM custom_dictionary_aliases ORDER BY id ASC"
+      );
+      const rows = stmt.all();
+      return rows.map((row) => ({ from: row.from_text, to: row.to_text }));
+    } catch (error) {
+      debugLogger.error("Error getting dictionary aliases", { error: error.message }, "database");
+      throw error;
+    }
+  }
+
+  setDictionaryAliases(aliases) {
+    try {
+      if (!this.db) {
+        throw new Error("Database not initialized");
+      }
+      const transaction = this.db.transaction((aliasList) => {
+        this.db.prepare("DELETE FROM custom_dictionary_aliases").run();
+        const insert = this.db.prepare(
+          "INSERT OR IGNORE INTO custom_dictionary_aliases (from_text, to_text) VALUES (?, ?)"
+        );
+        const seen = new Set();
+        for (const alias of Array.isArray(aliasList) ? aliasList : []) {
+          const from = typeof alias?.from === "string" ? alias.from.trim() : "";
+          const to = typeof alias?.to === "string" ? alias.to.trim() : "";
+          if (!from || !to || from.toLowerCase() === to.toLowerCase()) continue;
+          const key = from.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          insert.run(from, to);
+        }
+      });
+      transaction(aliases);
+      return { success: true };
+    } catch (error) {
+      debugLogger.error("Error setting dictionary aliases", { error: error.message }, "database");
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { BookOpen, X, CornerDownLeft, Info, Users } from "lucide-react";
+import { BookOpen, X, CornerDownLeft, Info, Users, ArrowRight } from "lucide-react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { ConfirmDialog } from "./ui/dialog";
@@ -15,10 +15,17 @@ interface SpeakerNameEntry {
 
 export default function DictionaryView() {
   const { t } = useTranslation();
-  const { customDictionary, setCustomDictionary } = useSettings();
+  const {
+    customDictionary,
+    customDictionaryAliases,
+    setCustomDictionary,
+    setCustomDictionaryAliases,
+  } = useSettings();
   const agentName = getAgentName();
   const [activeTab, setActiveTab] = useState<"dictionary" | "people">("dictionary");
   const [newWord, setNewWord] = useState("");
+  const [aliasFrom, setAliasFrom] = useState("");
+  const [aliasTo, setAliasTo] = useState("");
   const [newSpeakerName, setNewSpeakerName] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -61,6 +68,45 @@ export default function DictionaryView() {
       setCustomDictionary(customDictionary.filter((w) => w !== word));
     },
     [customDictionary, setCustomDictionary, agentName]
+  );
+
+  const handleClearDictionary = useCallback(() => {
+    setCustomDictionary(customDictionary.filter((w) => w === agentName));
+    setCustomDictionaryAliases([]);
+  }, [agentName, customDictionary, setCustomDictionary, setCustomDictionaryAliases]);
+
+  const handleAddAlias = useCallback(() => {
+    const from = aliasFrom.trim();
+    const to = aliasTo.trim();
+    if (!from || !to || from.toLowerCase() === to.toLowerCase()) return;
+
+    const exists = customDictionaryAliases.some(
+      (alias) => alias.from.toLowerCase() === from.toLowerCase()
+    );
+    if (!exists) {
+      setCustomDictionaryAliases([...customDictionaryAliases, { from, to }]);
+    }
+    if (!customDictionary.some((word) => word.toLowerCase() === to.toLowerCase())) {
+      setCustomDictionary([...customDictionary, to]);
+    }
+    setAliasFrom("");
+    setAliasTo("");
+  }, [
+    aliasFrom,
+    aliasTo,
+    customDictionary,
+    customDictionaryAliases,
+    setCustomDictionary,
+    setCustomDictionaryAliases,
+  ]);
+
+  const handleRemoveAlias = useCallback(
+    (from: string) => {
+      setCustomDictionaryAliases(
+        customDictionaryAliases.filter((alias) => alias.from.toLowerCase() !== from.toLowerCase())
+      );
+    },
+    [customDictionaryAliases, setCustomDictionaryAliases]
   );
 
   const handleAddSpeakerName = useCallback(async () => {
@@ -122,7 +168,7 @@ export default function DictionaryView() {
           onOpenChange={setConfirmClear}
           title={t("dictionary.clearTitle")}
           description={t("dictionary.clearDescription")}
-          onConfirm={() => setCustomDictionary(customDictionary.filter((w) => w === agentName))}
+          onConfirm={handleClearDictionary}
           variant="destructive"
         />
 
@@ -363,6 +409,78 @@ export default function DictionaryView() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div className="rounded-md bg-muted/20 p-3 dark:bg-white/[0.02]">
+                <div className="mb-2 flex items-baseline justify-between gap-3">
+                  <div>
+                    <h3 className="text-xs font-semibold text-foreground">
+                      {t("dictionary.aliasesTitle")}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {t("dictionary.aliasesDescription")}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                    {customDictionaryAliases.length}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
+                  <Input
+                    placeholder={t("dictionary.aliasFromPlaceholder")}
+                    value={aliasFrom}
+                    onChange={(e) => setAliasFrom(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddAlias();
+                    }}
+                    className="h-8 text-xs"
+                  />
+                  <ArrowRight size={13} className="text-muted-foreground" />
+                  <Input
+                    placeholder={t("dictionary.aliasToPlaceholder")}
+                    value={aliasTo}
+                    onChange={(e) => setAliasTo(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddAlias();
+                    }}
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddAlias}
+                    disabled={!aliasFrom.trim() || !aliasTo.trim()}
+                    className="h-8 px-2 text-xs"
+                  >
+                    {t("dictionary.aliasAdd")}
+                  </Button>
+                </div>
+
+                {customDictionaryAliases.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {customDictionaryAliases.map((alias) => (
+                      <span
+                        key={`${alias.from}->${alias.to}`}
+                        className="group inline-flex items-center gap-1.5 rounded-[5px] border border-border bg-card px-2.5 py-[3px] text-xs text-muted-foreground transition-colors duration-150 hover:border-border-hover hover:bg-muted hover:text-foreground dark:bg-white/[0.04]"
+                      >
+                        <span>{alias.from}</span>
+                        <ArrowRight size={10} className="text-muted-foreground/70" />
+                        <span className="text-foreground">{alias.to}</span>
+                        <button
+                          onClick={() => handleRemoveAlias(alias.from)}
+                          aria-label={t("dictionary.removeAlias", {
+                            from: alias.from,
+                            to: alias.to,
+                          })}
+                          className="p-0.5 rounded-sm opacity-0 group-hover:opacity-100 text-muted-foreground hover:!text-destructive transition-colors duration-150"
+                        >
+                          <X size={10} strokeWidth={2} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </>

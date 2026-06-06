@@ -1077,7 +1077,12 @@
           "annualEquivalent": "$16.67",
           "includesPrefix": "所有 Pro 功能 +",
           "badge": "最熱門",
-          "features": ["無限會議錄製", "代理模式", "與您的資料對話", "優先支援"],
+          "features": [
+            "無限會議錄製",
+            "代理模式",
+            "與您的資料對話",
+            "優先支援"
+          ],
           "cta": "開始使用",
           "switchToAnnual": "切換為年付"
         },
@@ -2259,7 +2264,13 @@
     "peopleUsage": "用於轉錄和會議筆記中的發言人標註；這些人名會讓分配發言人更快、更一致。",
     "addPerson": "新增人名",
     "addPersonPlaceholder": "新增發言人姓名...",
-    "removePerson": "移除 {{name}}"
+    "removePerson": "移除 {{name}}",
+    "aliasesTitle": "常見誤識別",
+    "aliasesDescription": "把反覆出現的識別錯誤強制修正為詞典寫法，例如 Antibus -> EntVerse。",
+    "aliasFromPlaceholder": "錯誤識別",
+    "aliasToPlaceholder": "正確寫法",
+    "aliasAdd": "新增",
+    "removeAlias": "移除 {{from}} 到 {{to}}"
   },
   "sidebar": {
     "home": "首頁",

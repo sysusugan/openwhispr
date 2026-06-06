@@ -55,10 +55,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Dictionary functions
   getDictionary: () => ipcRenderer.invoke("db-get-dictionary"),
   setDictionary: (words) => ipcRenderer.invoke("db-set-dictionary", words),
+  getDictionaryAliases: () => ipcRenderer.invoke("db-get-dictionary-aliases"),
+  setDictionaryAliases: (aliases) => ipcRenderer.invoke("db-set-dictionary-aliases", aliases),
   onDictionaryUpdated: (callback) => {
     const listener = (_event, words) => callback?.(words);
     ipcRenderer.on("dictionary-updated", listener);
     return () => ipcRenderer.removeListener("dictionary-updated", listener);
+  },
+  onDictionaryAliasesUpdated: (callback) => {
+    const listener = (_event, aliases) => callback?.(aliases);
+    ipcRenderer.on("dictionary-aliases-updated", listener);
+    return () => ipcRenderer.removeListener("dictionary-aliases-updated", listener);
   },
   setAutoLearnEnabled: (enabled) => ipcRenderer.send("auto-learn-changed", enabled),
   learnReplacementCorrection: (payload) =>
@@ -508,8 +515,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getNoteRecordingConfig: () => ipcRenderer.invoke("get-note-recording-config"),
 
   // Cloud audio file transcription
-  transcribeAudioFileCloud: (filePath) =>
-    ipcRenderer.invoke("transcribe-audio-file-cloud", filePath),
+  transcribeAudioFileCloud: (filePath, options) =>
+    ipcRenderer.invoke("transcribe-audio-file-cloud", filePath, options),
   transcribeAudioFileByok: (options) => ipcRenderer.invoke("transcribe-audio-file-byok", options),
   cancelUploadTranscription: (jobId) => ipcRenderer.invoke("cancel-upload-transcription", jobId),
   onUploadTranscriptionProgress: registerListener(

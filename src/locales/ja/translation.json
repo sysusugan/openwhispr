@@ -2192,7 +2192,13 @@
     "peopleUsage": "文字起こしや会議メモで話者をラベル付けするときに使われます。これらの名前により、話者の割り当てが速く一貫します。",
     "addPerson": "Add person",
     "addPersonPlaceholder": "Add a speaker name...",
-    "removePerson": "Remove {{name}}"
+    "removePerson": "Remove {{name}}",
+    "aliasesTitle": "よくある誤認識",
+    "aliasesDescription": "繰り返し発生するASRの誤りを辞書の正しい表記へ強制的に修正します。例: Antibus -> EntVerse。",
+    "aliasFromPlaceholder": "誤認識テキスト",
+    "aliasToPlaceholder": "正しい辞書語",
+    "aliasAdd": "追加",
+    "removeAlias": "{{from}} から {{to}} への変換を削除"
   },
   "referral": {
     "title": "紹介して特典をゲット",

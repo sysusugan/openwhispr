@@ -47,6 +47,7 @@ import AcceptInvitationModal, {
   clearPendingInvitationToken,
 } from "./AcceptInvitationModal";
 import { WORKSPACES_ENABLED } from "../lib/features";
+import { applyDictionaryCorrections } from "../utils/dictionaryCorrection";
 
 const platform = getCachedPlatform();
 
@@ -538,6 +539,8 @@ export default function ControlPanel() {
           cloudTranscriptionBaseUrl: s.cloudTranscriptionBaseUrl,
           parakeetModel: s.parakeetModel,
           whisperModel: s.whisperModel,
+          customDictionary: s.customDictionary,
+          customDictionaryAliases: s.customDictionaryAliases,
           preferredLanguage: s.preferredLanguage,
           transcriptionMode: s.transcriptionMode,
           remoteTranscriptionType: s.remoteTranscriptionType,
@@ -564,10 +567,15 @@ export default function ControlPanel() {
                 const reasonedText = await ReasoningService.processText(rawText, model, agentName, {
                   disableThinking: getSettings().cleanupDisableThinking,
                 });
-                if (reasonedText && reasonedText !== rawText) {
+                const corrected = applyDictionaryCorrections(reasonedText || rawText, {
+                  dictionary: getSettings().customDictionary,
+                  aliases: getSettings().customDictionaryAliases,
+                });
+                const finalText = corrected.text;
+                if (finalText && finalText !== rawText) {
                   const updated = await window.electronAPI.updateTranscriptionText(
                     id,
-                    reasonedText,
+                    finalText,
                     rawText
                   );
                   if (updated.success && updated.transcription) {
