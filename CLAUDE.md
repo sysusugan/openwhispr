@@ -531,6 +531,14 @@ Detects meetings via three independent sources, orchestrated by `MeetingDetectio
 
 ### Git Workflow
 
+- Mandatory worktree gate before any task code edit, commit, build, or test-driven implementation:
+  1. Run `git worktree list --porcelain`.
+  2. Run `git status --short --branch` in the current workspace.
+  3. If the current workspace is the primary `main` checkout, stop and create or switch to a dedicated clean worktree before editing.
+  4. Never make task changes directly on `main` unless the user explicitly says: "允许直接在 main 上修改".
+  5. If `main` is dirty or ahead/behind `origin/main`, stop and report the state before proceeding.
+  6. In the first response before edits, state the chosen worktree path and branch.
+  7. If this gate is violated, stop immediately, report the violation, and propose a recovery plan before making further changes.
 - All new feature work must happen in an isolated worktree, not directly in the primary `main` checkout.
 - Before creating a new worktree, list existing worktrees and prefer a clean, explicitly idle/free worktree. A worktree is reusable only if it is clean and either detached, on an approved reusable branch, or explicitly marked idle by the user. Do not reuse task-named branches without confirmation.
 - Prefer reusing an existing feature worktree when it is already on the intended branch and has no unrelated uncommitted changes.

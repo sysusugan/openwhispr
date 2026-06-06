@@ -531,6 +531,14 @@ Detects meetings via three independent sources, orchestrated by `MeetingDetectio
 
 ### Git Workflow
 
+- Mandatory worktree gate before any task code edit, commit, build, or test-driven implementation:
+  1. Run `git worktree list --porcelain`.
+  2. Run `git status --short --branch` in the current workspace.
+  3. If the current workspace is the primary `main` checkout, stop and create or switch to a dedicated clean worktree before editing.
+  4. Never make task changes directly on `main` unless the user explicitly says: "允许直接在 main 上修改".
+  5. If `main` is dirty or ahead/behind `origin/main`, stop and report the state before proceeding.
+  6. In the first response before edits, state the chosen worktree path and branch.
+  7. If this gate is violated, stop immediately, report the violation, and propose a recovery plan before making further changes.
 - All commits must comply with DCO. Use `git commit -s` or otherwise include a valid `Signed-off-by:` trailer.
 - Before creating or amending commits, verify DCO compliance when relevant.
 - When integrating into `main`, use rebase merge only. Do not use squash merge or merge commits unless explicitly approved.
