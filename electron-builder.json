@@ -243,12 +243,5 @@
       "width": 540,
       "height": 380
     }
-  },
-  "publish": {
-    "provider": "github",
-    "owner": "OpenWhispr",
-    "repo": "openwhispr",
-    "private": false,
-    "releaseType": "draft"
   }
 }

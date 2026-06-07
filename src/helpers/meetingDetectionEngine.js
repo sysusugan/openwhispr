@@ -2,17 +2,13 @@ const { BrowserWindow } = require("electron");
 const debugLogger = require("./debugLogger");
 const { i18nMain } = require("./i18nMain");
 
-const IMMINENT_THRESHOLD_MS = 5 * 60 * 1000;
-
 class MeetingDetectionEngine {
   constructor(
-    googleCalendarManager,
     meetingProcessDetector,
     audioActivityDetector,
     windowManager,
     databaseManager
   ) {
-    this.googleCalendarManager = googleCalendarManager;
     this.meetingProcessDetector = meetingProcessDetector;
     this.audioActivityDetector = audioActivityDetector;
     this.windowManager = windowManager;
@@ -68,18 +64,6 @@ class MeetingDetectionEngine {
       return;
     }
 
-    const calendarState = this.googleCalendarManager?.getActiveMeetingState?.();
-    if (calendarState) {
-      if (calendarState.activeMeeting) {
-        debugLogger.info(
-          "Suppressing detection — active calendar meeting recording in progress",
-          { detectionId, activeMeeting: calendarState.activeMeeting?.summary },
-          "meeting"
-        );
-        return;
-      }
-    }
-
     if (this._userRecording || this._postRecordingCooldown) {
       debugLogger.info("Detection queued — user is recording", { detectionId, source }, "meeting");
       this._notificationQueue.push({ source, key, data });
@@ -87,53 +71,29 @@ class MeetingDetectionEngine {
       return;
     }
 
-    let imminentEvent = null;
-    if (calendarState?.upcomingEvents?.length > 0) {
-      const now = Date.now();
-      imminentEvent = calendarState.upcomingEvents.find((evt) => {
-        const start = new Date(evt.start_time).getTime();
-        return start - now <= IMMINENT_THRESHOLD_MS && start > now;
-      });
-    }
-
     debugLogger.info(
       "Meeting detection triggered",
-      { detectionId, source, imminentEvent: imminentEvent?.summary ?? null },
+      { detectionId, source },
       "meeting"
     );
     this.activeDetections.set(detectionId, { source, key, data, dismissed: false });
-    this._showPrompt(detectionId, source, key, data, imminentEvent);
+    this._showPrompt(detectionId, source, key, data);
   }
 
-  _showPrompt(detectionId, source, key, data, imminentEvent) {
-    const title = imminentEvent?.summary || undefined;
-    const titleKey = imminentEvent
-      ? "meetingNotification.upcomingTitle"
-      : "meetingNotification.detectedTitle";
-    const bodyKey = imminentEvent
-      ? "meetingNotification.upcomingBody"
-      : "meetingNotification.detectedBody";
+  _showPrompt(detectionId, source, key, data) {
+    const title = undefined;
+    const titleKey = "meetingNotification.detectedTitle";
+    const bodyKey = "meetingNotification.detectedBody";
 
     debugLogger.info("Showing notification", { detectionId, title: title || titleKey }, "meeting");
 
-    let event;
-    if (imminentEvent) {
-      event = imminentEvent;
-    } else {
-      event = {
-        id: `detected-${Date.now()}`,
-        calendar_id: "__detected__",
-        summary: this._defaultMeetingNoteTitle(),
-        start_time: new Date().toISOString(),
-        end_time: new Date(Date.now() + 3600000).toISOString(),
-        is_all_day: 0,
-        status: "confirmed",
-        hangout_link: null,
-        conference_data: null,
-        organizer_email: null,
-        attendees_count: 0,
-      };
-    }
+    const event = {
+      id: `detected-${Date.now()}`,
+      summary: this._defaultMeetingNoteTitle(),
+      start_time: new Date().toISOString(),
+      end_time: new Date(Date.now() + 3600000).toISOString(),
+      source: "detected",
+    };
 
     const detection = this.activeDetections.get(detectionId);
     if (detection) {
@@ -159,7 +119,6 @@ class MeetingDetectionEngine {
       detectionId,
       source,
       data,
-      imminentEvent,
     });
   }
 
@@ -188,28 +147,11 @@ class MeetingDetectionEngine {
 
         this.broadcastToWindows("note-added", noteResult.note);
 
-        const isRealEvent =
-          detection.event?.calendar_id &&
-          detection.event.calendar_id !== "__detected__" &&
-          detection.event.calendar_id !== "__manual__";
-
-        if (isRealEvent) {
-          const calEvent = this.databaseManager.getCalendarEventById(detection.event.id);
-          const updates = { calendar_event_id: detection.event.id };
-          if (calEvent?.attendees) {
-            updates.participants = calEvent.attendees;
-          }
-          const updateResult = this.databaseManager.updateNote(noteResult.note.id, updates);
-          if (updateResult?.success && updateResult?.note) {
-            this.broadcastToWindows("note-updated", updateResult.note);
-          }
-        }
-
         await this.windowManager.queueMeetingNoteNavigation({
           noteId: noteResult.note.id,
           folderId: meetingsFolder.id,
           event: detection.event,
-          trigger: "calendar-join",
+          trigger: "meeting-detection",
         });
 
         this.audioActivityDetector.resetPrompt();
@@ -236,25 +178,14 @@ class MeetingDetectionEngine {
   async startManualMeeting() {
     debugLogger.info("Starting manual meeting", {}, "meeting");
 
-    const activeEvents = this.databaseManager.getActiveEvents();
-    if (activeEvents?.length > 0) {
-      return this.joinCalendarMeeting(activeEvents[0].id, "hotkey");
-    }
-
     this._meetingModeActive = true;
 
     const event = {
       id: `manual-${Date.now()}`,
-      calendar_id: "__manual__",
       summary: this._defaultMeetingNoteTitle(),
       start_time: new Date().toISOString(),
       end_time: new Date(Date.now() + 3600000).toISOString(),
-      is_all_day: 0,
-      status: "confirmed",
-      hangout_link: null,
-      conference_data: null,
-      organizer_email: null,
-      attendees_count: 0,
+      source: "manual",
     };
 
     const noteResult = this.databaseManager.saveNote(event.summary, "", "meeting");
@@ -277,50 +208,6 @@ class MeetingDetectionEngine {
       folderId: meetingsFolder.id,
       event,
       trigger: "hotkey",
-    });
-  }
-
-  async joinCalendarMeeting(eventId, trigger = "calendar-join") {
-    this._meetingModeActive = true;
-    debugLogger.info("Joining calendar meeting", { eventId, trigger }, "meeting");
-
-    const calEvent = this.databaseManager.getCalendarEventById(eventId);
-    if (!calEvent) {
-      debugLogger.error("Calendar event not found", { eventId }, "meeting");
-      this._meetingModeActive = false;
-      return;
-    }
-
-    const noteResult = this.databaseManager.saveNote(
-      calEvent.summary || this._defaultMeetingNoteTitle(),
-      "",
-      "meeting"
-    );
-    const meetingsFolder = this.databaseManager.getMeetingsFolder();
-
-    if (!noteResult?.note?.id || !meetingsFolder?.id) {
-      debugLogger.error(
-        "Join calendar meeting failed — missing note or folder",
-        { noteId: noteResult?.note?.id, folderId: meetingsFolder?.id },
-        "meeting"
-      );
-      this._meetingModeActive = false;
-      return;
-    }
-
-    const updates = { calendar_event_id: calEvent.id };
-    if (calEvent.attendees) {
-      updates.participants = calEvent.attendees;
-    }
-    const updateResult = this.databaseManager.updateNote(noteResult.note.id, updates);
-
-    this.broadcastToWindows("note-added", updateResult?.note || noteResult.note);
-
-    await this.windowManager.queueMeetingNoteNavigation({
-      noteId: noteResult.note.id,
-      folderId: meetingsFolder.id,
-      event: calEvent,
-      trigger,
     });
   }
 
@@ -355,17 +242,7 @@ class MeetingDetectionEngine {
 
     const detection = this.activeDetections.get(detectionId);
     if (detection && !detection.dismissed) {
-      const calendarState = this.googleCalendarManager?.getActiveMeetingState?.();
-      let imminentEvent = null;
-      if (calendarState?.upcomingEvents?.length > 0) {
-        const now = Date.now();
-        imminentEvent = calendarState.upcomingEvents.find((evt) => {
-          const start = new Date(evt.start_time).getTime();
-          return start - now <= IMMINENT_THRESHOLD_MS && start > now;
-        });
-      }
-
-      this._showPrompt(detectionId, best.source, best.key, best.data, imminentEvent);
+      this._showPrompt(detectionId, best.source, best.key, best.data);
     }
 
     this._notificationQueue = [];

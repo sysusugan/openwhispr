@@ -9,22 +9,17 @@ import {
   AlignLeft,
   MessageSquareText,
   Calendar,
-  LinkIcon,
   FolderOpen,
   Search,
   ChevronUp,
   ChevronDown,
   Plus,
   Check,
-  Share2,
   Pencil,
   X,
   Filter,
   FileUp,
 } from "lucide-react";
-import ShareNoteDialog from "./ShareNoteDialog";
-import { useShareCacheEntry } from "../../stores/noteStore";
-import { SHARING_ENABLED } from "../../lib/features";
 import { RichTextEditor } from "../ui/RichTextEditor";
 import type { Editor } from "@tiptap/react";
 import { MeetingTranscriptChat, SelectionBar } from "./MeetingTranscriptChat";
@@ -78,8 +73,7 @@ import {
   getTranscriptSpeakerFilterOptions,
   type TranscriptSpeakerFilterOption,
 } from "../../utils/speakerAssignment";
-import NoteParticipants from "./NoteParticipants";
-import type { CalendarAttendee } from "../../types/calendar";
+import NoteParticipants, { type NoteParticipant } from "./NoteParticipants";
 import { countMatches } from "../../utils/transcriptFindReplace";
 
 function formatNoteDate(dateStr: string): string {
@@ -287,7 +281,6 @@ interface NoteEditorProps {
   onSetSessionDiarizationEnabled?: (enabled: boolean) => void;
   onSetSessionExpectedCount?: (count: number) => void;
   folderName?: string | null;
-  calendarEventName?: string | null;
   folders?: FolderItem[];
   onMoveToFolder?: (noteId: number, folderId: number) => void;
   onCreateFolderAndMove?: (noteId: number, folderName: string) => void;
@@ -330,7 +323,6 @@ export default function NoteEditor({
   onSetSessionDiarizationEnabled,
   onSetSessionExpectedCount,
   folderName,
-  calendarEventName,
   folders,
   onMoveToFolder,
   onCreateFolderAndMove,
@@ -347,7 +339,6 @@ export default function NoteEditor({
   const [recordedDateInput, setRecordedDateInput] = useState("");
   const [isSavingRecordedDate, setIsSavingRecordedDate] = useState(false);
   const [isDiarizing, setIsDiarizing] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false);
   const [isTranscriptSaving, setIsTranscriptSaving] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
@@ -374,8 +365,6 @@ export default function NoteEditor({
     activeIndex: number;
     ignoreCase: boolean;
   } | null>(null);
-  const shareCache = useShareCacheEntry(note.cloud_id);
-  const isShared = (shareCache?.share.visibility ?? "private") !== "private";
   const [diarizedSegments, setDiarizedSegments] = useState<TranscriptSegment[] | null>(null);
   const [speakerMappings, setSpeakerMappings] = useState<Record<string, string>>({});
   const [speakerProfiles, setSpeakerProfiles] = useState<
@@ -514,7 +503,7 @@ export default function NoteEditor({
     setActiveFindIndex(-1);
   }, [selectedSpeakerFilterKeys]);
 
-  const parsedParticipants = useMemo<CalendarAttendee[]>(() => {
+  const parsedParticipants = useMemo<NoteParticipant[]>(() => {
     try {
       return note.participants ? JSON.parse(note.participants) : [];
     } catch {
@@ -1532,12 +1521,6 @@ export default function NoteEditor({
                 </PopoverContent>
               </Popover>
             )}
-            {calendarEventName && (
-              <span className="inline-flex h-6 min-w-0 max-w-44 items-center gap-1.5 rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground">
-                <LinkIcon size={11} className="shrink-0" />
-                <span className="truncate">{calendarEventName}</span>
-              </span>
-            )}
             <NoteParticipants noteId={note.id} participants={parsedParticipants} />
             {folders && onMoveToFolder && (
               <DropdownMenu
@@ -1808,31 +1791,6 @@ export default function NoteEditor({
                     t={t}
                   />
                 )}
-              {SHARING_ENABLED && note.cloud_id && (
-                <button
-                  type="button"
-                  onClick={() => setShareDialogOpen(true)}
-                  className={cn(
-                    "shrink-0 h-6 w-6 flex items-center justify-center rounded-md",
-                    "bg-foreground/4 dark:bg-white/5",
-                    "hover:bg-foreground/8 dark:hover:bg-white/10",
-                    "active:bg-foreground/12 dark:active:bg-white/15",
-                    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                    "transition-colors duration-150"
-                  )}
-                  aria-label={t("noteEditor.share.button")}
-                >
-                  <Share2
-                    size={11}
-                    className={cn(
-                      "transition-colors",
-                      isShared
-                        ? "text-foreground/70 dark:text-white/70"
-                        : "text-foreground/50 dark:text-foreground/40"
-                    )}
-                  />
-                </button>
-              )}
               {(onExportNote || onExportTranscript || onDownloadOriginalAudio) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -2272,9 +2230,6 @@ export default function NoteEditor({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {SHARING_ENABLED && note.cloud_id && (
-        <ShareNoteDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} note={note} />
-      )}
     </div>
   );
 }

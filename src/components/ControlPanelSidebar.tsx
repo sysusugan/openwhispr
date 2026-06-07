@@ -6,12 +6,9 @@ import {
   BookOpen,
   Upload,
   Blocks,
-  Gift,
   Settings,
   HelpCircle,
   UserCircle,
-  UserPlus,
-  X,
   Search,
   PanelLeftClose,
   PanelLeftOpen,
@@ -21,11 +18,6 @@ import { useTranslation } from "react-i18next";
 import { cn } from "./lib/utils";
 import SupportDropdown from "./ui/SupportDropdown";
 import { getCachedPlatform } from "../utils/platform";
-import WorkspaceSwitcher from "./WorkspaceSwitcher";
-import InviteTeammateDialog from "./InviteTeammateDialog";
-import CreateWorkspaceDialog from "./CreateWorkspaceDialog";
-import { useWorkspace } from "../hooks/useWorkspace";
-import { WORKSPACES_ENABLED } from "../lib/features";
 
 const platform = getCachedPlatform();
 
@@ -42,16 +34,9 @@ interface ControlPanelSidebarProps {
   onViewChange: (view: ControlPanelView) => void;
   onOpenSettings: () => void;
   onOpenSearch?: () => void;
-  onOpenReferrals?: () => void;
-  onUpgrade?: () => void;
-  isOverLimit?: boolean;
   userName?: string | null;
   userEmail?: string | null;
   userImage?: string | null;
-  isSignedIn?: boolean;
-  authLoaded?: boolean;
-  isProUser?: boolean;
-  usageLoaded?: boolean;
   updateAction?: React.ReactNode;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
@@ -62,35 +47,14 @@ export default function ControlPanelSidebar({
   onViewChange,
   onOpenSettings,
   onOpenSearch,
-  onOpenReferrals,
-  onUpgrade,
-  isOverLimit,
   userName,
   userEmail,
   userImage,
-  isSignedIn,
-  authLoaded,
-  isProUser,
-  usageLoaded,
   updateAction,
   collapsed = false,
   onCollapsedChange,
 }: ControlPanelSidebarProps) {
   const { t } = useTranslation();
-  const [upgradeDismissed, setUpgradeDismissed] = useState(
-    () => localStorage.getItem("upgradeProDismissed") === "true"
-  );
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
-  const { active: activeWorkspace } = useWorkspace();
-
-  const showLimitBanner = authLoaded && isSignedIn && !isProUser && isOverLimit;
-  const showUpgradeBanner =
-    !showLimitBanner &&
-    authLoaded &&
-    (!isSignedIn || usageLoaded !== false) &&
-    !isProUser &&
-    !upgradeDismissed;
   const collapseLabel = "收起侧边栏";
   const expandLabel = "展开侧边栏";
 
@@ -106,22 +70,6 @@ export default function ControlPanelSidebar({
     { id: "dictionary", label: t("sidebar.dictionary"), icon: BookOpen },
     { id: "integrations", label: t("sidebar.integrations"), icon: Blocks },
   ];
-
-  const dialogs = (
-    <>
-      {WORKSPACES_ENABLED && activeWorkspace && (
-        <InviteTeammateDialog
-          open={inviteOpen}
-          onOpenChange={setInviteOpen}
-          workspaceId={activeWorkspace.id}
-          workspaceName={activeWorkspace.name}
-        />
-      )}
-      {WORKSPACES_ENABLED && (
-        <CreateWorkspaceDialog open={createWorkspaceOpen} onOpenChange={setCreateWorkspaceOpen} />
-      )}
-    </>
-  );
 
   if (collapsed) {
     return (
@@ -182,18 +130,6 @@ export default function ControlPanelSidebar({
         <div className="flex-1" />
 
         <div className="flex flex-col items-center gap-1 pb-3">
-          {isSignedIn && onOpenReferrals && (
-            <button
-              type="button"
-              onClick={onOpenReferrals}
-              title={t("sidebar.referral")}
-              aria-label={t("sidebar.referral")}
-              className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none transition-colors hover:border-border/70 hover:bg-card hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
-            >
-              <Gift size={17} />
-            </button>
-          )}
-
           <button
             type="button"
             onClick={onOpenSettings}
@@ -230,8 +166,6 @@ export default function ControlPanelSidebar({
             )}
           </div>
         </div>
-
-        {dialogs}
       </div>
     );
   }
@@ -262,12 +196,6 @@ export default function ControlPanelSidebar({
           <PanelLeftClose size={16} />
         </button>
       </div>
-
-      {WORKSPACES_ENABLED && isSignedIn && (
-        <div className="px-4 pt-1 pb-1">
-          <WorkspaceSwitcher userName={userName} />
-        </div>
-      )}
 
       {onOpenSearch && (
         <div className="px-4 pt-2 pb-2">
@@ -330,99 +258,11 @@ export default function ControlPanelSidebar({
 
       <div className="flex-1" />
 
-      {showLimitBanner && (
-        <div className="px-4 pb-3">
-          <div className="rounded-lg border border-destructive/20 bg-destructive/5 dark:bg-destructive/10 p-3">
-            <div className="flex flex-col items-center text-center">
-              <img src={logoIcon} alt="" className="w-7 h-7 rounded-md mb-2" />
-              <p className="text-xs font-medium text-foreground mb-0.5">
-                {t("sidebar.limitReached")}
-              </p>
-              <p className="text-[11px] leading-snug text-muted-foreground mb-2.5">
-                {t("sidebar.limitReachedDescription")}
-              </p>
-              <button
-                onClick={onUpgrade}
-                className="w-full h-8 rounded-md border border-border/70 bg-background text-foreground text-xs font-medium hover:bg-foreground/[0.04] transition-colors"
-              >
-                {t("sidebar.viewPlans")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showUpgradeBanner && (
-        <div className="px-4 pb-3">
-          <div className="relative rounded-md border border-border/70 bg-background p-3">
-            <button
-              onClick={() => {
-                setUpgradeDismissed(true);
-                localStorage.setItem("upgradeProDismissed", "true");
-              }}
-              aria-label={t("common.dismiss")}
-              className="absolute top-1.5 right-1.5 p-0.5 rounded-sm text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-            >
-              <X size={12} />
-            </button>
-            <div className="flex flex-col items-center text-center pt-1">
-              <img src={logoIcon} alt="" className="w-7 h-7 rounded-md mb-2" />
-              <p className="text-xs font-medium text-foreground mb-0.5">
-                {t("sidebar.upgradeTitle")}
-              </p>
-              <p className="text-[11px] leading-snug text-muted-foreground mb-2.5">
-                {t("sidebar.upgradeDescription")}
-              </p>
-              <button
-                onClick={onUpgrade}
-                className="w-full h-8 rounded-md border border-border/70 bg-background text-foreground text-xs font-medium hover:bg-foreground/[0.04] transition-colors"
-              >
-                {t("sidebar.learnMore")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="px-4 pb-3 space-y-1">
         {updateAction && (
           <div className="px-1 pb-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
             {updateAction}
           </div>
-        )}
-
-        {isSignedIn && onOpenReferrals && (
-          <button
-            onClick={onOpenReferrals}
-            aria-label={t("sidebar.referral")}
-            className="group flex items-center gap-3 w-full h-10 px-3 rounded-md border border-transparent text-left outline-none text-muted-foreground hover:border-border/70 hover:bg-card hover:text-foreground dark:hover:bg-white/8 focus-visible:ring-2 focus-visible:ring-ring/20 transition-colors duration-150"
-          >
-            <Gift
-              size={15}
-              className="shrink-0 text-muted-foreground group-hover:text-foreground transition-colors duration-150"
-            />
-            <span className="text-sm font-semibold transition-colors duration-150">
-              {t("sidebar.referral")}
-            </span>
-          </button>
-        )}
-
-        {WORKSPACES_ENABLED && isSignedIn && (
-          <button
-            onClick={() => (activeWorkspace ? setInviteOpen(true) : setCreateWorkspaceOpen(true))}
-            aria-label={
-              activeWorkspace ? t("sidebar.inviteTeammate") : t("sidebar.createWorkspace")
-            }
-            className="group flex items-center gap-3 w-full h-10 px-3 rounded-md border border-transparent text-left outline-none text-muted-foreground hover:border-border/70 hover:bg-card hover:text-foreground dark:hover:bg-white/8 focus-visible:ring-2 focus-visible:ring-ring/20 transition-colors duration-150"
-          >
-            <UserPlus
-              size={15}
-              className="shrink-0 text-muted-foreground group-hover:text-foreground transition-colors duration-150"
-            />
-            <span className="text-sm font-semibold transition-colors duration-150">
-              {activeWorkspace ? t("sidebar.inviteTeammate") : t("sidebar.createWorkspace")}
-            </span>
-          </button>
         )}
 
         <button
@@ -456,34 +296,7 @@ export default function ControlPanelSidebar({
           }
         />
 
-        <div className="mx-1 h-px bg-border my-2!" />
-
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-md border border-border bg-card shadow-sm">
-          {userImage ? (
-            <img src={userImage} alt="" className="w-6 h-6 rounded-full shrink-0 object-cover" />
-          ) : (
-            <UserCircle size={18} className="shrink-0 text-muted-foreground" />
-          )}
-          <div className="flex-1 min-w-0">
-            {isSignedIn && (userName || userEmail) ? (
-              <>
-                <p className="text-xs font-medium text-foreground truncate leading-tight">
-                  {userName || t("sidebar.defaultUser")}
-                </p>
-                {userEmail && (
-                  <p className="text-xs text-muted-foreground truncate leading-tight">
-                    {userEmail}
-                  </p>
-                )}
-              </>
-            ) : authLoaded && !isSignedIn ? (
-              <p className="text-xs text-muted-foreground">{t("sidebar.notSignedIn")}</p>
-            ) : null}
-          </div>
-        </div>
       </div>
-
-      {dialogs}
     </div>
   );
 }

@@ -1,30 +1,14 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const test = require("node:test");
 
-const {
-  DEFAULT_OPENWHISPR_API_URL,
-  resolveOpenWhisprApiUrl,
-} = require("../../src/config/openwhisprCloud.js");
-
-test("defaults to the official OpenWhispr Cloud API when no override is configured", () => {
-  assert.equal(resolveOpenWhisprApiUrl({}), DEFAULT_OPENWHISPR_API_URL);
-});
-
-test("prefers explicit OpenWhispr API URL overrides", () => {
-  assert.equal(
-    resolveOpenWhisprApiUrl({
-      OPENWHISPR_API_URL: "https://self-hosted.example.com",
-      VITE_OPENWHISPR_API_URL: DEFAULT_OPENWHISPR_API_URL,
-    }),
-    "https://self-hosted.example.com"
+test("official hosted API defaults are not configured in the open-source build", () => {
+  const constants = fs.readFileSync(
+    path.resolve(__dirname, "../../src/config/constants.ts"),
+    "utf8"
   );
-});
 
-test("falls back to Vite OpenWhispr API URL overrides", () => {
-  assert.equal(
-    resolveOpenWhisprApiUrl({
-      VITE_OPENWHISPR_API_URL: "https://vite.example.com",
-    }),
-    "https://vite.example.com"
-  );
+  assert.match(constants, /export const OPENWHISPR_API_URL = "";/);
+  assert.doesNotMatch(constants, /api\.openwhispr\.com/i);
 });

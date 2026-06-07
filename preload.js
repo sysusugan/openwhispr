@@ -495,39 +495,21 @@ contextBridge.exposeInMainWorld("electronAPI", {
   pauseMediaPlayback: () => ipcRenderer.invoke("pause-media-playback"),
   resumeMediaPlayback: () => ipcRenderer.invoke("resume-media-playback"),
   openWhisperModelsFolder: () => ipcRenderer.invoke("open-whisper-models-folder"),
+
+  // Self-hosted service auth
   authClearSession: () => ipcRenderer.invoke("auth-clear-session"),
   authGetToken: () => ipcRenderer.invoke("auth-get-token"),
   authSetToken: (token) => ipcRenderer.invoke("auth-set-token", token),
 
-  // OpenWhispr Cloud API
-  cloudHealthCheck: () => ipcRenderer.invoke("cloud-health-check"),
-  cloudTranscribe: (audioBuffer, opts) => ipcRenderer.invoke("cloud-transcribe", audioBuffer, opts),
-  cloudReason: (text, opts) => ipcRenderer.invoke("cloud-reason", text, opts),
-  cloudStreamingUsage: (text, audioDurationSeconds, opts) =>
-    ipcRenderer.invoke("cloud-streaming-usage", text, audioDurationSeconds, opts),
-  cloudUsage: () => ipcRenderer.invoke("cloud-usage"),
-  cloudCheckout: (opts) => ipcRenderer.invoke("cloud-checkout", opts),
-  cloudBillingPortal: () => ipcRenderer.invoke("cloud-billing-portal"),
-  cloudSwitchPlan: (opts) => ipcRenderer.invoke("cloud-switch-plan", opts),
-  cloudPreviewSwitch: (opts) => ipcRenderer.invoke("cloud-preview-switch", opts),
-  cloudApiRequest: (opts) => ipcRenderer.invoke("cloud-api-request", opts),
   getSttConfig: () => ipcRenderer.invoke("get-stt-config"),
   getNoteRecordingConfig: () => ipcRenderer.invoke("get-note-recording-config"),
 
-  // Cloud audio file transcription
-  transcribeAudioFileCloud: (filePath, options) =>
-    ipcRenderer.invoke("transcribe-audio-file-cloud", filePath, options),
   transcribeAudioFileByok: (options) => ipcRenderer.invoke("transcribe-audio-file-byok", options),
   cancelUploadTranscription: (jobId) => ipcRenderer.invoke("cancel-upload-transcription", jobId),
   onUploadTranscriptionProgress: registerListener(
     "upload-transcription-progress",
     (callback) => (_event, data) => callback(data)
   ),
-
-  // Referral stats
-  getReferralStats: () => ipcRenderer.invoke("get-referral-stats"),
-  sendReferralInvite: (email) => ipcRenderer.invoke("send-referral-invite", email),
-  getReferralInvites: () => ipcRenderer.invoke("get-referral-invites"),
 
   // Assembly AI Streaming
   assemblyAiStreamingWarmup: (options) =>
@@ -625,16 +607,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onDictationRealtimeSessionEnd: registerListener(
     "dictation-realtime-session-end",
     (callback) => (_event, data) => callback(data)
-  ),
-
-  // Usage limit events (for showing UpgradePrompt in ControlPanel)
-  notifyLimitReached: (data) => ipcRenderer.send("limit-reached", data),
-  onLimitReached: registerListener("limit-reached", (callback) => (_event, data) => callback(data)),
-
-  // Workspace invitation deep link
-  onWorkspaceInvitationToken: registerListener(
-    "workspace-invitation-token",
-    (callback) => (_event, token) => callback(token)
   ),
 
   // Globe key listener for hotkey capture (macOS only)
@@ -752,20 +724,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   acquireRecordingLock: (pipeline) => ipcRenderer.invoke("acquire-recording-lock", pipeline),
   releaseRecordingLock: (pipeline) => ipcRenderer.invoke("release-recording-lock", pipeline),
 
-  // Agent cloud streaming (event-based for real-time chunks)
-  startAgentStream: (messages, opts) =>
-    ipcRenderer.send("cloud-agent-stream-start", messages, opts),
-  onAgentStreamChunk: registerListener(
-    "cloud-agent-stream-chunk",
-    (callback) => (_event, chunk) => callback(chunk)
-  ),
-  onAgentStreamError: registerListener(
-    "cloud-agent-stream-error",
-    (callback) => (_event, error) => callback(error)
-  ),
-  onAgentStreamEnd: registerListener("cloud-agent-stream-end", (callback) => () => callback()),
-
-  // Agent cloud tools
+  // Agent tools
   agentWebSearch: (query, numResults) => ipcRenderer.invoke("agent-web-search", query, numResults),
   agentOpenNote: (noteId) => ipcRenderer.invoke("agent-open-note", noteId),
 
@@ -833,45 +792,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getPendingTranscriptionDeletes: () => ipcRenderer.invoke("db-get-pending-transcription-deletes"),
   hardDeleteTranscription: (id) => ipcRenderer.invoke("db-hard-delete-transcription", id),
 
-  // Google Calendar
-  gcalStartOAuth: () => ipcRenderer.invoke("gcal-start-oauth"),
-  gcalDisconnect: () => ipcRenderer.invoke("gcal-disconnect"),
-  gcalGetConnectionStatus: () => ipcRenderer.invoke("gcal-get-connection-status"),
-  gcalGetCalendars: () => ipcRenderer.invoke("gcal-get-calendars"),
-  gcalSetCalendarSelection: (calendarId, isSelected) =>
-    ipcRenderer.invoke("gcal-set-calendar-selection", calendarId, isSelected),
-  gcalSetPrimaryOnly: (value) => ipcRenderer.invoke("gcal-set-primary-only", value),
-  gcalSyncEvents: () => ipcRenderer.invoke("gcal-sync-events"),
-  gcalGetUpcomingEvents: (windowMinutes) =>
-    ipcRenderer.invoke("gcal-get-upcoming-events", windowMinutes),
-  gcalGetEvent: (eventId) => ipcRenderer.invoke("gcal-get-event", eventId),
-
   // Contacts
   searchContacts: (query) => ipcRenderer.invoke("search-contacts", query),
   upsertContact: (contact) => ipcRenderer.invoke("upsert-contact", contact),
   getMD5Hash: (text) => ipcRenderer.invoke("get-md5-hash", text),
-
-  // Google Calendar event listeners
-  onGcalMeetingStarting: registerListener(
-    "gcal-meeting-starting",
-    (callback) => (_event, data) => callback(data)
-  ),
-  onGcalMeetingEnded: registerListener(
-    "gcal-meeting-ended",
-    (callback) => (_event, data) => callback(data)
-  ),
-  onGcalStartRecording: registerListener(
-    "gcal-start-recording",
-    (callback) => (_event, data) => callback(data)
-  ),
-  onGcalConnectionChanged: registerListener(
-    "gcal-connection-changed",
-    (callback) => (_event, data) => callback(data)
-  ),
-  onGcalEventsSynced: registerListener(
-    "gcal-events-synced",
-    (callback) => (_event, data) => callback(data)
-  ),
 
   // Meeting detection
   meetingDetectionGetPreferences: () => ipcRenderer.invoke("meeting-detection-get-preferences"),
@@ -901,7 +825,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   meetingNotificationReady: () => ipcRenderer.invoke("meeting-notification-ready"),
   meetingNotificationRespond: (detectionId, action) =>
     ipcRenderer.invoke("meeting-notification-respond", detectionId, action),
-  joinCalendarMeeting: (eventId) => ipcRenderer.invoke("join-calendar-meeting", eventId),
   getPendingMeetingNoteNavigation: () => ipcRenderer.invoke("get-pending-meeting-note-navigation"),
   onMeetingNoteNavigationPending: registerListener(
     "meeting-note-navigation-pending",

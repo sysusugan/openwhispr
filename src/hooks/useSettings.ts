@@ -67,7 +67,6 @@ export interface ApiKeySettings {
 }
 
 export interface PrivacySettings {
-  cloudBackupEnabled: boolean;
   telemetryEnabled: boolean;
   audioRetentionDays: number;
   dataRetentionEnabled: boolean;
@@ -281,8 +280,6 @@ function useSettingsInternal() {
     setNotificationsEnabled: store.setNotificationsEnabled,
     notifyMeetingDetection: store.notifyMeetingDetection,
     setNotifyMeetingDetection: store.setNotifyMeetingDetection,
-    notifyCalendarReminders: store.notifyCalendarReminders,
-    setNotifyCalendarReminders: store.setNotifyCalendarReminders,
     notifyUpdates: store.notifyUpdates,
     setNotifyUpdates: store.setNotifyUpdates,
     audioCuesEnabled: store.audioCuesEnabled,
@@ -329,8 +326,6 @@ function useSettingsInternal() {
     setWhisperVadSpeechPadMs: store.setWhisperVadSpeechPadMs,
     whisperVadSamplesOverlap: store.whisperVadSamplesOverlap,
     setWhisperVadSamplesOverlap: store.setWhisperVadSamplesOverlap,
-    cloudBackupEnabled: store.cloudBackupEnabled,
-    setCloudBackupEnabled: store.setCloudBackupEnabled,
     telemetryEnabled: store.telemetryEnabled,
     setTelemetryEnabled: store.setTelemetryEnabled,
     audioRetentionDays: store.audioRetentionDays,

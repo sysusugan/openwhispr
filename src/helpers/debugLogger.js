@@ -123,6 +123,31 @@ class DebugLogger {
     }
   }
 
+  setDebugLogging(enabled) {
+    this.logLevel = enabled ? "debug" : "info";
+    this.levelValue = LOG_LEVELS[this.logLevel];
+    this.debugMode = this.isDebugEnabled();
+    process.env.OPENWHISPR_LOG_LEVEL = this.logLevel;
+
+    if (enabled) {
+      this.fileLoggingPending = !this.fileLoggingEnabled;
+      this.ensureFileLogging();
+    } else {
+      this.fileLoggingPending = false;
+      if (this.logStream) {
+        this.logStream.end();
+        this.logStream = null;
+      }
+      this.fileLoggingEnabled = false;
+    }
+
+    return {
+      enabled: this.debugMode,
+      logPath: this.getLogPath(),
+      logLevel: this.logLevel,
+    };
+  }
+
   getLevel() {
     return this.logLevel;
   }

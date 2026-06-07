@@ -1,42 +1,14 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Copy, ExternalLink, Terminal } from "lucide-react";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { Terminal } from "lucide-react";
 import { CopyableCommand } from "./ui/CopyableCommand";
 import { LogoTile } from "./ui/LogoTile";
-import { useToast } from "./ui/useToast";
 import logo from "../assets/logo.svg";
 
-const CLI_DOCS_URL = "https://docs.openwhispr.com/cli/install";
 const INSTALL_CMD = "npm install -g @openwhispr/cli";
 const LOCAL_EXAMPLE = "openwhispr --local notes list";
-const CLOUD_LOGIN_CMD = "openwhispr auth login";
 
-interface CliIntegrationCardProps {
-  isPaid: boolean;
-  onUpgrade: () => void;
-}
-
-export default function CliIntegrationCard({ isPaid, onUpgrade }: CliIntegrationCardProps) {
+export default function CliIntegrationCard() {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const [docsLinkCopied, setDocsLinkCopied] = useState(false);
-
-  const handleCopyDocsLink = async () => {
-    try {
-      await navigator.clipboard.writeText(CLI_DOCS_URL);
-      setDocsLinkCopied(true);
-      toast({
-        title: t("integrations.cli.docsLinkCopied"),
-        variant: "success",
-        duration: 2000,
-      });
-      setTimeout(() => setDocsLinkCopied(false), 2000);
-    } catch {
-      /* noop */
-    }
-  };
 
   return (
     <div className="rounded-md border border-border/60 bg-background p-4">
@@ -59,64 +31,16 @@ export default function CliIntegrationCard({ isPaid, onUpgrade }: CliIntegration
         <CopyableCommand command={INSTALL_CMD} />
       </div>
 
-      <div className="flex items-center gap-2 mb-5">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => window.electronAPI?.openExternal?.(CLI_DOCS_URL)}
-          className="gap-1.5"
-        >
-          {t("integrations.cli.learnMore")}
-          <ExternalLink className="h-3 w-3" />
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleCopyDocsLink} className="gap-1.5">
-          {docsLinkCopied ? (
-            <Check className="h-3 w-3 text-success" />
-          ) : (
-            <Copy className="h-3 w-3" />
-          )}
-          {t("integrations.cli.copyDocsLink")}
-        </Button>
-      </div>
-
-      <div className="mb-4">
+      <div>
         <div className="flex items-center gap-1.5 mb-1">
           <h4 className="text-xs font-semibold text-foreground">
             {t("integrations.cli.local.label")}
           </h4>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
-            {t("integrations.cli.local.freeBadge")}
-          </Badge>
         </div>
         <p className="text-xs text-muted-foreground/70 mb-2 leading-relaxed">
           {t("integrations.cli.local.description")}
         </p>
         <CopyableCommand command={LOCAL_EXAMPLE} />
-      </div>
-
-      <div>
-        <div className="flex items-center gap-1.5 mb-1">
-          <h4 className="text-xs font-semibold text-foreground">
-            {t("integrations.cli.cloud.label")}
-          </h4>
-          {!isPaid && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
-              {t("integrations.plan.pro")}
-            </Badge>
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground/70 mb-2 leading-relaxed">
-          {isPaid
-            ? t("integrations.cli.cloud.description")
-            : t("integrations.cli.cloud.proRequired")}
-        </p>
-        {isPaid ? (
-          <CopyableCommand command={CLOUD_LOGIN_CMD} />
-        ) : (
-          <Button variant="outline" size="sm" onClick={onUpgrade}>
-            {t("integrations.cli.viewPlans")}
-          </Button>
-        )}
       </div>
     </div>
   );

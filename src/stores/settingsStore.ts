@@ -6,7 +6,6 @@ import { useStreamingProvidersStore } from "./streamingProvidersStore";
 import logger from "../utils/logger";
 import whisperVadConstants from "../constants/whisperVad.json";
 import type { LocalTranscriptionProvider, InferenceMode, SelfHostedType } from "../types/electron";
-import type { GoogleCalendarAccount } from "../types/calendar";
 import { PROMPT_KIND_LIST, type PromptKind } from "../config/prompts/registry";
 import {
   INFERENCE_SCOPES,
@@ -130,7 +129,6 @@ const BOOLEAN_SETTINGS = new Set([
   "useCleanupModel",
   "useDictationAgent",
   "preferBuiltInMic",
-  "cloudBackupEnabled",
   "telemetryEnabled",
   "audioCuesEnabled",
   "pauseMediaOnDictation",
@@ -154,12 +152,10 @@ const BOOLEAN_SETTINGS = new Set([
   "chatAgentDisableThinking",
   "notificationsEnabled",
   "notifyMeetingDetection",
-  "notifyCalendarReminders",
   "notifyUpdates",
-  "gcalPrimaryOnly",
 ]);
 
-const ARRAY_SETTINGS = new Set(["customDictionary", "customDictionaryAliases", "gcalAccounts"]);
+const ARRAY_SETTINGS = new Set(["customDictionary", "customDictionaryAliases"]);
 
 const NUMERIC_SETTINGS = new Set([
   "audioRetentionDays",
@@ -205,7 +201,7 @@ function migrateProviderSettings() {
   const useLocal = localStorage.getItem("useLocalWhisper") === "true";
   const provider = localStorage.getItem("cloudTranscriptionProvider");
 
-  let transcriptionMode: InferenceMode = "openwhispr";
+  let transcriptionMode: InferenceMode = "local";
   if (useLocal) {
     transcriptionMode = "local";
   } else if (cloudMode === "byok") {
@@ -224,7 +220,7 @@ function migrateProviderSettings() {
 
   const reasoningMode = localStorage.getItem("cloudReasoningMode");
   const reasoningProvider = localStorage.getItem("reasoningProvider");
-  let newReasoningMode: InferenceMode = "openwhispr";
+  let newReasoningMode: InferenceMode = "providers";
   if (reasoningMode === "byok") {
     if (reasoningProvider === "custom") {
       newReasoningMode = "self-hosted";
@@ -257,6 +253,41 @@ function migrateProviderSettings() {
 
 migrateProviderSettings();
 
+function migrateOfficialCloudModesToLocal() {
+  if (!isBrowser) return;
+  if (localStorage.getItem("_officialCloudModesRemoved") === "1") return;
+
+  const wasOfficialTranscription =
+    localStorage.getItem("transcriptionMode") === "openwhispr" ||
+    localStorage.getItem("cloudTranscriptionMode") === "openwhispr";
+  if (wasOfficialTranscription) {
+    localStorage.setItem("useLocalWhisper", "true");
+    localStorage.setItem("transcriptionMode", "local");
+    localStorage.setItem("cloudTranscriptionMode", "byok");
+    if (localStorage.getItem("showTranscriptionPreview") === null) {
+      localStorage.setItem("showTranscriptionPreview", "true");
+    }
+  }
+
+  for (const [modeKey, cloudModeKey] of [
+    ["cleanupMode", "cleanupCloudMode"],
+    ["noteFormattingMode", "noteFormattingCloudMode"],
+    ["chatAgentMode", "chatAgentCloudMode"],
+    ["dictationAgentMode", "dictationAgentCloudMode"],
+  ] as const) {
+    if (localStorage.getItem(modeKey) === "openwhispr") {
+      localStorage.setItem(modeKey, "providers");
+    }
+    if (localStorage.getItem(cloudModeKey) === "openwhispr") {
+      localStorage.setItem(cloudModeKey, "byok");
+    }
+  }
+
+  localStorage.setItem("_officialCloudModesRemoved", "1");
+}
+
+migrateOfficialCloudModesToLocal();
+
 function migrateAgentMode() {
   if (!isBrowser) return;
   if (localStorage.getItem("_agentModeMigrated") === "1") return;
@@ -264,7 +295,7 @@ function migrateAgentMode() {
   const cloudAgentMode = localStorage.getItem("cloudAgentMode");
   const agentProvider = localStorage.getItem("agentProvider");
 
-  let agentInferenceMode: InferenceMode = "openwhispr";
+  let agentInferenceMode: InferenceMode = "providers";
   if (cloudAgentMode === "byok") {
     const localProviders = ["qwen", "llama", "mistral", "openai-oss", "gemma"];
     if (agentProvider === "custom") {
@@ -377,14 +408,9 @@ export interface SettingsState
   pauseMediaOnDictation: boolean;
   floatingIconAutoHide: boolean;
   startMinimized: boolean;
-  gcalAccounts: GoogleCalendarAccount[];
-  gcalConnected: boolean;
-  gcalEmail: string;
   notificationsEnabled: boolean;
   notifyMeetingDetection: boolean;
-  notifyCalendarReminders: boolean;
   notifyUpdates: boolean;
-  gcalPrimaryOnly: boolean;
   meetingProcessDetection: boolean;
   meetingAudioDetection: boolean;
   speakerDiarizationEnabled: boolean;
@@ -556,7 +582,6 @@ export interface SettingsState
   setSelectedMicDeviceId: (value: string) => void;
 
   setTheme: (value: "light" | "dark" | "auto") => void;
-  setCloudBackupEnabled: (value: boolean) => void;
   setTelemetryEnabled: (value: boolean) => void;
   setAudioRetentionDays: (days: number) => void;
   setDataRetentionEnabled: (value: boolean) => void;
@@ -564,12 +589,9 @@ export interface SettingsState
   setPauseMediaOnDictation: (value: boolean) => void;
   setFloatingIconAutoHide: (enabled: boolean) => void;
   setStartMinimized: (enabled: boolean) => void;
-  setGcalAccounts: (accounts: GoogleCalendarAccount[]) => void;
   setNotificationsEnabled: (value: boolean) => void;
   setNotifyMeetingDetection: (value: boolean) => void;
-  setNotifyCalendarReminders: (value: boolean) => void;
   setNotifyUpdates: (value: boolean) => void;
-  setGcalPrimaryOnly: (value: boolean) => void;
   setMeetingProcessDetection: (value: boolean) => void;
   setMeetingAudioDetection: (value: boolean) => void;
   setSpeakerDiarizationEnabled: (value: boolean) => void;
@@ -708,7 +730,7 @@ function invalidateApiKeyCaches(
 
 export const useSettingsStore = create<SettingsState>()((set, get) => ({
   uiLanguage: normalizeUiLanguage(isBrowser ? localStorage.getItem("uiLanguage") : null),
-  useLocalWhisper: readBoolean("useLocalWhisper", false),
+  useLocalWhisper: readBoolean("useLocalWhisper", true),
   whisperModel: readString("whisperModel", "base"),
   localTranscriptionProvider: (readString("localTranscriptionProvider", "whisper") === "nvidia"
     ? "nvidia"
@@ -726,8 +748,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   ),
   // Secrets aren't hydrated yet at construction; the BYOK default is set
   // post-hydration in initializeSettings.
-  cloudTranscriptionMode: readString("cloudTranscriptionMode", "openwhispr"),
-  cleanupCloudMode: readString("cleanupCloudMode", "openwhispr"),
+  cloudTranscriptionMode: readString("cloudTranscriptionMode", "byok"),
+  cleanupCloudMode: readString("cleanupCloudMode", "byok"),
   cleanupCloudBaseUrl: readString("cleanupCloudBaseUrl", API_ENDPOINTS.OPENAI_BASE),
   customDictionary: readStringArray("customDictionary", []),
   customDictionaryAliases: readStringArray(
@@ -784,7 +806,6 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (v === "light" || v === "dark" || v === "auto") return v;
     return "auto" as const;
   })(),
-  cloudBackupEnabled: readBoolean("cloudBackupEnabled", false),
   telemetryEnabled: readBoolean("telemetryEnabled", false),
   audioRetentionDays: (() => {
     if (!isBrowser) return 30;
@@ -800,23 +821,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   startMinimized: readBoolean("startMinimized", false),
   notificationsEnabled: readBoolean("notificationsEnabled", true),
   notifyMeetingDetection: readBoolean("notifyMeetingDetection", true),
-  notifyCalendarReminders: readBoolean("notifyCalendarReminders", true),
   notifyUpdates: readBoolean("notifyUpdates", true),
-  ...(() => {
-    let accounts: GoogleCalendarAccount[] = [];
-    try {
-      const parsed = JSON.parse(readString("gcalAccounts", "[]"));
-      if (Array.isArray(parsed)) accounts = parsed;
-    } catch {
-      /* use empty default */
-    }
-    return {
-      gcalAccounts: accounts,
-      gcalConnected: accounts.length > 0,
-      gcalEmail: accounts[0]?.email ?? "",
-    };
-  })(),
-  gcalPrimaryOnly: readBoolean("gcalPrimaryOnly", true),
   meetingProcessDetection: readBoolean("meetingProcessDetection", true),
   meetingAudioDetection: readBoolean("meetingAudioDetection", true),
   speakerDiarizationEnabled: readBoolean("speakerDiarizationEnabled", true),
@@ -846,7 +851,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     if (v === "bottom-right" || v === "center" || v === "bottom-left") return v;
     return "bottom-right" as const;
   })(),
-  showTranscriptionPreview: readBoolean("showTranscriptionPreview", false),
+  showTranscriptionPreview: readBoolean("showTranscriptionPreview", true),
   autoPasteEnabled: readBoolean("autoPasteEnabled", true),
   keepTranscriptionInClipboard: readBoolean("keepTranscriptionInClipboard", false),
   noteFilesEnabled: readBoolean("noteFilesEnabled", false),
@@ -854,9 +859,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   isSignedIn: readBoolean("isSignedIn", false),
 
   transcriptionMode: (() => {
-    const v = readString("transcriptionMode", "openwhispr");
-    if (v === "openwhispr" || v === "providers" || v === "local" || v === "self-hosted") return v;
-    return "openwhispr" as InferenceMode;
+    const v = readString("transcriptionMode", "local");
+    if (v === "providers" || v === "local" || v === "self-hosted") return v;
+    return "local" as InferenceMode;
   })(),
   remoteTranscriptionType: (() => {
     const v = readString("remoteTranscriptionType", "lan");
@@ -864,23 +869,22 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   })(),
   remoteTranscriptionUrl: readString("remoteTranscriptionUrl", ""),
   cleanupMode: (() => {
-    const v = readString("cleanupMode", "openwhispr");
+    const v = readString("cleanupMode", "providers");
     if (
-      v === "openwhispr" ||
-      v === "providers" ||
+            v === "providers" ||
       v === "local" ||
       v === "self-hosted" ||
       v === "enterprise"
     )
       return v;
-    return "openwhispr" as InferenceMode;
+    return "providers" as InferenceMode;
   })(),
   cleanupRemoteUrl: readString("cleanupRemoteUrl", ""),
 
   meetingTranscriptionMode: (() => {
-    const v = readString("meetingTranscriptionMode", "openwhispr");
-    if (v === "openwhispr" || v === "providers" || v === "local" || v === "self-hosted") return v;
-    return "openwhispr" as InferenceMode;
+    const v = readString("meetingTranscriptionMode", "local");
+    if (v === "providers" || v === "local" || v === "self-hosted") return v;
+    return "local" as InferenceMode;
   })(),
   meetingUseLocalWhisper: readBoolean("meetingUseLocalWhisper", false),
   meetingWhisperModel: readString("meetingWhisperModel", ""),
@@ -900,16 +904,15 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   meetingRemoteTranscriptionUrl: readString("meetingRemoteTranscriptionUrl", ""),
 
   noteFormattingMode: (() => {
-    const v = readString("noteFormattingMode", "openwhispr");
+    const v = readString("noteFormattingMode", "providers");
     if (
-      v === "openwhispr" ||
-      v === "providers" ||
+            v === "providers" ||
       v === "local" ||
       v === "self-hosted" ||
       v === "enterprise"
     )
       return v;
-    return "openwhispr" as InferenceMode;
+    return "providers" as InferenceMode;
   })(),
   noteFormattingProvider: readString("noteFormattingProvider", ""),
   noteFormattingModel: readString("noteFormattingModel", ""),
@@ -956,18 +959,17 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   chatAgentModel: readString("chatAgentModel", "openai/gpt-oss-120b"),
   chatAgentProvider: readString("chatAgentProvider", "groq"),
   chatAgentKey: readString("chatAgentKey", ""),
-  chatAgentCloudMode: readString("chatAgentCloudMode", "openwhispr"),
+  chatAgentCloudMode: readString("chatAgentCloudMode", "byok"),
   chatAgentMode: (() => {
-    const v = readString("chatAgentMode", "openwhispr");
+    const v = readString("chatAgentMode", "providers");
     if (
-      v === "openwhispr" ||
-      v === "providers" ||
+            v === "providers" ||
       v === "local" ||
       v === "self-hosted" ||
       v === "enterprise"
     )
       return v;
-    return "openwhispr" as InferenceMode;
+    return "providers" as InferenceMode;
   })(),
   chatAgentRemoteUrl: readString("chatAgentRemoteUrl", ""),
   chatAgentCloudBaseUrl: readString("chatAgentCloudBaseUrl", ""),
@@ -976,8 +978,7 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   dictationAgentMode: (() => {
     const v = readString("dictationAgentMode", "");
     if (
-      v === "openwhispr" ||
-      v === "providers" ||
+            v === "providers" ||
       v === "local" ||
       v === "self-hosted" ||
       v === "enterprise"
@@ -1234,7 +1235,6 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     set({ theme: value });
   },
 
-  setCloudBackupEnabled: createBooleanSetter("cloudBackupEnabled"),
   setTelemetryEnabled: createBooleanSetter("telemetryEnabled"),
   setAudioRetentionDays: (days: number) => {
     if (isBrowser) localStorage.setItem("audioRetentionDays", String(days));
@@ -1272,23 +1272,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
     }
   },
 
-  setGcalAccounts: (accounts: GoogleCalendarAccount[]) => {
-    if (isBrowser) localStorage.setItem("gcalAccounts", JSON.stringify(accounts));
-    useSettingsStore.setState({
-      gcalAccounts: accounts,
-      gcalConnected: accounts.length > 0,
-      gcalEmail: accounts[0]?.email ?? "",
-    });
-  },
   setNotificationsEnabled: createBooleanSetter("notificationsEnabled"),
   setNotifyMeetingDetection: createBooleanSetter("notifyMeetingDetection"),
-  setNotifyCalendarReminders: createBooleanSetter("notifyCalendarReminders"),
   setNotifyUpdates: createBooleanSetter("notifyUpdates"),
-  setGcalPrimaryOnly: (value: boolean) => {
-    if (isBrowser) localStorage.setItem("gcalPrimaryOnly", String(value));
-    useSettingsStore.setState({ gcalPrimaryOnly: value });
-    if (isBrowser) window.electronAPI?.gcalSetPrimaryOnly?.(value);
-  },
   setMeetingProcessDetection: createBooleanSetter("meetingProcessDetection"),
   setMeetingAudioDetection: createBooleanSetter("meetingAudioDetection"),
   setSpeakerDiarizationEnabled: (value: boolean) => {
@@ -1505,21 +1491,13 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
 
 // --- Selectors (derived state, not stored) ---
 
-export const selectIsCloudCleanupMode = (state: SettingsState) =>
-  state.isSignedIn && state.cleanupMode === "openwhispr" && state.cleanupCloudMode === "openwhispr";
+export const selectIsCloudCleanupMode = (_state: SettingsState) => false;
 
-export const selectEffectiveCleanupProvider = (state: SettingsState) =>
-  selectIsCloudCleanupMode(state) ? "openwhispr" : state.cleanupProvider;
+export const selectEffectiveCleanupProvider = (state: SettingsState) => state.cleanupProvider;
 
-export const selectIsCloudChatAgentMode = (state: SettingsState) =>
-  state.isSignedIn &&
-  state.chatAgentMode === "openwhispr" &&
-  state.chatAgentCloudMode === "openwhispr";
+export const selectIsCloudChatAgentMode = (_state: SettingsState) => false;
 
-export const selectIsCloudNoteFormattingMode = (state: SettingsState) => {
-  const cfg = selectResolvedNoteFormatting(state);
-  return state.isSignedIn && cfg.mode === "openwhispr" && cfg.cloudMode === "openwhispr";
-};
+export const selectIsCloudNoteFormattingMode = (_state: SettingsState) => false;
 
 export interface ResolvedMeetingTranscription {
   useLocalWhisper: boolean;
@@ -1877,23 +1855,11 @@ export async function initializeSettings(): Promise<void> {
       await window.electronAPI.syncNotificationPreferences?.({
         notificationsEnabled: currentState.notificationsEnabled,
         notifyMeetingDetection: currentState.notifyMeetingDetection,
-        notifyCalendarReminders: currentState.notifyCalendarReminders,
         notifyUpdates: currentState.notifyUpdates,
       });
     } catch (err) {
       logger.warn(
         "Failed to sync notification preferences on startup",
-        { error: (err as Error).message },
-        "settings"
-      );
-    }
-
-    try {
-      const currentState = useSettingsStore.getState();
-      await window.electronAPI.gcalSetPrimaryOnly?.(currentState.gcalPrimaryOnly);
-    } catch (err) {
-      logger.warn(
-        "Failed to sync gcal primary-only on startup",
         { error: (err as Error).message },
         "settings"
       );
@@ -1978,14 +1944,6 @@ export async function initializeSettings(): Promise<void> {
     }
 
     useSettingsStore.setState({ [key]: value });
-
-    if (key === "gcalAccounts" && Array.isArray(value)) {
-      const accounts = value as GoogleCalendarAccount[];
-      useSettingsStore.setState({
-        gcalConnected: accounts.length > 0,
-        gcalEmail: accounts[0]?.email ?? "",
-      });
-    }
 
     if (key === "uiLanguage" && typeof value === "string") {
       void i18n.changeLanguage(value);

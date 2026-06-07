@@ -7,8 +7,6 @@ import type { TranscriptionItem as TranscriptionItemType } from "../types/electr
 import { formatHotkeyLabel } from "../utils/hotkeys";
 import { formatDateGroup } from "../utils/dateFormatting";
 import { cn } from "./lib/utils";
-import { useUpcomingEvents } from "../hooks/useUpcomingEvents";
-import UpcomingMeetings from "./UpcomingMeetings";
 import { useSettingsStore } from "../stores/settingsStore";
 
 interface HistoryViewProps {
@@ -46,7 +44,6 @@ export default function HistoryView({
 }: HistoryViewProps) {
   const { t } = useTranslation();
   const dataRetentionEnabled = useSettingsStore((s) => s.dataRetentionEnabled);
-  const { events, isLoading: eventsLoading, isConnected } = useUpcomingEvents();
 
   const groupedHistory = useMemo(() => {
     if (history.length === 0) return [];
@@ -73,7 +70,7 @@ export default function HistoryView({
       <div
         className={cn(
           "ow-page-column",
-          isConnected ? "max-w-6xl xl:max-w-6xl" : "max-w-4xl xl:max-w-4xl"
+          "max-w-4xl xl:max-w-4xl"
         )}
       >
         {showCloudMigrationBanner && (
@@ -152,16 +149,8 @@ export default function HistoryView({
           </div>
         )}
 
-        <div className={cn("h-full min-w-0", isConnected ? "flex gap-6" : "")}>
-          <div className={cn("min-w-0", isConnected ? "flex-1" : "w-full")}>
-            {isConnected && (
-              <div className="flex items-center gap-1.5 pb-2.5">
-                <Mic size={12} className="text-muted-foreground" />
-                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t("upcoming.transcriptions")}
-                </span>
-              </div>
-            )}
+        <div className="h-full min-w-0">
+          <div className="min-w-0 w-full">
             {!dataRetentionEnabled && (
               <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 dark:bg-amber-500/10 px-3.5 py-2.5 flex items-center gap-2.5">
                 <span className="text-amber-600 dark:text-amber-400 shrink-0 text-sm">⊘</span>
@@ -312,14 +301,6 @@ export default function HistoryView({
               </div>
             )}
           </div>
-
-          {isConnected && (
-            <div className="w-64 shrink-0 hidden sm:block">
-              <div className="sticky top-4">
-                <UpcomingMeetings events={events} isLoading={eventsLoading} />
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

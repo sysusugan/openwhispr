@@ -12,7 +12,6 @@ import {
 } from "../stores/settingsStore";
 import { runNoteActionOnce } from "../stores/runNoteActionOnce";
 import { buildWriteNoteContentUpdates } from "../stores/actionProcessingCore";
-import { syncService } from "../services/SyncService";
 import { createPendingRunNoteActionToolCall } from "./embeddedChatActions";
 
 interface UseEmbeddedChatOptions {
@@ -223,7 +222,6 @@ export function useEmbeddedChat({
       });
       const result = await window.electronAPI.updateNote(note.id, updates);
       if (!result.success) throw new Error(t("embeddedChat.confirmation.writeFailed"));
-      syncService.debouncedPush("note", note.id);
     },
     [t]
   );
@@ -277,7 +275,6 @@ export function useEmbeddedChat({
           });
           const result = await window.electronAPI.updateNote(note.id, updates);
           if (!result.success) throw new Error(t("embeddedChat.confirmation.writeFailed"));
-          syncService.debouncedPush("note", note.id);
           patchToolCall(toolCall.id, {
             status: "completed",
             result: t("embeddedChat.confirmation.actionCompleted", { name: action.name }),

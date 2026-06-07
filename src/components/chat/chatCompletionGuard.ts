@@ -8,7 +8,6 @@ const TOOLS_REQUIRING_FINAL_ANSWER = new Set([
   "search_notes",
   "get_note",
   "web_search",
-  "get_calendar_events",
 ]);
 
 export function isMissingFinalAnswerAfterToolResult({

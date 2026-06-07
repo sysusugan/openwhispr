@@ -267,7 +267,6 @@ const WindowsKeyManager = require("./src/helpers/windowsKeyManager");
 const LinuxKeyManager = require("./src/helpers/linuxKeyManager");
 const TextEditMonitor = require("./src/helpers/textEditMonitor");
 const WhisperCudaManager = require("./src/helpers/whisperCudaManager");
-const GoogleCalendarManager = require("./src/helpers/googleCalendarManager");
 const MeetingProcessDetector = require("./src/helpers/meetingProcessDetector");
 const AudioActivityDetector = require("./src/helpers/audioActivityDetector");
 const AudioTapManager = require("./src/helpers/audioTapManager");
@@ -296,7 +295,6 @@ let windowsKeyManager = null;
 let linuxKeyManager = null;
 let textEditMonitor = null;
 let whisperCudaManager = null;
-let googleCalendarManager = null;
 let meetingDetectionEngine = null;
 let audioTapManager = null;
 let linuxPortalAudioManager = null;
@@ -368,9 +366,7 @@ function initializeCoreManagers() {
   }
   parakeetManager = new ParakeetManager();
   diarizationManager = new DiarizationManager();
-  googleCalendarManager = new GoogleCalendarManager(databaseManager, windowManager);
   meetingDetectionEngine = new MeetingDetectionEngine(
-    googleCalendarManager,
     new MeetingProcessDetector(),
     new AudioActivityDetector(),
     windowManager,
@@ -401,7 +397,6 @@ function initializeCoreManagers() {
     linuxKeyManager,
     textEditMonitor,
     whisperCudaManager,
-    googleCalendarManager,
     meetingDetectionEngine,
     audioTapManager,
     linuxPortalAudioManager,
@@ -464,23 +459,12 @@ function initializeDeferredManagers() {
     });
   }
 
-  googleCalendarManager.start();
   meetingDetectionEngine.start();
 }
 
 app.on("open-url", (event, url) => {
   event.preventDefault();
   if (!url.startsWith(`${OAUTH_PROTOCOL}://`)) return;
-
-  if (url.includes("upgrade-success")) {
-    handleUpgradeDeepLink();
-    return;
-  }
-
-  if (url.includes("/invitations/")) {
-    handleInvitationDeepLink(url);
-    return;
-  }
 
   void handleOAuthDeepLink(url);
 
@@ -489,30 +473,6 @@ app.on("open-url", (event, url) => {
     windowManager.controlPanelWindow.focus();
   }
 });
-
-function handleInvitationDeepLink(deepLinkUrl) {
-  try {
-    const match = deepLinkUrl.match(/invitations\/([^/?#]+)/);
-    const token = match?.[1];
-    if (!token) return;
-    if (windowManager && isLiveWindow(windowManager.controlPanelWindow)) {
-      windowManager.controlPanelWindow.show();
-      windowManager.controlPanelWindow.focus();
-      windowManager.controlPanelWindow.webContents.send("workspace-invitation-token", token);
-    } else if (windowManager) {
-      windowManager.createControlPanelWindow();
-      // Defer the send until renderer is ready; main.js relies on `did-finish-load`
-      const win = windowManager.controlPanelWindow;
-      if (win) {
-        win.webContents.once("did-finish-load", () => {
-          win.webContents.send("workspace-invitation-token", token);
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Invitation deep link parse failed:", error);
-  }
-}
 
 function resolveAuthUrl() {
   const fs = require("fs");
@@ -525,7 +485,7 @@ function resolveAuthUrl() {
     process.env.AUTH_URL ||
     process.env.VITE_AUTH_URL ||
     runtimeEnv.VITE_AUTH_URL ||
-    "https://auth.openwhispr.com"
+    ""
   );
 }
 
@@ -539,7 +499,9 @@ function getOauthCookieName() {
 // for the raw session.token the bearer plugin expects.
 async function exchangeSignedTokenForRawBearer(signedToken) {
   try {
-    const res = await net.fetch(`${resolveAuthUrl()}/api/auth/get-session`, {
+    const authUrl = resolveAuthUrl();
+    if (!authUrl) return null;
+    const res = await net.fetch(`${authUrl}/api/auth/get-session`, {
       headers: { Cookie: `${getOauthCookieName()}=${signedToken}` },
       signal: AbortSignal.timeout(5000),
       useSessionCookies: false,
@@ -567,6 +529,7 @@ async function migrateCookieToBearerToken() {
 
   const cookieName = getOauthCookieName();
   const authUrl = resolveAuthUrl();
+  if (!authUrl) return;
 
   try {
     const cookies = await session.defaultSession.cookies.get({ url: authUrl, name: cookieName });
@@ -630,16 +593,6 @@ async function handleOAuthDeepLink(deepLinkUrl) {
     if (rawToken) void applySessionTokenAndRefresh(rawToken);
   } catch (err) {
     if (debugLogger) debugLogger.error("Failed to handle OAuth deep link:", err);
-  }
-}
-
-function handleUpgradeDeepLink() {
-  if (isLiveWindow(windowManager?.controlPanelWindow)) {
-    windowManager.controlPanelWindow.webContents.executeJavaScript(
-      'window.dispatchEvent(new Event("upgrade-success"))'
-    );
-    windowManager.controlPanelWindow.show();
-    windowManager.controlPanelWindow.focus();
   }
 }
 
@@ -750,17 +703,19 @@ async function startApp() {
 
   await migrateCookieToBearerToken();
 
-  // Electron's file:// renderer sends Origin: null, which Better Auth's
-  // trustedOrigins check rejects. Spoof Origin to the request's own URL so
-  // calls to OpenWhispr's auth and API hosts are treated as same-origin.
+  // Electron's file:// renderer sends Origin: null, which some self-hosted auth
+  // servers reject. Spoof Origin to the request's own URL for configured local
+  // or self-hosted service endpoints.
+  const authUrl = resolveAuthUrl();
+  const apiUrl =
+    process.env.OPENWHISPR_API_URL || process.env.VITE_OPENWHISPR_API_URL || "";
+  const rewriteUrls = [authUrl, apiUrl, "http://localhost:3000", "http://127.0.0.1:3000"]
+    .map((value) => String(value || "").replace(/\/+$/, ""))
+    .filter(Boolean)
+    .map((value) => `${value}/*`);
   session.defaultSession.webRequest.onBeforeSendHeaders(
     {
-      urls: [
-        "https://auth.openwhispr.com/*",
-        "https://api.openwhispr.com/*",
-        "http://localhost:3000/*",
-        "http://127.0.0.1:3000/*",
-      ],
+      urls: rewriteUrls,
     },
     (details, callback) => {
       try {
@@ -873,17 +828,6 @@ async function startApp() {
   // Phase 2: Initialize remaining managers after windows are visible
   initializeDeferredManagers();
 
-  app.on("browser-window-focus", () => {
-    if (googleCalendarManager) googleCalendarManager.syncOnFocus();
-  });
-
-  const { powerMonitor } = require("electron");
-  powerMonitor.on("resume", () => {
-    if (googleCalendarManager) {
-      googleCalendarManager.onWakeFromSleep();
-    }
-  });
-
   // Non-blocking server pre-warming
   const whisperSettings = {
     localTranscriptionProvider: process.env.LOCAL_TRANSCRIPTION_PROVIDER || "",
@@ -975,7 +919,6 @@ async function startApp() {
   await trayManager.createTray();
 
   updateManager.setWindows(windowManager.mainWindow, windowManager.controlPanelWindow);
-  updateManager.checkForUpdatesOnStartup();
 
   if (process.platform === "darwin") {
     const { isGlobeLikeHotkey, isMouseButtonHotkey } = require("./src/helpers/hotkeyManager");
@@ -1457,7 +1400,7 @@ async function startApp() {
   }
 }
 
-// Listen for usage limit reached from dictation overlay, forward to control panel
+// Listen for quota/status events from dictation overlay, forward to control panel
 ipcMain.on("limit-reached", (_event, data) => {
   if (isLiveWindow(windowManager?.controlPanelWindow)) {
     windowManager.controlPanelWindow.webContents.send("limit-reached", data);
@@ -1494,13 +1437,7 @@ if (gotSingleInstanceLock) {
     // Check for OAuth protocol URL in command line arguments (Windows/Linux)
     const url = commandLine.find((arg) => arg.startsWith(`${OAUTH_PROTOCOL}://`));
     if (url) {
-      if (url.includes("upgrade-success")) {
-        handleUpgradeDeepLink();
-      } else if (url.includes("/invitations/")) {
-        handleInvitationDeepLink(url);
-      } else {
-        void handleOAuthDeepLink(url);
-      }
+      void handleOAuthDeepLink(url);
     }
   });
 
@@ -1619,7 +1556,6 @@ function performSyncTeardown() {
   if (windowsKeyManager) windowsKeyManager.stop();
   if (linuxKeyManager) linuxKeyManager.stop();
   if (meetingDetectionEngine) meetingDetectionEngine.stop();
-  if (googleCalendarManager) googleCalendarManager.stop();
   if (audioTapManager) audioTapManager.stop().catch(() => {});
   if (linuxPortalAudioManager) linuxPortalAudioManager.stop().catch(() => {});
   if (meetingAecManager) meetingAecManager.stop().catch(() => {});

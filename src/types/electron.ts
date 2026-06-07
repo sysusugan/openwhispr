@@ -1,6 +1,6 @@
 export type LocalTranscriptionProvider = "whisper" | "nvidia";
 
-export type InferenceMode = "openwhispr" | "providers" | "local" | "self-hosted" | "enterprise";
+export type InferenceMode = "providers" | "local" | "self-hosted" | "enterprise";
 
 export type SelfHostedType = "openai-compatible" | "lan";
 
@@ -54,7 +54,6 @@ export interface NoteItem {
   audio_duration_seconds: number | null;
   folder_id: number | null;
   transcript: string | null;
-  calendar_event_id: string | null;
   participants: string | null;
   diarization_enabled: number | null;
   expected_speaker_count: number | null;
@@ -65,8 +64,6 @@ export interface NoteItem {
   client_note_id: string;
   sync_status: "synced" | "pending" | "error";
   deleted_at: string | null;
-  workspace_id?: string | null;
-  team_id?: string | null;
 }
 
 export type NoteSortBy = "updatedAt" | "createdAt" | "recordedAt";
@@ -85,26 +82,6 @@ export interface NoteAudioFile {
   extension: string;
 }
 
-export type ShareVisibility = "private" | "link" | "domain" | "invited";
-
-export interface ShareSettings {
-  visibility: ShareVisibility;
-  token_prefix: string | null;
-  domain_allowlist: string[];
-  updated_by_user_id: string | null;
-  updated_at: string | null;
-}
-
-export interface NoteShareInvitation {
-  id: string;
-  email: string;
-  invited_by_user_id: string;
-  accepted_at: string | null;
-  revoked_at: string | null;
-  last_emailed_at: string | null;
-  created_at: string;
-}
-
 export interface FolderItem {
   id: number;
   name: string;
@@ -116,99 +93,6 @@ export interface FolderItem {
   cloud_id: string | null;
   sync_status: "synced" | "pending" | "error";
   deleted_at: string | null;
-  workspace_id?: string | null;
-  team_id?: string | null;
-}
-
-export type WorkspaceRole = "owner" | "admin" | "member";
-export type TeamRole = "admin" | "member";
-
-export interface Workspace {
-  id: string;
-  name: string;
-  slug: string;
-  created_by_user_id: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  plan: string;
-  status: string;
-  trial_ends_at: string | null;
-  current_period_end: string | null;
-  cancel_at_period_end: boolean;
-  seats: number;
-  created_at: string;
-  updated_at: string;
-  role: WorkspaceRole;
-}
-
-export interface WorkspaceMember {
-  user_id: string;
-  role: WorkspaceRole;
-  joined_at: string;
-  email: string;
-  name: string | null;
-  image: string | null;
-}
-
-export interface Team {
-  id: string;
-  workspace_id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-  member_count?: number;
-}
-
-export interface TeamMember {
-  user_id: string;
-  role: TeamRole;
-  joined_at: string;
-  email: string;
-  name: string | null;
-  image: string | null;
-}
-
-export interface WorkspaceInvitation {
-  id: string;
-  email: string;
-  workspace_role: TeamRole;
-  team_ids: string[];
-  invited_by_user_id: string;
-  expires_at: string;
-  created_at: string;
-  accepted_at: string | null;
-  revoked_at: string | null;
-}
-
-export interface InvitationPreview {
-  id: string;
-  email: string;
-  workspace_role: TeamRole;
-  team_ids: string[];
-  expires_at: string;
-  workspace_id: string;
-  workspace_name: string;
-  workspace_slug: string;
-  inviter_name: string | null;
-  inviter_email: string | null;
-}
-
-export interface WorkspaceApiKey {
-  id: string;
-  name: string;
-  key_prefix: string;
-  scopes: string[];
-  last_used_at: string | null;
-  expires_at: string | null;
-  created_at: string;
-  created_by_user_id: string | null;
-  description: string | null;
-}
-
-export interface NewWorkspaceApiKey extends WorkspaceApiKey {
-  key: string;
 }
 
 export interface ActionItem {
@@ -477,14 +361,6 @@ export interface ConversationPreview {
   last_message_role?: "user" | "assistant" | "system" | null;
 }
 
-export interface ReferralItem {
-  id: string;
-  email: string;
-  name: string | null;
-  status: "pending" | "completed" | "rewarded";
-  created_at: string;
-  first_payment_at: string | null;
-}
 
 declare global {
   interface Window {
@@ -657,7 +533,6 @@ declare global {
           enhanced_at_content_hash?: string | null;
           folder_id?: number | null;
           transcript?: string | null;
-          calendar_event_id?: string | null;
           participants?: string | null;
           diarization_enabled?: number | null;
           expected_speaker_count?: number | null;
@@ -1213,150 +1088,10 @@ declare global {
       getAutoStartEnabled?: () => Promise<boolean>;
       setAutoStartEnabled?: (enabled: boolean) => Promise<{ success: boolean; error?: string }>;
 
-      // Auth
+      // Self-hosted service auth
       authClearSession?: () => Promise<void>;
       authGetToken?: () => Promise<string | null>;
       authSetToken?: (token: string) => Promise<void>;
-
-      // OpenWhispr Cloud API
-      cloudTranscribe?: (
-        audioBuffer: ArrayBuffer,
-        opts: { language?: string; prompt?: string; useCase?: string; diarization?: boolean }
-      ) => Promise<{
-        success: boolean;
-        text?: string;
-        clientTranscriptionId?: string;
-        wordsUsed?: number;
-        wordsRemaining?: number;
-        limitReached?: boolean;
-        error?: string;
-        code?: string;
-      }>;
-      cloudReason?: (
-        text: string,
-        opts: {
-          model?: string;
-          agentName?: string;
-          customDictionary?: string[];
-          customPrompt?: string;
-          systemPrompt?: string;
-          language?: string;
-          locale?: string;
-        }
-      ) => Promise<{
-        success: boolean;
-        text?: string;
-        model?: string;
-        provider?: string;
-        promptMode?: string;
-        matchType?: string;
-        error?: string;
-        code?: string;
-      }>;
-      cloudStreamingUsage?: (
-        text: string,
-        audioDurationSeconds: number,
-        opts?: {
-          sendLogs?: boolean;
-          sttProvider?: string;
-          sttModel?: string;
-          sttProcessingMs?: number;
-          sttLanguage?: string;
-          audioSizeBytes?: number;
-          audioFormat?: string;
-          clientTotalMs?: number;
-        }
-      ) => Promise<{
-        success: boolean;
-        wordsUsed?: number;
-        wordsRemaining?: number;
-        limitReached?: boolean;
-        error?: string;
-        code?: string;
-      }>;
-      cloudHealthCheck?: () => Promise<{
-        ok: boolean;
-        status?: number;
-        code?: string;
-        messageKey?: string;
-      }>;
-      cloudUsage?: () => Promise<{
-        success: boolean;
-        wordsUsed?: number;
-        wordsRemaining?: number;
-        limit?: number;
-        plan?: string;
-        status?: string;
-        isSubscribed?: boolean;
-        isTrial?: boolean;
-        trialDaysLeft?: number | null;
-        currentPeriodEnd?: string | null;
-        billingInterval?: "monthly" | "annual" | null;
-        resetAt?: string;
-        error?: string;
-        code?: string;
-      }>;
-      cloudCheckout?: (opts?: {
-        plan?: "monthly" | "annual";
-        tier?: "pro" | "business";
-      }) => Promise<{
-        success: boolean;
-        url?: string;
-        error?: string;
-        code?: string;
-      }>;
-      cloudBillingPortal?: () => Promise<{
-        success: boolean;
-        url?: string;
-        error?: string;
-        code?: string;
-      }>;
-      cloudSwitchPlan?: (opts: {
-        plan: "monthly" | "annual";
-        tier: "pro" | "business";
-      }) => Promise<{
-        success: boolean;
-        alreadyOnPlan?: boolean;
-        error?: string;
-      }>;
-      cloudPreviewSwitch?: (opts: {
-        plan: "monthly" | "annual";
-        tier: "pro" | "business";
-      }) => Promise<{
-        success: boolean;
-        immediateAmount?: number;
-        currency?: string;
-        currentPriceAmount?: number;
-        currentInterval?: string;
-        newPriceAmount?: number;
-        newInterval?: string;
-        nextBillingDate?: string;
-        alreadyOnPlan?: boolean;
-        error?: string;
-      }>;
-
-      // Authenticated cloud API proxy
-      cloudApiRequest?: (opts: { method?: string; path: string; body?: unknown }) => Promise<{
-        success: boolean;
-        data?: unknown;
-        error?: string;
-        code?: string;
-      }>;
-
-      // Cloud audio file transcription
-      transcribeAudioFileCloud?: (
-        filePath: string,
-        options?: {
-          customDictionary?: string[];
-          customDictionaryAliases?: Array<{ from: string; to: string }>;
-        }
-      ) => Promise<{
-        success: boolean;
-        text?: string;
-        error?: string;
-        code?: string;
-        warning?: string | null;
-      }>;
 
       onUploadTranscriptionProgress?: (
         callback: (data: {
@@ -1392,14 +1127,7 @@ declare global {
         code?: string;
       }>;
 
-      // Usage limit events
-      notifyLimitReached?: (data: { wordsUsed: number; limit: number }) => void;
-      onLimitReached?: (
-        callback: (data: { wordsUsed: number; limit: number }) => void
-      ) => () => void;
 
-      // Workspace invitation deep link
-      onWorkspaceInvitationToken?: (callback: (token: string) => void) => () => void;
 
       // AssemblyAI Streaming
       assemblyAiStreamingWarmup?: (options?: {
@@ -1435,45 +1163,6 @@ declare global {
         callback: (data: { audioDuration?: number; text?: string }) => void
       ) => () => void;
 
-      // Referral stats
-      getReferralStats?: () => Promise<{
-        referralCode: string;
-        referralLink: string;
-        totalReferrals: number;
-        completedReferrals: number;
-        pendingReferrals: number;
-        totalMonthsEarned: number;
-        referrals: Array<{
-          id: string;
-          email: string;
-          name: string;
-          status: "pending" | "completed" | "rewarded";
-          created_at: string;
-          first_payment_at: string | null;
-          words_used: number;
-        }>;
-      }>;
-
-      sendReferralInvite?: (email: string) => Promise<{
-        success: boolean;
-        invite: {
-          id: string;
-          recipientEmail: string;
-          status: "sent" | "failed" | "opened" | "converted";
-          sentAt: string;
-        };
-      }>;
-
-      getReferralInvites?: () => Promise<{
-        invites: Array<{
-          id: string;
-          recipientEmail: string;
-          status: "sent" | "failed" | "opened" | "converted";
-          sentAt: string;
-          openedAt?: string;
-          convertedAt?: string;
-        }>;
-      }>;
 
       // Agent Mode
       updateAgentHotkey?: (hotkey: string) => Promise<{ success: boolean; message: string }>;
@@ -1620,27 +1309,6 @@ declare global {
       onAgentToggleRecording?: (callback: () => void) => () => void;
 
       // Agent cloud streaming (event-based)
-      startAgentStream?: (
-        messages: Array<{ role: string; content: string | Array<unknown> }>,
-        opts?: {
-          systemPrompt?: string;
-          tools?: Array<{ name: string; description: string; parameters: Record<string, unknown> }>;
-        }
-      ) => void;
-      onAgentStreamChunk?: (
-        callback: (chunk: {
-          type: "content" | "tool_call" | "done";
-          text?: string;
-          id?: string;
-          name?: string;
-          arguments?: string;
-          finishReason?: string;
-        }) => void
-      ) => () => void;
-      onAgentStreamError?: (
-        callback: (error: { error: string; code?: string }) => void
-      ) => () => void;
-      onAgentStreamEnd?: (callback: () => void) => () => void;
 
       // Agent cloud tools
       agentOpenNote?: (noteId: number) => Promise<{ success: boolean; error?: string }>;
@@ -1656,36 +1324,6 @@ declare global {
           publishedDate?: string;
         }>;
         error?: string;
-      }>;
-
-      // Google Calendar
-      gcalStartOAuth?: () => Promise<{ success: boolean; email?: string; error?: string }>;
-      gcalDisconnect?: (email?: string) => Promise<{ success: boolean; error?: string }>;
-      gcalGetConnectionStatus?: () => Promise<{
-        connected: boolean;
-        accounts: Array<{ email: string }>;
-        email: string | null;
-      }>;
-      gcalGetCalendars?: () => Promise<{ success: boolean; calendars: any[] }>;
-      gcalSetCalendarSelection?: (
-        calendarId: string,
-        isSelected: boolean
-      ) => Promise<{ success: boolean; error?: string }>;
-      gcalSetPrimaryOnly?: (value: boolean) => Promise<{ success: boolean; error?: string }>;
-      gcalSyncEvents?: () => Promise<{ success: boolean; error?: string }>;
-      gcalGetUpcomingEvents?: (
-        windowMinutes?: number
-      ) => Promise<{ success: boolean; events: any[] }>;
-      gcalGetEvent?: (eventId: string) => Promise<{
-        success: boolean;
-        event: {
-          id: string;
-          summary: string | null;
-          start_time: string;
-          end_time: string;
-          attendees_count: number;
-          attendees: string | null;
-        } | null;
       }>;
 
       // Contacts
@@ -1868,11 +1506,11 @@ declare global {
       // Dictation realtime streaming
       dictationRealtimeWarmup?: (options: {
         model?: string;
-        mode?: "byok" | "openwhispr";
+        mode?: "byok";
       }) => Promise<{ success: boolean; error?: string }>;
       dictationRealtimeStart?: (options: {
         model?: string;
-        mode?: "byok" | "openwhispr";
+        mode?: "byok";
       }) => Promise<{ success: boolean; error?: string }>;
       dictationRealtimeSend?: (buffer: ArrayBuffer) => void;
       dictationRealtimeStop?: () => Promise<{ success: boolean; text: string }>;
@@ -1880,13 +1518,6 @@ declare global {
       onDictationRealtimeFinal?: (callback: (text: string) => void) => () => void;
       onDictationRealtimeError?: (callback: (error: string) => void) => () => void;
       onDictationRealtimeSessionEnd?: (callback: (data: { text: string }) => void) => () => void;
-
-      // Google Calendar event listeners
-      onGcalMeetingStarting?: (callback: (data: any) => void) => () => void;
-      onGcalMeetingEnded?: (callback: (data: any) => void) => () => void;
-      onGcalStartRecording?: (callback: (data: any) => void) => () => void;
-      onGcalConnectionChanged?: (callback: (data: any) => void) => () => void;
-      onGcalEventsSynced?: (callback: (data: any) => void) => () => void;
 
       meetingDetectionGetPreferences?: () => Promise<{ success: boolean; preferences?: any }>;
       meetingDetectionSetPreferences?: (
@@ -1937,7 +1568,6 @@ declare global {
         detectionId: string,
         action: string
       ) => Promise<{ success: boolean }>;
-      joinCalendarMeeting?: (eventId: string) => Promise<{ success: boolean }>;
       getPendingMeetingNoteNavigation?: () => Promise<{
         noteId: number;
         folderId: number;

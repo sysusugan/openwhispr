@@ -108,21 +108,6 @@
     "quit": "退出",
     "cancel": "取消"
   },
-  "upgradePrompt": {
-    "paymentFailed": "我们无法处理你的付款",
-    "weeklyLimit": "你已达到本周的使用上限",
-    "pastDueDescription": "你目前使用的是免费版——别担心，每周仍有 {{limit}} 个词的额度。\n更新支付方式即可恢复无限制的 Pro 版。",
-    "limitDescription": "已使用 {{used}} / {{limit}} 个词。\n你的转录已保存并粘贴。",
-    "updatePayment": "更新支付方式",
-    "updatePaymentDescription": "恢复无限制的 Pro 版转录。",
-    "upgradeToPro": "升级到 Pro",
-    "upgradeDescription": "无限转录，每月最低 $8 起。",
-    "useApiKey": "使用自己的 API Key",
-    "useApiKeyDescription": "使用你自己的密钥，无限制使用。",
-    "switchToLocal": "切换到本地模式",
-    "switchToLocalDescription": "离线转录，无使用限制。",
-    "rollingWeeklyLimit": "滚动周限额"
-  },
   "windowControls": {
     "minimize": "最小化",
     "maximize": "最大化",
@@ -204,7 +189,7 @@
       "systemAudioDescription": "转录会议、通话、讲座、播客和其他系统音频。",
       "optional": "可选",
       "recommended": "推荐",
-      "accessibilityTroubleshooting": "在系统设置 → 辅助功能中，将 OpenWhispr 的开关关闭再重新打开。如果无效，请将 OpenWhispr 从列表中移除后重新添加。还是不行？请发邮件至 support@openwhispr.com。"
+      "accessibilityTroubleshooting": "In System Settings -> Accessibility, switch OpenWhispr off and back on. If that does not work, remove OpenWhispr from the list and add it back."
     },
     "transcription": {
       "title": "转录设置",
@@ -224,7 +209,6 @@
       "textareaPlaceholder": "点击此处，然后使用快捷键进行听写..."
     },
     "connectivity": {
-      "title": "无法从该网络连接到 OpenWhispr Cloud",
       "body": "{{cause}} 你可以切换到本地引擎，或继续并稍后重试。",
       "useLocal": "使用本地引擎",
       "continue": "仍然继续"
@@ -233,9 +217,8 @@
   "streaming": {
     "errors": {
       "cloudUnreachable": {
-        "title": "无法连接到 OpenWhispr Cloud",
         "generic": "网络请求失败，请检查你的连接。",
-        "dnsBlocked": "DNS 无法解析 openwhispr.com — 广告拦截器或过滤器可能阻止了它。",
+        "dnsBlocked": "The configured service host could not be resolved. Check the URL, DNS, VPN, or firewall settings.",
         "refused": "连接被拒绝 — 可能是防火墙或 VPN。",
         "timeout": "网络超时 — VPN、强制门户或网络不稳定。",
         "tls": "TLS 握手失败 — 请检查系统时钟或企业代理。",
@@ -261,17 +244,11 @@
     },
     "limit": {
       "weeklyTitle": "已达到周限额",
-      "weeklyDescription": "你的额度按滚动方式重置。升级到 Pro 或使用自己的 API Key 可不受限制。"
+      "weeklyDescription": "Use a local model, your own API key, or a self-hosted endpoint for transcription."
     },
     "accessibilityMissing": {
       "title": "需要辅助功能权限",
       "description": "我们检测到 OpenWhispr 需要辅助功能权限才能正常工作。请在下方启用。"
-    },
-    "billing": {
-      "pastDueTitle": "我们无法处理你的付款",
-      "pastDueDescription": "别担心——你目前使用的是免费版。在设置中更新支付方式即可恢复 Pro 版。",
-      "bannerDescription": "你目前使用的是免费版——每周仍有 {{limit}} 个词的额度。更新支付方式即可恢复 Pro 版。",
-      "updatePayment": "更新支付方式"
     },
     "history": {
       "couldNotLoadTitle": "无法加载历史记录",
@@ -443,7 +420,7 @@
       "errorTitles": {
         "sessionExpired": "会话已过期",
         "offline": "你已离线",
-        "dailyLimitReached": "已达到每日上限"
+        "dailyLimitReached": "The transcription provider rejected the request. Check your provider configuration and try again."
       },
       "fallback": {
         "title": "回退模式",
@@ -454,9 +431,8 @@
         "description": "录音中未检测到音频，请重试。"
       },
       "errorDescriptions": {
-        "sessionExpired": "OpenWhispr Cloud 会话不可用。请到「设置」中重新登录。",
         "offline": "你目前离线。云端转录需要互联网连接。",
-        "dailyLimitReached": "已达今日转录上限。请明天再试或升级你的套餐。"
+        "dailyLimitReached": "The transcription provider rejected the request. Check your provider configuration and try again."
       }
     },
     "clipboard": {
@@ -904,7 +880,6 @@
       "none": "无",
       "outputLabel": "输出",
       "processing": "处理中...",
-      "openwhisprCloud": "OpenWhispr Cloud",
       "providerLabel": "服务商",
       "run": "运行测试",
       "customEndpoint": "自定义端点"
@@ -926,10 +901,6 @@
       "account": {
         "description": "个人资料与登录",
         "label": "账户"
-      },
-      "plansBilling": {
-        "description": "套餐、用量与账单",
-        "label": "套餐与账单"
       },
       "general": {
         "description": "外观、声音与启动",
@@ -954,192 +925,11 @@
       "system": {
         "description": "更新、存储与开发者工具",
         "label": "系统"
-      },
-      "workspace": {
-        "label": "Espacio de trabajo",
-        "description": "Miembros, equipos, facturación y claves API"
       }
     },
     "title": "设置"
   },
   "settingsPage": {
-    "account": {
-      "badges": {
-        "free": "免费版",
-        "limitReached": "已达上限",
-        "pastDue": "逾期未付",
-        "pro": "Pro",
-        "business": "Business",
-        "trial": "试用"
-      },
-      "billing": {
-        "couldNotOpenDescription": "打开账单页面时出错，请重试。",
-        "couldNotOpenTitle": "无法打开账单",
-        "manageBilling": "管理账单",
-        "opening": "正在打开...",
-        "updatePaymentMethod": "更新支付方式"
-      },
-      "checkout": {
-        "couldNotOpenDescription": "打开结账页面时出错，请重试。",
-        "couldNotOpenTitle": "无法打开结账页",
-        "opening": "正在打开...",
-        "upgradeToPro": "升级到 Pro"
-      },
-      "disabled": "已禁用",
-      "featuresDisabled": "账户功能已禁用",
-      "featuresDisabledDescription": "在 .env 文件中设置 VITE_AUTH_URL 以启用账户功能。",
-      "notConfigured": "身份验证未配置",
-      "notSignedIn": "未登录",
-      "notSignedInDescription": "创建账户以解锁高级功能。",
-      "offline": "离线",
-      "pastDue": {
-        "description": "你目前使用的是免费版。更新支付方式即可恢复 Pro 版。",
-        "title": "我们无法处理你的付款"
-      },
-      "planDescriptions": {
-        "freeUsage": "本周已使用 {{used}} / {{limit}} 个词",
-        "nextBilling": "下次扣费：{{date}}",
-        "pastDue": "本周 {{used}} / {{limit}} 免费词数——更新支付方式以恢复 Pro",
-        "trial": "剩余 {{days}} 天——无限转录",
-        "unlimited": "无限制"
-      },
-      "planLabels": {
-        "free": "免费版",
-        "pro": "Pro",
-        "business": "Business",
-        "trial": "试用"
-      },
-      "planTitle": "套餐",
-      "rollingWeeklyLimit": "滚动周限额",
-      "signOut": {
-        "failedDescription": "退出登录时出错，请重试。",
-        "failedTitle": "无法退出登录",
-        "signOut": "退出登录",
-        "signingOut": "正在退出..."
-      },
-      "signedIn": "已登录",
-      "title": "账户",
-      "toasts": {
-        "approachingLimit": {
-          "description": "本周已使用 {{used}} / {{limit}} 个免费词数。升级到 Pro 可享受无限使用。",
-          "title": "即将达到周限额"
-        }
-      },
-      "trialCta": {
-        "button": "免费创建账户",
-        "description": "无限转录、优先处理等更多功能。",
-        "title": "免费试用 Pro 版 7 天"
-      },
-      "pricing": {
-        "title": "套餐",
-        "billedYearly": "按年计费",
-        "free": {
-          "name": "Free",
-          "price": "$0",
-          "period": "永久",
-          "features": [
-            "## OpenWhispr Cloud",
-            "每周 2,000 字转录",
-            "每月 5 小时会议录制",
-            "## 永久免费",
-            "无限本地 AI 模型",
-            "使用自己的 API 密钥无限云端转录",
-            "支持 100+ 种语言",
-            "自定义词典",
-            "零数据留存",
-            "社区支持"
-          ]
-        },
-        "pro": {
-          "name": "Pro",
-          "monthlyPrice": "$8",
-          "monthlyPeriod": "/月",
-          "annualPrice": "$80",
-          "annualPeriod": "/年",
-          "annualEquivalent": "$6.67",
-          "includesPrefix": "所有 Free 功能 +",
-          "features": [
-            "无限云端转录",
-            "每月 20 小时会议录制",
-            "跨设备同步",
-            "个人 API 访问",
-            "在所有应用中集成 MCP",
-            "移动应用（iOS 即将推出）",
-            "邮件支持"
-          ],
-          "cta": "开始使用",
-          "switchToAnnual": "切换为年付"
-        },
-        "business": {
-          "name": "Business",
-          "monthlyPrice": "$20",
-          "monthlyPeriod": "/月",
-          "annualPrice": "$200",
-          "annualPeriod": "/年",
-          "annualEquivalent": "$16.67",
-          "includesPrefix": "所有 Pro 功能 +",
-          "badge": "最受欢迎",
-          "features": [
-            "无限会议录制",
-            "代理模式",
-            "与您的数据对话",
-            "优先支持"
-          ],
-          "cta": "开始使用",
-          "switchToAnnual": "切换为年付"
-        },
-        "enterprise": {
-          "name": "Enterprise",
-          "price": "自定义",
-          "subtitle": "提供高级安全保障与支持",
-          "includesPrefix": "所有 Business 功能 +",
-          "features": [
-            "托管 API 额度",
-            "跨设备云端同步",
-            "团队功能与管理",
-            "SSO 与合规",
-            "专属支持"
-          ],
-          "cta": "联系销售"
-        },
-        "currentPlan": "当前套餐",
-        "upgrade": "升级",
-        "downgrade": "降级",
-        "planSwitched": "套餐已成功更新",
-        "confirmSwitch": {
-          "title": "确认更换套餐",
-          "description": "切换至 {{plan}}（{{interval}}）",
-          "monthly": "月付",
-          "yearly": "年付",
-          "chargeToday": "今日收费",
-          "accountCredit": "账户余额",
-          "newPrice": "新价格",
-          "nextBilling": "下次计费",
-          "mo": "mo",
-          "yr": "yr",
-          "cancel": "取消",
-          "confirm": "确认"
-        }
-      },
-      "signedOutPlans": {
-        "button": "免费创建账户"
-      },
-      "user": "用户",
-      "wordsRemaining": "剩余 {{remaining}} 个词",
-      "deleteAccount": {
-        "label": "删除账户",
-        "labelDescription": "永久删除您的账户、所有云端数据和本地数据。此操作无法撤销。",
-        "button": "删除我的账户",
-        "deleting": "正在删除...",
-        "title": "删除您的账户？",
-        "description": "这将永久删除您的 OpenWhispr 账户、所有云端同步笔记和所有本地数据，包括转录、音频录制、下载的模型、日历连接和设置。此操作无法撤销。",
-        "confirmText": "删除所有内容",
-        "successTitle": "账户已删除",
-        "successDescription": "您的账户和所有数据已被删除。应用将立即重新加载。",
-        "failedTitle": "删除失败",
-        "failedDescription": "删除您的账户时出错。您的本地数据可能已被部分删除。请重试。"
-      }
-    },
     "agentConfig": {
       "agentName": "助手名称",
       "description": "为你的 AI 助手取个名字，这样你就能在听写时直接呼唤它",
@@ -1168,7 +958,6 @@
       "enableTextCleanup": "启用文本整理",
       "enableTextCleanupDescription": "AI 去除语气词，修正语法和标点",
       "modes": {
-        "openwhispr": "OpenWhispr Cloud",
         "providers": "云服务商",
         "local": "本地",
         "selfHosted": "自托管",
@@ -1179,7 +968,6 @@
         "enterprise": "企业级",
         "enterpriseDesc": "使用你组织的云账号（AWS、Azure、GCP）。"
       },
-      "openwhisprCloud": "OpenWhispr Cloud",
       "openwhisprCloudDescription": "准确可靠，无需设置。",
       "title": "AI 文本增强",
       "toasts": {
@@ -1318,8 +1106,6 @@
         "disableAllDescription": "静音除错误消息外的所有内容",
         "meetingDetection": "会议检测",
         "meetingDetectionDescription": "检测到会议时通知您以便开始录音",
-        "calendarReminders": "日历提醒",
-        "calendarRemindersDescription": "预定会议即将开始时通知您",
         "updates": "应用更新",
         "updatesDescription": "有新版本可用时通知您"
       },
@@ -1485,8 +1271,6 @@
       "cloudNotesMigrationDone": "所有笔记已备份",
       "description": "控制哪些数据会离开你的设备。默认全部关闭。",
       "title": "隐私",
-      "usageAnalytics": "使用分析",
-      "usageAnalyticsDescription": "通过分享匿名性能数据帮助我们改进 OpenWhispr。我们绝不发送转录内容——仅发送计时和错误数据。",
       "dataRetention": "数据保留",
       "dataRetentionDescription": "将转录和音频本地保存到历史记录中。禁用后，转录内容会被粘贴但不会被保存。",
       "hoursAgo": "{{count}}小时前",
@@ -1546,7 +1330,6 @@
       "customSetupDescription": "使用你自己的服务商和 API Key。",
       "description": "选择 OpenWhispr 转录语音的方式",
       "modes": {
-        "openwhispr": "OpenWhispr Cloud",
         "providers": "云服务商",
         "local": "本地",
         "selfHosted": "自托管",
@@ -1555,7 +1338,6 @@
         "localDesc": "设备端模型，完全私密。",
         "selfHostedDesc": "你的服务器，在你的网络上。"
       },
-      "openwhisprCloud": "OpenWhispr Cloud",
       "openwhisprCloudDescription": "准确可靠，无需设置。",
       "title": "语音转文字",
       "toasts": {
@@ -1647,91 +1429,6 @@
       "endpointUrl": "端点 URL",
       "serverUrl": "服务器 URL",
       "apiKeyOptional": "API Key（可选）"
-    },
-    "workspace": {
-      "title": "Espacio de trabajo",
-      "description": "Colabora con compañeros, comparte notas y administra la facturación en un solo lugar.",
-      "empty": {
-        "title": "Crea tu primer espacio de trabajo",
-        "description": "Los espacios de trabajo te permiten colaborar con compañeros y compartir notas.",
-        "create": "Crear espacio de trabajo"
-      },
-      "tab": {
-        "general": "General",
-        "members": "Miembros",
-        "teams": "Equipos",
-        "billing": "Facturación",
-        "developer": "Desarrollador"
-      },
-      "role": {
-        "owner": "Propietario",
-        "admin": "Administrador",
-        "member": "Miembro"
-      },
-      "general": {
-        "nameLabel": "Nombre del espacio de trabajo",
-        "slugLabel": "Slug",
-        "slugHint": "Se usa en URLs y enlaces de invitación. Solo letras minúsculas, dígitos y guiones.",
-        "saved": "Espacio de trabajo actualizado",
-        "dangerTitle": "Eliminar espacio de trabajo",
-        "dangerDescription": "Todas las notas, carpetas e integraciones compartidas se eliminarán. Esto no se puede deshacer.",
-        "delete": "Eliminar espacio de trabajo",
-        "confirmTitle": "¿Eliminar {{name}}?",
-        "confirmDescription": "Esto cancela la suscripción y elimina todos los datos del espacio de trabajo permanentemente."
-      },
-      "members": {
-        "title": "Miembros",
-        "description": "{{count}} de {{seats}} asientos utilizados.",
-        "invite": "Invitar",
-        "empty": "Aún no hay miembros.",
-        "roleUpdated": "Rol actualizado",
-        "promote": "Hacer administrador",
-        "demote": "Hacer miembro",
-        "transferOwnership": "Transferir propiedad",
-        "remove": "Quitar del espacio de trabajo"
-      },
-      "invites": {
-        "title": "Invitaciones pendientes",
-        "resend": "Reenviar",
-        "revoke": "Revocar",
-        "resent": "Invitación reenviada"
-      },
-      "teams": {
-        "title": "Equipos",
-        "description": "Agrupa miembros para compartir con alcance limitado.",
-        "new": "Nuevo equipo",
-        "empty": "Aún no hay equipos.",
-        "createFirst": "Crea tu primer equipo",
-        "createTitle": "Crear equipo",
-        "nameLabel": "Nombre del equipo",
-        "descriptionLabel": "Descripción",
-        "memberCount": "{{count}} miembros"
-      },
-      "billing": {
-        "title": "Facturación",
-        "description": "Plan, asientos y pago.",
-        "plan": "Plan",
-        "seats": "Asientos",
-        "nextInvoice": "Próxima factura",
-        "manageStripe": "Administrar en Stripe",
-        "startSubscription": "Iniciar suscripción"
-      },
-      "developer": {
-        "title": "Claves API",
-        "description": "Acceso programático limitado a este espacio de trabajo.",
-        "empty": "Aún no hay claves API. Crea una para integrarte con este espacio de trabajo.",
-        "new": "Nueva clave",
-        "create": "Crear clave",
-        "createTitle": "Crear clave API",
-        "createDescription": "Elige los permisos que necesita esta clave. Puedes revocarla en cualquier momento.",
-        "nameLabel": "Nombre de la clave",
-        "namePlaceholder": "Integración de producción",
-        "revoke": "Revocar clave",
-        "lastUsed": "Último uso {{date}}",
-        "neverUsed": "Nunca utilizada",
-        "keyCreatedTitle": "Clave API creada",
-        "keyCreatedDescription": "Copia esta clave ahora — no podrás verla de nuevo."
-      }
     }
   },
   "models": {
@@ -1823,78 +1520,6 @@
         "segmentation": "用于说话人分离的语音边界检测",
         "embedding_en": "用于说话人识别的声纹提取"
       }
-    }
-  },
-  "referral": {
-    "modalTitle": "推荐计划",
-    "title": "推荐赚取奖励",
-    "subtitle": "送一个月，得一个月。",
-    "tabs": {
-      "refer": "推荐",
-      "pastInvites": "历史邀请"
-    },
-    "howItWorks": {
-      "shareLink": "分享你的邀请链接",
-      "theySignUp": "对方注册即可获得",
-      "freeMonthOfPro": "一个月免费 Pro",
-      "youGet": "你将获得",
-      "freeMonth": "一个月免费",
-      "whenTheyDictate": "当对方听写满 2,000 个词时"
-    },
-    "inviteLink": {
-      "title": "你的邀请链接",
-      "copy": "复制",
-      "copied": "已复制"
-    },
-    "sendInvites": {
-      "title": "发送邀请",
-      "placeholder": "friend@example.com",
-      "send": "发送",
-      "sending": "发送中"
-    },
-    "stats": {
-      "referred": "已推荐",
-      "converted": "已转化",
-      "monthsEarned": "已获得月数"
-    },
-    "status": {
-      "converted": "已转化",
-      "opened": "已打开",
-      "failed": "失败",
-      "sent": "已发送"
-    },
-    "empty": {
-      "title": "尚未发送任何邀请",
-      "description": "分享你的链接或发送邀请以开始使用"
-    },
-    "toasts": {
-      "copiedTitle": "已复制！",
-      "copiedDescription": "推荐链接已复制到剪贴板",
-      "copyFailedTitle": "复制失败",
-      "copyFailedDescription": "无法将链接复制到剪贴板",
-      "invalidEmailTitle": "邮箱地址无效",
-      "invalidEmailDescription": "请输入有效的邮箱地址",
-      "inviteSentTitle": "邀请已发送！",
-      "inviteSentDescription": "邀请已发送至 {{email}}",
-      "sendFailedTitle": "发送失败",
-      "sendFailedDescription": "邀请发送失败，请重试。"
-    },
-    "errors": {
-      "unableToLoad": "无法加载推荐数据",
-      "unableToLoadStats": "无法加载推荐统计数据，请稍后重试。"
-    },
-    "tryAgain": "重试",
-    "card": {
-      "brand": "OpenWhispr",
-      "signalId": "Signal ID",
-      "audioSignature": "你的声纹签名",
-      "stop": "停止",
-      "playSignal": "播放信号"
-    },
-    "friends": {
-      "title": "好友",
-      "completed": "已完成",
-      "sentInvites": "已发出的邀请"
     }
   },
   "notes": {
@@ -2076,7 +1701,6 @@
       "setupTitle": "设置转录",
       "setupDescription": "选择转录音频的方式。此设置也适用于实时听写。",
       "continue": "继续",
-      "openwhisprCloud": "OpenWhispr Cloud",
       "custom": "自定义",
       "selectFolder": "选择文件夹",
       "transcriptionFailed": "转录失败",
@@ -2088,15 +1712,8 @@
       "fileTooLarge": "此文件超过了 500 MB 的大小限制。",
       "largeFileNote": "大文件将被分割并平行转录。",
       "chunkProgress": "正在转录第 {{completed}} 部分，共 {{total}} 部分...",
-      "paidPlanRequired": "超过 25 MB 的文件需要付费计划才能使用云端转录。大文件通过 OpenWhispr Cloud 处理，确保可靠、高质量的结果。",
       "byokTooLarge": "第三方 API 密钥仅支持 25 MB 以内的文件。",
-      "byokTooLargeDetail": "超过 25 MB 的文件由 OpenWhispr Cloud 负责分割、并行处理和重组——无需依赖第三方服务限制，即可获得可靠的结果。",
-      "byokTooLargeNeedsAccount": "创建账户并升级到付费计划，即可使用 OpenWhispr Cloud 转录更大的文件。",
-      "byokTooLargeNeedsUpgrade": "升级到付费计划，即可使用 OpenWhispr Cloud 转录更大的文件。",
-      "switchToCloudForLargeFiles": "切换到 OpenWhispr Cloud 来转录此文件。",
-      "createAccount": "创建账户",
-      "upgrade": "升级",
-      "switchToCloud": "OpenWhispr Cloud"
+      "createAccount": "创建账户"
     },
     "meeting": {
       "title": "会议笔记",
@@ -2190,10 +1807,6 @@
         "enabled": "已启用"
       }
     },
-    "realtimeBanner": {
-      "message": "Pro 版可使用实时转录",
-      "upgrade": "升级"
-    },
     "enhance": {
       "title": "增强错误"
     },
@@ -2279,21 +1892,15 @@
     "notes": "笔记",
     "upload": "上传",
     "dictionary": "词典",
-    "referral": "获取免费一个月",
     "settings": "设置",
     "support": "支持",
     "limitReached": "已达每周上限",
-    "limitReachedDescription": "升级到 Pro 即可无限转录。",
-    "viewPlans": "查看套餐",
-    "upgradeTitle": "升级到 Pro",
-    "upgradeDescription": "无限转录、实时转录等更多功能。",
+    "limitReachedDescription": "Configure a local model, BYOK provider, or self-hosted endpoint to continue.",
     "learnMore": "了解更多",
     "integrations": "集成",
     "defaultUser": "用户",
     "notSignedIn": "未登录",
-    "chat": "聊天",
-    "inviteTeammate": "Invitar compañero",
-    "createWorkspace": "Crear espacio de trabajo"
+    "chat": "聊天"
   },
   "chat": {
     "newChat": "新对话",
@@ -2317,29 +1924,8 @@
     "searchDescription": "搜索所有对话",
     "newChatEmpty": "询问关于笔记、转录或其他任何内容"
   },
-  "usage": {
-    "approachingLimit": "即将达到周限额",
-    "approachingLimitDescription": "你本周已使用 {{wordsUsed}} / {{limit}} 个免费词数。",
-    "yourPlan": "你的套餐",
-    "trial": "试用期（剩余 {{days}} 天）",
-    "trial_other": "试用期（剩余 {{days}} 天）",
-    "pro": "Pro",
-    "business": "Business",
-    "unlimitedTrial": "试用期间无限转录",
-    "unlimited": "无限转录",
-    "manageSubscription": "管理订阅",
-    "weeklyUsage": "每周用量",
-    "limitReached": "已达上限",
-    "free": "免费版",
-    "wordsRemaining": "剩余 {{remaining}} 个词",
-    "rollingLimit": "滚动周限额",
-    "upgradeToPro": "升级到 Pro",
-    "useYourOwnKey": "使用自己的 API Key",
-    "upgradeUnlimited": "升级到 Pro — 无限转录"
-  },
   "support": {
     "documentation": "文档",
-    "joinDiscord": "加入 Discord",
     "contactSupport": "联系支持",
     "submitBug": "提交 Bug"
   },
@@ -2409,7 +1995,6 @@
     "enabled": "Enable voice agent",
     "enabledDescription": "Dictate instructions to your agent. Activate by saying \"{{agentName}}\". Configurable below.",
     "modes": {
-      "openwhispr": "OpenWhispr Cloud",
       "openwhisprDesc": "Use the OpenWhispr-managed agent — no API key needed.",
       "providers": "Bring your own key",
       "providersDesc": "Connect to OpenAI, Anthropic, Gemini, or Groq with your own API key.",
@@ -2436,7 +2021,6 @@
       "systemPromptDescription": "助手的自定义指令",
       "systemPromptPlaceholder": "输入自定义系统提示词...",
       "modes": {
-        "openwhispr": "OpenWhispr Cloud",
         "providers": "云服务商",
         "local": "本地",
         "selfHosted": "自托管",
@@ -2447,7 +2031,6 @@
         "enterprise": "企业级",
         "enterpriseDesc": "使用你组织的云账号（AWS、Azure、GCP）。"
       },
-      "openwhisprCloud": "OpenWhispr Cloud",
       "openwhisprCloudDescription": "准确可靠，无需设置。",
       "customSetup": "自定义配置 (BYOK)",
       "customSetupDescription": "使用自己的 API 密钥并选择偏好的模型"
@@ -2483,7 +2066,6 @@
       "search_notesStatus": "正在搜索笔记...",
       "web_searchStatus": "正在搜索网页...",
       "copy_to_clipboardStatus": "正在复制到剪贴板...",
-      "get_calendar_eventsStatus": "正在查看日历...",
       "get_noteStatus": "正在读取笔记...",
       "create_noteStatus": "正在创建笔记...",
       "update_noteStatus": "正在更新笔记...",
@@ -2493,8 +2075,6 @@
       "searchResults": "找到 {{count}} 条结果",
       "searchResults_plural": "找到 {{count}} 条结果",
       "openNote": "打开笔记",
-      "calendarEvents": "找到 {{count}} 个日程",
-      "calendarEvents_plural": "找到 {{count}} 个日程",
       "noResults": "未找到结果",
       "error": "工具错误",
       "unknownTool": "未知工具：{{name}}",
@@ -2504,48 +2084,8 @@
   "integrations": {
     "title": "集成",
     "description": "连接服务以增强您的工作流程",
-    "googleCalendar": {
-      "title": "Google 日历",
-      "optional": "可选",
-      "description": "从日历自动填充会议名称和参与者。",
-      "connect": "连接 Google 日历",
-      "connecting": "连接中...",
-      "connected": "已连接",
-      "addAnother": "添加其他日历",
-      "primaryOnly": "仅同步主日历",
-      "primaryOnlyDescription": "忽略他人共享给你的日历事件。",
-      "disconnect": "断开",
-      "disconnectConfirm": "断开 {{email}}？",
-      "disconnectDescription": "将不再从此日历记录会议笔记。",
-      "systemAudioRequired": "需要系统音频权限",
-      "systemAudioDescription": "要转录会议，OpenWhispr 需要系统音频权限来录制其他参与者的音频。我们绝不会录制您的屏幕。您将被引导至系统设置以启用此权限。",
-      "openSettings": "打开系统设置"
-    },
     "sections": {
-      "calendar": "日历",
-      "api": "API",
-      "mcp": "MCP",
       "cli": "CLI"
-    },
-    "api": {
-      "title": "API 密钥",
-      "description": "管理用于程序访问的 API 密钥",
-      "proRequired": "升级到付费计划以访问 API",
-      "manage": "管理密钥",
-      "viewPlans": "查看套餐",
-      "dialogTitle": "API 密钥"
-    },
-    "mcp": {
-      "title": "将笔记带到你的 AI 工具中",
-      "description": "在 Claude、ChatGPT 和 Cursor 中与你的笔记一起聊天、搜索和工作。",
-      "step1": "在你的 AI 工具中，使用公开 URL 添加 OpenWhispr MCP",
-      "step2": "在上方创建具有所需权限的 API 密钥。",
-      "step3": "将密钥粘贴为 Authorization 标头以连接。",
-      "learnMore": "了解更多",
-      "viewPlans": "查看套餐",
-      "copyUrl": "复制 MCP URL",
-      "proRequired": "升级到付费计划，以将 OpenWhispr 连接到 Claude、ChatGPT 和 Cursor。",
-      "copied": "已复制"
     },
     "cli": {
       "title": "命令行访问",
@@ -2554,7 +2094,6 @@
       "learnMore": "查看文档",
       "copyDocsLink": "复制文档链接",
       "docsLinkCopied": "已复制文档链接",
-      "viewPlans": "查看套餐",
       "local": {
         "label": "本地",
         "freeBadge": "免费",
@@ -2562,73 +2101,12 @@
       },
       "cloud": {
         "label": "云端",
-        "description": "使用 API 密钥在多台设备之间同步。",
-        "proRequired": "升级到付费计划以在云端模式下使用 CLI。"
+        "description": "使用 API 密钥在多台设备之间同步。"
       }
-    },
-    "plan": {
-      "title": "您的方案",
-      "current": "当前",
-      "free": "免费",
-      "freeLimit": "每月5次会议",
-      "essential": "Essential",
-      "essentialLimit": "每月20次会议",
-      "pro": "Pro",
-      "proLimit": "无限",
-      "upgrade": "升级"
-    },
-    "notABot": {
-      "title": "OpenWhispr 是会议录制工具，不是机器人",
-      "description": "OpenWhispr 直接从您的系统捕获音频 — 它不会以参与者身份加入您的会议。只需连接日历，正常记录笔记即可。"
-    }
-  },
-  "calendar": {
-    "title": "Google 日历",
-    "status": "状态",
-    "connected": "已连接",
-    "disconnected": "未连接",
-    "notConnectedDescription": "连接以检测和录制会议",
-    "connectCta": {
-      "title": "日历集成",
-      "description": "自动检测会议并录制转录"
-    },
-    "connect": "连接 Google 日历",
-    "connecting": "连接中...",
-    "disconnect": "断开连接",
-    "disconnecting": "断开中...",
-    "sync": "同步",
-    "syncing": "同步中...",
-    "calendarsTitle": "日历",
-    "upcomingTitle": "即将到来",
-    "noUpcoming": "没有即将到来的事件",
-    "meetingStarting": "会议即将开始",
-    "today": "今天",
-    "tomorrow": "明天",
-    "detection": {
-      "title": "会议检测",
-      "description": "自动检测您是否在会议中",
-      "processDetection": "应用检测",
-      "processDescription": "检测到会议时识别您正在使用的应用",
-      "audioDetection": "音频检测",
-      "audioDescription": "检测到持续麦克风活动时提示"
     }
   },
   "upcoming": {
-    "title": "即将开始的会议",
-    "transcriptions": "转录",
-    "tomorrow": "明天",
-    "noMoreMeetings": "今天没有更多会议了",
-    "now": "进行中",
-    "join": "加入",
-    "untitledEvent": "无标题事件",
-    "systemAudioRequired": "需要系统音频权限来录制其他参与者的音频。",
-    "openSettings": "打开系统设置",
-    "signInRequired": "登录以使用会议录制",
-    "signInDescription": "创建账户或登录以录制和转录会议。",
-    "connectCalendar": "连接您的日历",
-    "connectCalendarDescription": "关联 Google 日历以查看即将到来的会议并自动记录笔记。",
-    "notABot": "OpenWhispr 通过系统音频录制 — 它不会以机器人身份加入您的会议。",
-    "connectCalendarButton": "连接日历"
+    "tomorrow": "明天"
   },
   "notesView": {
     "searchPlaceholder": "搜索笔记…",
@@ -2652,37 +2130,7 @@
     "deleteNote": "删除笔记",
     "deleteConfirmTitle": "删除笔记？",
     "deleteConfirmDescription": "此笔记将被永久删除，无法恢复。",
-    "deleteConfirm": "删除",
-    "share": {
-      "button": "分享",
-      "dialog": {
-        "title": "分享笔记",
-        "searchPlaceholder": "通过电子邮件添加成员",
-        "emailLabel": "收件人邮箱",
-        "shareButton": "分享",
-        "copyLink": "复制链接",
-        "copied": "已复制",
-        "owner": "所有者",
-        "pending": "待处理",
-        "accepted": "已获得访问权限",
-        "resend": "重新发送邀请",
-        "revoke": "移除",
-        "invitationActions": "邀请操作",
-        "permissionRequired": "只有笔记的所有者可以更改分享设置。",
-        "visibility": {
-          "label": "可见性",
-          "link": "拥有链接的任何人",
-          "domain": "{{domain}} 内拥有链接的所有人",
-          "invited": "仅受邀者"
-        },
-        "error": {
-          "invalidEmail": "请输入有效的电子邮件地址",
-          "alreadyInvited": "{{email}} 已经被邀请",
-          "inviteFailed": "无法发送邀请。请重试。",
-          "linkUnavailable": "生成或更换链接后即可复制"
-        }
-      }
-    }
+    "deleteConfirm": "删除"
   },
   "commandSearch": {
     "title": "搜索",
@@ -2710,54 +2158,6 @@
     "title": "需要权限",
     "description": "OpenWhispr 需要一些权限才能在此电脑上正常运行。",
     "continue": "继续"
-  },
-  "apiKeysSection": {
-    "title": "API 密钥",
-    "description": "创建密钥以编程方式访问 OpenWhispr API。",
-    "docsLink": "API 文档",
-    "empty": "暂无 API 密钥",
-    "createButton": "创建 API 密钥",
-    "create": {
-      "title": "创建 API 密钥",
-      "nameLabel": "密钥名称",
-      "namePlaceholder": "例如：我的集成",
-      "scopesLabel": "权限",
-      "expiryLabel": "有效期",
-      "expiryOptions": {
-        "never": "永不过期",
-        "30days": "30 天",
-        "60days": "60 天",
-        "90days": "90 天",
-        "1year": "1 年"
-      },
-      "submit": "创建",
-      "cancel": "取消"
-    },
-    "created": {
-      "title": "API 密钥已创建",
-      "warning": "请立即复制此密钥，它将不会再次显示。",
-      "copied": "已复制！",
-      "copyButton": "复制到剪贴板",
-      "done": "完成"
-    },
-    "scopes": {
-      "notesRead": "读取笔记",
-      "notesWrite": "创建和编辑笔记",
-      "transcriptionsRead": "读取转录"
-    },
-    "revoke": {
-      "button": "撤销",
-      "confirm": "撤销此密钥？使用它的集成将停止工作。",
-      "success": "API 密钥已撤销"
-    },
-    "neverUsed": "从未使用",
-    "lastUsed": "上次使用 {{time}}",
-    "maxKeysReached": "最多允许 {{max}} 个密钥",
-    "errors": {
-      "loadFailed": "无法加载 API 密钥",
-      "createFailed": "无法创建 API 密钥",
-      "revokeFailed": "无法撤销 API 密钥"
-    }
   },
   "embeddedChat": {
     "askPlaceholder": "随便问点什么...",
@@ -2830,54 +2230,6 @@
       "others": "其他人"
     }
   },
-  "workspaces": {
-    "switcher": {
-      "personal": "Personal",
-      "workspaces": "Espacios de trabajo",
-      "empty": "Aún no hay espacios de trabajo",
-      "create": "Crear espacio de trabajo…"
-    },
-    "create": {
-      "title": "Crear espacio de trabajo",
-      "description": "Los espacios de trabajo te permiten colaborar, compartir notas y administrar la facturación.",
-      "nameLabel": "Nombre del espacio de trabajo",
-      "namePlaceholder": "Acme Corp",
-      "submit": "Crear espacio de trabajo",
-      "submitting": "Creando…",
-      "errorTitle": "No se pudo crear el espacio de trabajo"
-    },
-    "created": {
-      "title": "Espacio de trabajo creado",
-      "description": "Ahora eres el propietario de {{name}}."
-    },
-    "invite": {
-      "title": "Invitar a {{workspace}}",
-      "description": "Agrega compañeros por correo. Recibirán un enlace para unirse.",
-      "emailLabel": "Correo electrónico",
-      "roleLabel": "Rol",
-      "teamsLabel": "Agregar a equipos",
-      "submit": "Enviar invitación",
-      "submitting": "Enviando…",
-      "sentTitle": "Invitación enviada",
-      "sentDescription": "Enviamos una invitación a {{email}}.",
-      "errorTitle": "No se pudo enviar la invitación",
-      "role": {
-        "admin": "Administrador",
-        "member": "Miembro"
-      }
-    },
-    "accept": {
-      "title": "Unirse al espacio de trabajo",
-      "description": "{{inviter}} te invitó a unirte a {{workspace}} como {{role}}.",
-      "loading": "Cargando invitación…",
-      "accept": "Aceptar invitación",
-      "accepting": "Aceptando…",
-      "signInToAccept": "Inicia sesión para aceptar",
-      "successTitle": "Te uniste",
-      "successDescription": "Bienvenido a {{name}}.",
-      "errorTitle": "No se pudo aceptar la invitación"
-    }
-  },
   "meetingNotification": {
     "detectedTitle": "检测到会议",
     "detectedBody": "听起来你正在开会。要记录笔记吗？",
@@ -2885,5 +2237,13 @@
     "upcomingBody": "你的会议即将开始。要记录笔记吗？",
     "startRecording": "开始录音",
     "newNoteTitle": "新笔记"
+  },
+  "meetingDetection": {
+    "title": "会议检测",
+    "description": "自动检测您是否在会议中",
+    "processDetection": "应用检测",
+    "processDescription": "检测到会议时识别您正在使用的应用",
+    "audioDetection": "音频检测",
+    "audioDescription": "检测到持续麦克风活动时提示"
   }
 }

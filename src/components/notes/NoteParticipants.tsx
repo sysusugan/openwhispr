@@ -2,7 +2,15 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Users, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import type { CalendarAttendee } from "../../types/calendar";
+
+export interface NoteParticipant {
+  email: string;
+  displayName: string | null;
+  display_name?: string | null;
+  responseStatus?: string | null;
+  optional?: boolean;
+  self?: boolean;
+}
 
 function getInitials(displayName: string | null, email: string): string {
   if (displayName) return displayName.charAt(0).toUpperCase();
@@ -56,7 +64,7 @@ function ParticipantAvatar({
 
 interface NoteParticipantsProps {
   noteId: number;
-  participants: CalendarAttendee[];
+  participants: NoteParticipant[];
 }
 
 export default function NoteParticipants({ noteId, participants }: NoteParticipantsProps) {
@@ -105,7 +113,7 @@ export default function NoteParticipants({ noteId, participants }: NoteParticipa
   }, [search, open, localParticipants]);
 
   const saveParticipants = useCallback(
-    (updated: CalendarAttendee[]) => {
+    (updated: NoteParticipant[]) => {
       window.electronAPI.updateNote(noteId, {
         participants: JSON.stringify(updated),
       });
@@ -149,7 +157,7 @@ export default function NoteParticipants({ noteId, participants }: NoteParticipa
   );
 
   const grouped = useMemo(() => {
-    const groups = new Map<string, CalendarAttendee[]>();
+    const groups = new Map<string, NoteParticipant[]>();
     for (const p of localParticipants) {
       const domain = p.email.split("@")[1] || "other";
       if (!groups.has(domain)) groups.set(domain, []);

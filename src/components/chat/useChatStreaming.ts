@@ -90,8 +90,8 @@ export function useChatStreaming({
       setAgentState("thinking");
 
       const settings = getSettings();
-      const chatAgentMode = settings.chatAgentMode || "openwhispr";
-      const isCloudAgent = chatAgentMode === "openwhispr" && settings.isSignedIn;
+      const chatAgentMode = settings.chatAgentMode || "providers";
+      const isCloudAgent = false;
       const isLanAgent = chatAgentMode === "self-hosted" && !!settings.chatAgentRemoteUrl;
       const isCustomAgent =
         chatAgentMode === "providers" && settings.chatAgentProvider === "custom";
@@ -109,8 +109,6 @@ export function useChatStreaming({
           .join("|");
         const cacheKey = [
           settings.isSignedIn,
-          settings.gcalConnected,
-          settings.cloudBackupEnabled,
           currentNote?.id ?? "",
           currentNote?.updated_at ?? "",
           actionKey,
@@ -121,8 +119,6 @@ export function useChatStreaming({
           registry = createToolRegistry(
             {
               isSignedIn: settings.isSignedIn,
-              gcalConnected: settings.gcalConnected,
-              cloudBackupEnabled: settings.cloudBackupEnabled,
             },
             { currentNote, availableActions }
           );
@@ -150,75 +146,26 @@ export function useChatStreaming({
       setAgentState("streaming");
 
       try {
-        if (chatAgentMode === "openwhispr" && !settings.isSignedIn) {
-          throw new Error(
-            "聊天当前配置为 OpenWhispr 云端，但当前没有有效登录态。请登录，或在设置里把聊天模型切到 Providers/本地模型。"
-          );
-        }
-
         let fullContent = "";
         let contentAfterToolResult = "";
         let sawToolResult = false;
         let toolCallsSnapshot: ToolCallInfo[] = [];
         let stream: AsyncGenerator<AgentStreamChunk>;
 
-        if (isCloudAgent) {
-          const executeToolCall = registry
-            ? async (name: string, argsJson: string) => {
-                const tool = registry.get(name);
-                if (!tool)
-                  return {
-                    data: `Unknown tool: ${name}`,
-                    displayText: t("agentMode.tools.unknownTool", { name }),
-                  };
-                let args: Record<string, unknown>;
-                try {
-                  args = JSON.parse(argsJson);
-                } catch {
-                  return {
-                    data: `Invalid tool arguments for ${name}`,
-                    displayText: t("agentMode.tools.invalidArgs", { name }),
-                  };
-                }
-                const result = await tool.execute(args);
-                const data = result.success
-                  ? typeof result.data === "string"
-                    ? result.data
-                    : JSON.stringify(result.data)
-                  : result.displayText;
-                const metadata =
-                  result.success && result.data && typeof result.data === "object"
-                    ? (result.data as Record<string, unknown>)
-                    : undefined;
-                return { data, displayText: result.displayText, metadata };
-              }
-            : undefined;
-
-          stream = ReasoningService.processTextStreamingCloud(llmMessages, {
+        const aiTools = registry?.toAISDKFormat();
+        stream = ReasoningService.processTextStreamingAI(
+          llmMessages,
+          settings.chatAgentModel,
+          settings.chatAgentProvider,
+          {
             systemPrompt,
-            tools: registry?.getAll().map((t) => ({
-              name: t.name,
-              description: t.description,
-              parameters: t.parameters,
-            })),
-            executeToolCall,
-          });
-        } else {
-          const aiTools = registry?.toAISDKFormat();
-          stream = ReasoningService.processTextStreamingAI(
-            llmMessages,
-            settings.chatAgentModel,
-            settings.chatAgentProvider,
-            {
-              systemPrompt,
-              lanUrl: isLanAgent ? settings.chatAgentRemoteUrl : undefined,
-              baseUrl: isCustomAgent ? settings.chatAgentCloudBaseUrl || undefined : undefined,
-              customApiKey: isCustomAgent ? settings.chatAgentCustomApiKey || undefined : undefined,
-              disableThinking: settings.chatAgentDisableThinking,
-            },
-            aiTools
-          );
-        }
+            lanUrl: isLanAgent ? settings.chatAgentRemoteUrl : undefined,
+            baseUrl: isCustomAgent ? settings.chatAgentCloudBaseUrl || undefined : undefined,
+            customApiKey: isCustomAgent ? settings.chatAgentCustomApiKey || undefined : undefined,
+            disableThinking: settings.chatAgentDisableThinking,
+          },
+          aiTools
+        );
 
         for await (const chunk of stream) {
           if (!mountedRef.current) {

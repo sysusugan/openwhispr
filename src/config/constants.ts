@@ -45,13 +45,6 @@ export const ensureV1Suffix = (base: string): string => {
 };
 
 const env = (typeof import.meta !== "undefined" && (import.meta as any).env) || {};
-const DEFAULT_OPENWHISPR_API_URL = "https://api.openwhispr.com";
-
-const resolveOpenWhisprApiUrl = (values: Record<string, string | undefined>): string =>
-  values.OPENWHISPR_API_URL ||
-  values.VITE_OPENWHISPR_API_URL ||
-  values.runtimeViteOpenWhisprApiUrl ||
-  DEFAULT_OPENWHISPR_API_URL;
 
 const computeBaseUrl = (candidates: Array<string | undefined>, fallback: string): string => {
   for (const candidate of candidates) {
@@ -120,8 +113,7 @@ export const CACHE_CONFIG = {
   PASTE_DELAY_MS: 50, // Delay before paste simulation to allow clipboard to settle
 } as const;
 
-// OpenWhispr Cloud API
-export const OPENWHISPR_API_URL = resolveOpenWhisprApiUrl(env);
+export const OPENWHISPR_API_URL = "";
 
 // Retry Configuration
 export const RETRY_CONFIG = {

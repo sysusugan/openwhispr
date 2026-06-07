@@ -6,7 +6,6 @@ import { updateNoteTool } from "./updateNoteTool";
 import { listFoldersTool } from "./listFoldersTool";
 import { clipboardTool } from "./clipboardTool";
 import { webSearchTool } from "./webSearchTool";
-import { calendarTool } from "./calendarTool";
 import { createRunNoteActionTool, writeNoteContentTool } from "./noteActionChatTools";
 import type { ActionItem, NoteItem } from "../../types/electron";
 
@@ -15,8 +14,6 @@ export type { ToolDefinition, ToolResult } from "./ToolRegistry";
 
 interface ToolRegistrySettings {
   isSignedIn: boolean;
-  gcalConnected: boolean;
-  cloudBackupEnabled: boolean;
 }
 
 interface ToolRegistryContext {
@@ -32,9 +29,7 @@ export function createToolRegistry(
   context: ToolRegistryContext = {}
 ): ToolRegistry {
   const registry = new ToolRegistry();
-
-  const useCloudSearch = settings.isSignedIn && settings.cloudBackupEnabled;
-  registry.register(createSearchNotesTool({ useCloudSearch }));
+  registry.register(createSearchNotesTool());
   registry.register(getNoteTool);
   registry.register(createNoteTool);
   registry.register(updateNoteTool);
@@ -43,10 +38,6 @@ export function createToolRegistry(
 
   if (settings.isSignedIn) {
     registry.register(webSearchTool);
-  }
-
-  if (settings.gcalConnected) {
-    registry.register(calendarTool);
   }
 
   if (context.currentNote) {

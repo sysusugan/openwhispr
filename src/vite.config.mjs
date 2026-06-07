@@ -4,12 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import openwhisprCloud from "./config/openwhisprCloud.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DEFAULT_DEV_SERVER_PORT = 5183;
-const { resolveOpenWhisprApiUrl } = openwhisprCloud;
 
 const parseDevServerPort = (rawPort) => {
   const normalizedPort = rawPort || String(DEFAULT_DEV_SERVER_PORT);
@@ -37,7 +35,7 @@ export default defineConfig(({ mode }) => {
         name: "write-runtime-env",
         writeBundle() {
           const runtimeEnv = {
-            VITE_OPENWHISPR_API_URL: resolveOpenWhisprApiUrl(env),
+            VITE_OPENWHISPR_API_URL: env.VITE_OPENWHISPR_API_URL || "",
             VITE_AUTH_URL: env.VITE_AUTH_URL || "",
           };
           fs.writeFileSync(

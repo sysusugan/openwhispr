@@ -52,7 +52,7 @@ export async function runNoteActionOnce({
 
   const settings = getSettings();
   const resolvedFormatting = selectResolvedNoteFormatting(settings);
-  const isOpenWhisprCloud = isCloudMode || selectIsCloudNoteFormattingMode(settings);
+  const isHostedMode = isCloudMode || selectIsCloudNoteFormattingMode(settings);
   const selectedModel = modelId || resolvedFormatting.model;
   const systemPrompt = buildNoteActionSystemPrompt(action.prompt, {
     isMeetingNote: actionInput.isMeetingNote,
@@ -66,8 +66,8 @@ export async function runNoteActionOnce({
     disableThinking: settings.noteFormattingDisableThinking,
   };
 
-  if (isOpenWhisprCloud) {
-    reasoningConfig.provider = "openwhispr";
+  if (isHostedMode) {
+    throw new Error("Hosted note actions are not available in this build.");
   } else if (resolvedFormatting.mode === "self-hosted" && resolvedFormatting.remoteUrl) {
     reasoningConfig.lanUrl = resolvedFormatting.remoteUrl;
   } else if (resolvedFormatting.mode === "providers" || resolvedFormatting.mode === "enterprise") {
@@ -79,7 +79,7 @@ export async function runNoteActionOnce({
     reasoningConfig.customApiKey = settings.noteFormattingCustomApiKey;
   }
 
-  if (!selectedModel && !isOpenWhisprCloud && !reasoningConfig.lanUrl) {
+  if (!selectedModel && !reasoningConfig.lanUrl) {
     throw new Error("No AI model selected");
   }
 

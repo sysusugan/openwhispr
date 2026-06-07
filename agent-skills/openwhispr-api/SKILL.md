@@ -1,251 +1,94 @@
 ---
 name: openwhispr-api
-description: Use this skill when building integrations with the OpenWhispr REST API, calling OpenWhispr endpoints, managing notes/folders/transcriptions programmatically, or connecting to the OpenWhispr MCP server. Covers authentication, all V1 endpoints, pagination, rate limits, error handling, and the remote MCP server.
+description: Use OpenWhispr's local loopback API exposed by a running desktop app.
 ---
 
-# OpenWhispr API v1
+# OpenWhispr Local API
 
-Use this reference when making requests to the OpenWhispr REST API. All endpoints are under the V1 path and require API key authentication.
+OpenWhispr exposes a local-only HTTP bridge for automation. It is intended for
+desktop-local tools, MCP adapters, and agent skills that need to read or modify
+the user's local notes and transcription history.
 
-## Authentication
+## Connection
 
-Pass the API key as a Bearer token in the `Authorization` header on every request.
+The desktop app writes bridge metadata to:
 
-```
-Authorization: Bearer owk_live_YOUR_KEY
-```
-
-Generate keys from the OpenWhispr desktop app under **Settings > API Keys**. Keys start with `owk_live_` and are shown once at creation.
-
-### Scopes
-
-Each key has scoped permissions. The API rejects requests missing the required scope with `403 Forbidden`.
-
-| Scope | Grants |
-|-------|--------|
-| `notes:read` | List, get, and search notes. List folders. |
-| `notes:write` | Create, update, and delete notes. Create folders. |
-| `transcriptions:read` | List and get transcriptions. |
-| `usage:read` | Read usage statistics. |
-
-## Base URL
-
-```
-https://api.openwhispr.com/api/v1
+```sh
+~/.openwhispr/cli-bridge.json
 ```
 
-## Response Envelope
+Read the current port and bearer token from that file:
 
-Wrap all responses in a consistent envelope.
-
-**Single resource:**
-```json
-{ "data": { "id": "uuid", "title": "My note", ... } }
+```sh
+bridge="${HOME}/.openwhispr/cli-bridge.json"
+port="$(jq -r .port "$bridge")"
+token="$(jq -r .token "$bridge")"
+base_url="http://127.0.0.1:${port}"
 ```
 
-**Paginated list:**
-```json
-{
-  "data": [{ ... }, { ... }],
-  "has_more": true,
-  "next_cursor": "2026-04-15T10:30:00.000Z"
-}
+All requests must include:
+
+```sh
+Authorization: Bearer $token
 ```
 
-**Error:**
-```json
-{ "error": { "code": "not_found", "message": "Note not found" } }
-```
+The bridge only binds to `127.0.0.1` and is not a hosted service. It does not
+require an OpenWhispr account.
 
-### Error Codes
+## Routes
 
-| HTTP Status | Code | Meaning |
-|-------------|------|---------|
-| 400 | `validation_error` | Invalid request body or query params |
-| 401 | `invalid_api_key` | Missing, malformed, expired, or revoked key |
-| 403 | `forbidden` | Key lacks required scope |
-| 404 | `not_found` | Resource does not exist or belongs to another user |
-| 405 | `method_not_allowed` | Wrong HTTP method |
-| 409 | `conflict` | Duplicate resource (e.g. folder name) |
-| 429 | `rate_limited` | Rate limit exceeded — check `Retry-After` header |
-| 500 | `internal_error` | Server error |
-
-## Rate Limits
-
-Enforced per API key with minute and daily windows. Search requests cost 5x against the rate limit.
-
-| Plan | Per Minute | Per Day |
-|------|-----------|---------|
-| Free | 30 | 1,000 |
-| Pro | 120 | 10,000 |
-| Business | 300 | 50,000 |
-
-Response headers on every request:
-
-| Header | Description |
-|--------|-------------|
-| `X-RateLimit-Limit` | Max requests per minute |
-| `X-RateLimit-Remaining` | Remaining in current window |
-| `X-RateLimit-Reset` | Unix timestamp when window resets |
-| `Retry-After` | Seconds to wait (only on 429) |
-
-## Pagination
-
-List endpoints use cursor-based pagination. Pass the `next_cursor` value from a previous response as the `cursor` query parameter to fetch the next page. When `has_more` is `false`, there are no more results.
-
-```
-GET /notes/list?limit=50&cursor=2026-04-15T10:30:00.000Z
-```
-
-## Endpoints
-
-### Notes
-
-**List Notes** — `GET /notes/list`
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `limit` | integer | No | 1-100, default 50 |
-| `cursor` | string | No | Pagination cursor |
-| `folder_id` | UUID | No | Filter by folder |
-Scope: `notes:read`
-
-**Get Note** — `GET /notes/{id}`
-Scope: `notes:read`. Returns 404 if the note does not exist or is deleted.
-
-**Create Note** — `POST /notes/create`
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `content` | string | Yes | Note body text |
-| `title` | string | No | Note title |
-| `enhanced_content` | string | No | Cleaned/enhanced version |
-| `note_type` | enum | No | `personal` (default), `meeting`, `upload` |
-| `folder_id` | UUID | No | Target folder |
-Scope: `notes:write`. Returns `201` with the created note.
-
-**Update Note** — `PATCH /notes/{id}`
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | No | New title |
-| `content` | string | No | New content |
-| `enhanced_content` | string | No | New enhanced content |
-| `folder_id` | UUID | No | Move to folder |
-Scope: `notes:write`. All fields optional — only provided fields are updated.
-
-**Delete Note** — `DELETE /notes/{id}`
-Scope: `notes:write`. Soft-deletes the note. Returns `204 No Content`.
-
-**Search Notes** — `POST /notes/search`
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `query` | string | Yes | Search text (1-500 chars) |
-| `limit` | integer | No | 1-50, default 20 |
-Scope: `notes:read`. Uses hybrid semantic (vector) + full-text search with relevance scoring. Costs 5x against rate limit.
-
-### Folders
-
-**List Folders** — `GET /folders/list`
-Scope: `notes:read`. Returns all folders sorted by `sort_order` then `created_at`.
-
-**Create Folder** — `POST /folders/create`
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Folder name (1-100 chars) |
-| `sort_order` | integer | No | Sort position |
-Scope: `notes:write`. Max 50 folders per user. Returns `409` if name already exists.
-
-### Transcriptions
-
-**List Transcriptions** — `GET /transcriptions/list`
-| Param | Type | Required | Description |
-|-------|------|----------|-------------|
-| `limit` | integer | No | 1-100, default 50 |
-| `cursor` | string | No | Pagination cursor |
-Scope: `transcriptions:read`. Returns transcription history with `text`, `word_count`, `source`, `provider`, `model`, `language`, `audio_duration_ms`, `processing_ms`.
-
-**Get Transcription** — `GET /transcriptions/{id}`
-Scope: `transcriptions:read`.
-
-### Usage
-
-**Get Usage** — `GET /usage`
-Scope: `usage:read`. Returns:
-- `words_used` — Words consumed this period
-- `words_remaining` — Words left in quota
-- `limit` — Total word quota
-- `plan` — Current plan (`free`, `pro`, `business`)
-- `is_subscribed` — Whether user has active subscription
-- `current_period_end` — End of current billing period
-- `billing_interval` — Billing cycle
-
-## MCP Server
-
-For AI assistant integration (Claude, Cursor, VS Code), connect to the remote MCP server at:
-
-```
-https://mcp.openwhispr.com/mcp
-```
-
-Pass the API key via `Authorization: Bearer` header. All V1 endpoints are available as MCP tools. The server uses Streamable HTTP transport (stateless, no sessions).
-
-### Claude Code
-```bash
-claude mcp add openwhispr --transport http https://mcp.openwhispr.com/mcp \
-  --header "Authorization: Bearer owk_live_YOUR_KEY"
-```
-
-### Cursor / VS Code
-```json
-{
-  "mcpServers": {
-    "openwhispr": {
-      "url": "https://mcp.openwhispr.com/mcp",
-      "headers": { "Authorization": "Bearer owk_live_YOUR_KEY" }
-    }
-  }
-}
-```
+- `GET /v1/health`
+- `GET /v1/notes/list?limit=100&folder_id=<id>&note_type=<type>`
+- `GET /v1/notes/search?q=<query>&limit=20`
+- `GET /v1/notes/<id>`
+- `POST /v1/notes/create`
+- `PATCH /v1/notes/<id>`
+- `DELETE /v1/notes/<id>`
+- `GET /v1/folders/list`
+- `POST /v1/folders/create`
+- `GET /v1/dictionary`
+- `GET /v1/dictionary/aliases`
+- `GET /v1/transcriptions/list?limit=50`
+- `GET /v1/transcriptions/<id>`
+- `DELETE /v1/transcriptions/<id>`
+- `DELETE /v1/transcriptions/<id>/audio`
 
 ## Examples
 
-### List recent notes
-```bash
-curl -H "Authorization: Bearer owk_live_YOUR_KEY" \
-  "https://api.openwhispr.com/api/v1/notes/list?limit=10"
+Health check:
+
+```sh
+curl -sS \
+  -H "Authorization: Bearer ${token}" \
+  "${base_url}/v1/health"
 ```
 
-### Create a note in a folder
-```bash
-curl -X POST \
-  -H "Authorization: Bearer owk_live_YOUR_KEY" \
+Search local notes:
+
+```sh
+curl -sS \
+  -H "Authorization: Bearer ${token}" \
+  "${base_url}/v1/notes/search?q=meeting&limit=5"
+```
+
+Create a local note:
+
+```sh
+curl -sS \
+  -X POST \
+  -H "Authorization: Bearer ${token}" \
   -H "Content-Type: application/json" \
-  -d '{"content": "Remember to review PR #42", "title": "TODO", "folder_id": "UUID"}' \
-  https://api.openwhispr.com/api/v1/notes/create
+  -d '{"title":"Draft","content":"Local note","note_type":"personal"}' \
+  "${base_url}/v1/notes/create"
 ```
 
-### Search notes
-```bash
-curl -X POST \
-  -H "Authorization: Bearer owk_live_YOUR_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "quarterly budget discussion"}' \
-  https://api.openwhispr.com/api/v1/notes/search
-```
+## MCP Adapter Guidance
 
-### Paginate through all notes
-```bash
-cursor=""
-while true; do
-  response=$(curl -s -H "Authorization: Bearer owk_live_YOUR_KEY" \
-    "https://api.openwhispr.com/api/v1/notes/list?limit=100&cursor=${cursor}")
-  echo "$response" | jq '.data[]'
-  has_more=$(echo "$response" | jq -r '.has_more')
-  [ "$has_more" != "true" ] && break
-  cursor=$(echo "$response" | jq -r '.next_cursor')
-done
-```
+If an MCP server or tool adapter is used, it should wrap this local bridge and
+keep the same local trust boundary:
 
-### Check usage
-```bash
-curl -H "Authorization: Bearer owk_live_YOUR_KEY" \
-  https://api.openwhispr.com/api/v1/usage
-```
+- Read the bridge file at runtime.
+- Connect only to `127.0.0.1`.
+- Pass the bearer token in memory.
+- Do not add telemetry or remote synchronization.
+- Surface bridge-not-running errors clearly so the user can start the desktop app.

@@ -18,16 +18,14 @@
 </p>
 
 <p align="center">
-  <a href="https://openwhispr.com">Website</a> &middot;
-  <a href="https://docs.openwhispr.com">Docs</a> &middot;
+  <a href="https://github.com/OpenWhispr/openwhispr#readme">Docs</a> &middot;
   <a href="https://github.com/OpenWhispr/openwhispr/releases/latest">Download</a> &middot;
-  <a href="https://docs.openwhispr.com/api/overview">API</a> &middot;
   <a href="https://github.com/OpenWhispr/openwhispr/blob/main/CHANGELOG.md">Changelog</a>
 </p>
 
 ---
 
-OpenWhispr turns your voice into text, notes, and actions from your desktop. Press a hotkey, speak, and your words appear at your cursor. Choose between fully private offline transcription with local speech-to-text engines like Whisper and NVIDIA Parakeet — where your audio never leaves your device — or cloud processing for speed. No data collection, no telemetry, fully open source.
+OpenWhispr turns your voice into text, notes, and actions from your desktop. Press a hotkey, speak, and your words appear at your cursor. Choose fully private offline transcription with local speech-to-text engines like Whisper and NVIDIA Parakeet, or bring your own provider API key. No data collection, no telemetry, fully open source.
 
 ## Download
 
@@ -42,11 +40,10 @@ OpenWhispr turns your voice into text, notes, and actions from your desktop. Pre
 
 - **Voice dictation** — global hotkey to dictate into any app with automatic pasting
 - **AI agent** — talk to GPT-5, Claude, Gemini, Groq, or local models with a named voice assistant
-- **Meeting transcription** — auto-detect Zoom, Teams, and FaceTime calls with live speaker diarization, voice fingerprinting, and Google Calendar integration
+- **Meeting transcription** — auto-detect Zoom, Teams, and FaceTime calls with live speaker diarization and voice fingerprinting
 - **Local speaker diarization** — on-device speaker labelling with voice fingerprint recognition across meetings, no cloud required
-- **Notes** — create, organize, and search notes with folders, semantic search, cloud sync, and AI actions
-- **Local or cloud — your choice** — all core features (transcription, AI reasoning, speaker diarization, semantic search) work with local models or cloud providers
-- **Public API & MCP** — manage notes and transcriptions programmatically or connect your AI assistant via the [MCP server](https://docs.openwhispr.com/integrations/mcp)
+- **Notes** — create, organize, and search notes with folders, local semantic search, and AI actions
+- **Local or BYOK — your choice** — core features work with local models or user-configured providers
 
 ## Quick start
 
@@ -57,17 +54,11 @@ npm install
 npm run dev
 ```
 
-Requires Node.js 24+. See the [full documentation](https://docs.openwhispr.com/quickstart) for setup guides, platform-specific instructions, and build details.
+Requires Node.js 24+. See this repository for setup guides, platform-specific instructions, and build details.
 
 ## Documentation
 
-Visit **[docs.openwhispr.com](https://docs.openwhispr.com)** for:
-
-- [Getting started](https://docs.openwhispr.com/quickstart)
-- [Platform guides](https://docs.openwhispr.com/platform/macos) (macOS, Windows, Linux)
-- [API reference](https://docs.openwhispr.com/api/overview)
-- [MCP server setup](https://docs.openwhispr.com/integrations/mcp)
-- [Troubleshooting](https://docs.openwhispr.com/troubleshooting)
+Start with this README and the files in [`docs/`](docs/) for local development, platform notes, and troubleshooting.
 
 ## Tech stack
 
@@ -77,23 +68,9 @@ React 19, TypeScript, Tailwind CSS v4, Electron 41, better-sqlite3, whisper.cpp,
 
 [![Star History Chart](https://api.star-history.com/svg?repos=OpenWhispr/openwhispr&type=date&legend=top-left)](https://www.star-history.com/#OpenWhispr/openwhispr&type=date&legend=top-left)
 
-## Sponsors
-
-<p align="center">
-  <a href="https://console.neon.tech/app/?promo=openwhispr">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://neon.com/brand/neon-logo-dark-color.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://neon.com/brand/neon-logo-light-color.svg">
-      <img width="250" alt="Neon" src="https://neon.com/brand/neon-logo-light-color.svg">
-    </picture>
-  </a>
-</p>
-
-<p align="center"><a href="https://console.neon.tech/app/?promo=openwhispr">Neon</a> is the serverless Postgres platform powering OpenWhispr Cloud.</p>
-
 ## Contributing
 
-We welcome contributions. Fork the repo, create a feature branch, and open a pull request. See the [contributing guide](https://docs.openwhispr.com/contributing) for development setup and guidelines.
+We welcome contributions. Fork the repo, create a feature branch, and open a pull request.
 
 ## License
 
@@ -110,4 +87,3 @@ We welcome contributions. Fork the repo, create a feature branch, and open a pul
 - **[Electron](https://www.electronjs.org/)** — cross-platform desktop framework
 - **[React](https://react.dev/)** — UI component library
 - **[shadcn/ui](https://ui.shadcn.com/)** — accessible components built on Radix primitives
-- **[Neon](https://console.neon.tech/app/?promo=openwhispr)** — serverless Postgres powering OpenWhispr Cloud

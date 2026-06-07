@@ -5,9 +5,7 @@ import {
   FileAudio,
   X,
   AlertCircle,
-  Cloud,
   ChevronRight,
-  Key,
   FolderOpen,
   Plus,
   Settings,
@@ -26,10 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "../ui/input";
 import type { FolderItem } from "../../types/electron";
 import { findDefaultFolder, MEETINGS_FOLDER_NAME } from "./shared";
-import { useAuth } from "../../hooks/useAuth";
-import { useUsage } from "../../hooks/useUsage";
 import { useSettings } from "../../hooks/useSettings";
-import { withSessionRefresh } from "../../lib/auth";
 import { getAllReasoningModels } from "../../models/ModelRegistry";
 import {
   useSettingsStore,
@@ -44,8 +39,6 @@ const TranscriptionModelPicker = React.lazy(() => import("../TranscriptionModelP
 const SUPPORTED_EXTENSIONS = ["mp3", "wav", "m4a", "webm", "ogg", "oga", "flac", "aac"];
 
 const BYOK_MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB — hard limit for bring-your-own-key
-const CLOUD_FREE_MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB — free plan cloud limit
-const CLOUD_PRO_MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB — pro plan cloud limit
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -74,10 +67,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   const [advancedOpen, setAdvancedOpen] = useState(true);
   const [providerReady, setProviderReady] = useState<boolean | null>(null);
 
-  const { isSignedIn } = useAuth();
-  const usage = useUsage();
-  const isProUser = usage?.isSubscribed || usage?.isTrial;
-
   const {
     useLocalWhisper,
     setUseLocalWhisper,
@@ -93,7 +82,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     setCloudTranscriptionModel,
     cloudTranscriptionBaseUrl,
     setCloudTranscriptionBaseUrl,
-    cloudTranscriptionMode,
     setCloudTranscriptionMode,
     openaiApiKey,
     groqApiKey,
@@ -126,22 +114,15 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     cancelTranscription: cancelUploadTranscription,
   } = useUploadTranscriptionStore();
 
-  const isOpenWhisprCloud =
-    isSignedIn && cloudTranscriptionMode === "openwhispr" && !useLocalWhisper;
-  const usageLoaded = usage?.hasLoaded ?? false;
-  const showSetup = usageLoaded && !isProUser && !setupDismissed && state === "idle";
-  const showModelPicker = !isSignedIn || cloudTranscriptionMode === "byok" || useLocalWhisper;
-  // Mode detection
-  const isByok = !useLocalWhisper && !isOpenWhisprCloud;
+  const showSetup = !setupDismissed && state === "idle";
+  const showModelPicker = true;
 
   // Mode-aware file size validation
   // Local: no limits at all
   // BYOK: 25 MB hard max regardless of plan
-  // Cloud free: 25 MB max (upgrade to Pro for more)
+  // BYOK providers commonly reject very large single uploads.
   // Cloud pro: 500 MB max
   let fileTooLarge = false;
-  let requiresUpgrade = false;
-  let requiresAccount = false;
   let byokTooLarge = false;
   let isLargeFile = false;
 
@@ -150,16 +131,8 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
       // Local transcription: no file size restrictions
     } else if (cloudTranscriptionProvider === "custom") {
       // Custom endpoints (e.g. local whisper.cpp): no file size restrictions
-    } else if (isByok) {
-      byokTooLarge = file.sizeBytes > BYOK_MAX_FILE_SIZE;
-      if (byokTooLarge && !isSignedIn) {
-        requiresAccount = true;
-      }
     } else {
-      // Cloud (OpenWhispr) — user is always signed in here
-      fileTooLarge = file.sizeBytes > CLOUD_PRO_MAX_FILE_SIZE;
-      requiresUpgrade = !isProUser && file.sizeBytes > CLOUD_FREE_MAX_FILE_SIZE;
-      isLargeFile = file.sizeBytes > CLOUD_FREE_MAX_FILE_SIZE;
+      byokTooLarge = file.sizeBytes > BYOK_MAX_FILE_SIZE;
     }
   }
 
@@ -174,10 +147,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   useEffect(() => {
     let cancelled = false;
     const checkProviderReady = async () => {
-      if (isOpenWhisprCloud) {
-        setProviderReady(true);
-        return;
-      }
       if (!useLocalWhisper) {
         if (cloudTranscriptionProvider === "custom") {
           // Custom providers only need a base URL; API key is truly optional
@@ -214,7 +183,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
       cancelled = true;
     };
   }, [
-    isOpenWhisprCloud,
     useLocalWhisper,
     localTranscriptionProvider,
     cloudTranscriptionProvider,
@@ -226,7 +194,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   ]);
 
   const getActiveModelLabel = (): string => {
-    if (isOpenWhisprCloud) return t("notes.upload.openwhisprCloud");
     if (useLocalWhisper) {
       if (localTranscriptionProvider === "nvidia")
         return `Parakeet · ${parakeetModel || "default"}`;
@@ -298,7 +265,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   const handleTranscribe = () => {
     if (!file) return;
 
-    const useChunkProgress = useLocalWhisper || (isOpenWhisprCloud && isLargeFile);
+    const useChunkProgress = useLocalWhisper;
 
     runTranscription({
       useChunkProgress,
@@ -307,20 +274,6 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
         window.electronAPI.cancelUploadTranscription?.() ??
         Promise.resolve({ success: false, error: "Cancel is unavailable" }),
       transcribe: async () => {
-        if (isOpenWhisprCloud) {
-          return withSessionRefresh(async () => {
-            const r = await window.electronAPI.transcribeAudioFileCloud!(file.path, {
-              customDictionary,
-              customDictionaryAliases,
-            });
-            if (!r.success && r.code) {
-              throw Object.assign(new Error(r.error || "Cloud transcription failed"), {
-                code: r.code,
-              });
-            }
-            return r;
-          });
-        }
         if (useLocalWhisper) {
           return window.electronAPI.transcribeAudioFile(file.path, {
             provider: localTranscriptionProvider as "whisper" | "nvidia",
@@ -378,53 +331,12 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
     }
   };
 
-  const handleCreateAccount = () => {
-    localStorage.setItem("pendingCloudMigration", "true");
-    localStorage.setItem("onboardingCurrentStep", "0");
-    localStorage.removeItem("onboardingCompleted");
-    window.location.reload();
-  };
-
-  const switchToCloud = () => {
-    setCloudTranscriptionMode("openwhispr");
-    setUseLocalWhisper(false);
-    updateTranscriptionSettings({ useLocalWhisper: false });
-  };
-
   const getTranscribingLabel = (): string => {
-    if (isOpenWhisprCloud) return t("notes.upload.transcribingCloud");
     if (useLocalWhisper) return t("notes.upload.transcribingLocal");
     return t("notes.upload.transcribingProvider", { provider: cloudTranscriptionProvider });
   };
 
-  const modeSelector = isSignedIn ? (
-    <div className="ow-segmented mb-3 grid grid-cols-2">
-      <button
-        onClick={() => {
-          setCloudTranscriptionMode("openwhispr");
-          setUseLocalWhisper(false);
-          updateTranscriptionSettings({ useLocalWhisper: false });
-        }}
-        className={cn(
-          "ow-segmented-item h-7 w-full px-2",
-          isOpenWhisprCloud && "ow-segmented-item-active"
-        )}
-      >
-        <Cloud size={11} className="shrink-0" />
-        <span className="truncate">{t("notes.upload.openwhisprCloud")}</span>
-      </button>
-      <button
-        onClick={() => setCloudTranscriptionMode("byok")}
-        className={cn(
-          "ow-segmented-item h-7 w-full px-2",
-          !isOpenWhisprCloud && "ow-segmented-item-active"
-        )}
-      >
-        <Key size={11} className="shrink-0" />
-        <span className="truncate">{t("notes.upload.custom")}</span>
-      </button>
-    </div>
-  ) : null;
+  const modeSelector = null;
 
   const modelPicker = showModelPicker ? (
     <Suspense fallback={null}>
@@ -518,16 +430,9 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
               getActiveModelLabel={getActiveModelLabel}
               reset={reset}
               handleTranscribe={handleTranscribe}
-              requiresUpgrade={!!requiresUpgrade}
               fileTooLarge={fileTooLarge}
               isLargeFile={isLargeFile}
-              isOpenWhisprCloud={isOpenWhisprCloud}
               byokTooLarge={byokTooLarge}
-              requiresAccount={requiresAccount}
-              isProUser={!!isProUser}
-              onUpgrade={() => usage?.openCheckout()}
-              onCreateAccount={handleCreateAccount}
-              onSwitchToCloud={switchToCloud}
             />
           )}
 
@@ -786,16 +691,9 @@ interface SelectedViewProps {
   getActiveModelLabel: () => string;
   reset: () => void;
   handleTranscribe: () => void;
-  requiresUpgrade: boolean;
   fileTooLarge: boolean;
   isLargeFile: boolean;
-  isOpenWhisprCloud: boolean;
   byokTooLarge: boolean;
-  requiresAccount: boolean;
-  isProUser: boolean;
-  onUpgrade: () => void;
-  onCreateAccount: () => void;
-  onSwitchToCloud: () => void;
 }
 
 function SelectedView({
@@ -804,18 +702,10 @@ function SelectedView({
   getActiveModelLabel,
   reset,
   handleTranscribe,
-  requiresUpgrade,
   fileTooLarge,
-  isLargeFile,
-  isOpenWhisprCloud,
   byokTooLarge,
-  requiresAccount,
-  isProUser,
-  onUpgrade,
-  onCreateAccount,
-  onSwitchToCloud,
 }: SelectedViewProps) {
-  const canTranscribe = !fileTooLarge && !requiresUpgrade && !byokTooLarge;
+  const canTranscribe = !fileTooLarge && !byokTooLarge;
 
   return (
     <div style={{ animation: "float-up 0.3s ease-out" }}>
@@ -838,7 +728,6 @@ function SelectedView({
         </div>
       </div>
 
-      {/* Cloud absolute limit (500 MB) */}
       {fileTooLarge && (
         <div className="rounded-lg border border-destructive/12 dark:border-destructive/15 bg-destructive/[0.03] px-3 py-2.5 mb-3">
           <p className="text-xs text-destructive/60 leading-relaxed">
@@ -857,71 +746,12 @@ function SelectedView({
             {t("notes.upload.byokTooLargeDetail")}
           </p>
           <p className="text-xs text-foreground leading-relaxed mt-1.5 font-medium">
-            {requiresAccount
-              ? t("notes.upload.byokTooLargeNeedsAccount")
-              : isProUser
-                ? t("notes.upload.switchToCloudForLargeFiles")
-                : t("notes.upload.byokTooLargeNeedsUpgrade")}
+            {t("notes.upload.useLocalOrSelfHosted")}
           </p>
         </div>
-      )}
-
-      {/* Cloud free user, file > 25 MB → needs paid plan */}
-      {requiresUpgrade && !fileTooLarge && (
-        <div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2.5 mb-3">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {t("notes.upload.paidPlanRequired")}
-          </p>
-        </div>
-      )}
-
-      {/* Cloud large file info (Pro user, will be chunked) */}
-      {isLargeFile && !requiresUpgrade && !fileTooLarge && isOpenWhisprCloud && (
-        <p className="text-xs text-muted-foreground text-center mb-3">
-          {t("notes.upload.largeFileNote")}
-        </p>
       )}
 
       <div className="flex items-center gap-2 justify-center flex-wrap">
-        {/* BYOK too large — not signed in: Create Account */}
-        {byokTooLarge && requiresAccount && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onCreateAccount}
-            className="h-8 text-xs px-5"
-          >
-            {t("notes.upload.createAccount")}
-          </Button>
-        )}
-
-        {/* BYOK too large — signed in, Pro: Switch to Cloud */}
-        {byokTooLarge && !requiresAccount && isProUser && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSwitchToCloud}
-            className="h-8 text-xs px-5"
-          >
-            {t("notes.upload.switchToCloud")}
-          </Button>
-        )}
-
-        {/* BYOK too large — signed in, Free: Upgrade */}
-        {byokTooLarge && !requiresAccount && !isProUser && (
-          <Button variant="outline" size="sm" onClick={onUpgrade} className="h-8 text-xs px-5">
-            {t("notes.upload.upgrade")}
-          </Button>
-        )}
-
-        {/* Cloud requires upgrade */}
-        {!byokTooLarge && requiresUpgrade && (
-          <Button variant="outline" size="sm" onClick={onUpgrade} className="h-8 text-xs px-5">
-            {t("notes.upload.upgrade")}
-          </Button>
-        )}
-
-        {/* Normal: can transcribe */}
         {canTranscribe && (
           <Button
             variant="outline"

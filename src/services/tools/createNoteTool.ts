@@ -1,6 +1,5 @@
 import type { ToolDefinition, ToolResult } from "./ToolRegistry";
 import { resolveFolderId } from "./utils";
-import { syncService } from "../SyncService.js";
 
 export const createNoteTool: ToolDefinition = {
   name: "create_note",
@@ -57,8 +56,6 @@ export const createNoteTool: ToolDefinition = {
       if (!result.success || !result.note) {
         return { success: false, data: null, displayText: "Failed to create note" };
       }
-
-      syncService.debouncedPush("note", result.note.id);
 
       const suffix = folderCreated ? ` in new folder "${folderName}"` : "";
       return {

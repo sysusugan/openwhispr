@@ -108,21 +108,6 @@
     "quit": "Beenden",
     "cancel": "Abbrechen"
   },
-  "upgradePrompt": {
-    "paymentFailed": "Ihre Zahlung konnte nicht verarbeitet werden",
-    "weeklyLimit": "Sie haben Ihr Wochenlimit erreicht",
-    "pastDueDescription": "Sie sind vorerst im kostenlosen Tarif – keine Sorge, Sie haben weiterhin {{limit}} Wörter pro Woche.\nAktualisieren Sie Ihre Zahlungsmethode, um wieder unbegrenztes Pro zu erhalten.",
-    "limitDescription": "{{used}} von {{limit}} Wörtern verwendet.\nIhre Transkription wurde gespeichert und eingefügt.",
-    "updatePayment": "Zahlungsmethode aktualisieren",
-    "updatePaymentDescription": "Zurück zu unbegrenzten Pro-Transkriptionen.",
-    "upgradeToPro": "Auf Pro upgraden",
-    "upgradeDescription": "Unbegrenzte Transkriptionen ab $8/Monat.",
-    "useApiKey": "Eigenen API-Schlüssel verwenden",
-    "useApiKeyDescription": "Verwenden Sie Ihren eigenen Schlüssel für unbegrenzte Nutzung.",
-    "switchToLocal": "Zu lokal wechseln",
-    "switchToLocalDescription": "Offline-Transkription. Keine Limits.",
-    "rollingWeeklyLimit": "Rollierendes Wochenlimit"
-  },
   "windowControls": {
     "minimize": "Minimieren",
     "maximize": "Maximieren",
@@ -204,7 +189,7 @@
       "systemAudioDescription": "Transkribiert Meetings, Anrufe, Vorträge, Podcasts und andere Systemaudios.",
       "optional": "Optional",
       "recommended": "Empfohlen",
-      "accessibilityTroubleshooting": "Schalte in Systemeinstellungen → Bedienungshilfen den Schalter für OpenWhispr aus und wieder ein. Wenn das nicht hilft, entferne OpenWhispr aus der Liste und füge es erneut hinzu. Klappt's immer noch nicht? Schreib an support@openwhispr.com."
+      "accessibilityTroubleshooting": "In System Settings -> Accessibility, switch OpenWhispr off and back on. If that does not work, remove OpenWhispr from the list and add it back."
     },
     "transcription": {
       "title": "Transkriptions-Einrichtung",
@@ -224,7 +209,6 @@
       "textareaPlaceholder": "Hier klicken und Hotkey zum Diktieren verwenden..."
     },
     "connectivity": {
-      "title": "OpenWhispr Cloud ist aus diesem Netzwerk nicht erreichbar",
       "body": "{{cause}} Sie können zur lokalen Engine wechseln oder fortfahren und es später erneut versuchen.",
       "useLocal": "Lokale Engine verwenden",
       "continue": "Trotzdem fortfahren"
@@ -233,9 +217,8 @@
   "streaming": {
     "errors": {
       "cloudUnreachable": {
-        "title": "OpenWhispr Cloud nicht erreichbar",
         "generic": "Die Netzwerkanfrage ist fehlgeschlagen. Prüfen Sie Ihre Verbindung.",
-        "dnsBlocked": "DNS löst openwhispr.com nicht auf — ein Werbeblocker oder Filter blockiert es möglicherweise.",
+        "dnsBlocked": "The configured service host could not be resolved. Check the URL, DNS, VPN, or firewall settings.",
         "refused": "Verbindung wurde abgelehnt — wahrscheinlich eine Firewall oder ein VPN.",
         "timeout": "Netzwerk-Zeitüberschreitung — VPN, Captive Portal oder instabile Verbindung.",
         "tls": "TLS-Handshake fehlgeschlagen — prüfen Sie Ihre Systemuhr oder einen Unternehmens-Proxy.",
@@ -261,17 +244,11 @@
     },
     "limit": {
       "weeklyTitle": "Wochenlimit erreicht",
-      "weeklyDescription": "Ihr Limit setzt sich rollierend zurück. Upgraden Sie auf Pro oder nutzen Sie Ihren eigenen API-Schlüssel für unbegrenzte Nutzung."
+      "weeklyDescription": "Use a local model, your own API key, or a self-hosted endpoint for transcription."
     },
     "accessibilityMissing": {
       "title": "Bedienungshilfen-Berechtigungen benötigt",
       "description": "Wir haben festgestellt, dass OpenWhispr Bedienungshilfen-Berechtigungen benötigt, um korrekt zu funktionieren. Bitte aktivieren Sie diese unten."
-    },
-    "billing": {
-      "pastDueTitle": "Ihre Zahlung konnte nicht verarbeitet werden",
-      "pastDueDescription": "Keine Sorge – Sie sind vorerst im kostenlosen Tarif. Aktualisieren Sie Ihre Zahlungsdaten in den Einstellungen, um wieder Pro zu erhalten.",
-      "bannerDescription": "Sie sind momentan im kostenlosen Tarif – Sie haben weiterhin {{limit}} Wörter pro Woche. Aktualisieren Sie Ihre Zahlungsdaten, um wieder Pro zu erhalten.",
-      "updatePayment": "Zahlung aktualisieren"
     },
     "history": {
       "couldNotLoadTitle": "Verlauf konnte nicht geladen werden",
@@ -322,8 +299,6 @@
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}"
     },
     "cloudMigration": {
-      "title": "Willkommen bei OpenWhispr Cloud",
-      "description": "Wir haben die Transkription auf OpenWhispr Cloud umgestellt für schnellere und genauere Ergebnisse. Ihre bisherigen Einstellungen sind gespeichert – wechseln Sie jederzeit in den Einstellungen zurück.",
       "viewSettings": "Einstellungen anzeigen"
     },
     "aiCta": {
@@ -443,7 +418,7 @@
       "errorTitles": {
         "sessionExpired": "Sitzung abgelaufen",
         "offline": "Sie sind offline",
-        "dailyLimitReached": "Tägliches Limit erreicht"
+        "dailyLimitReached": "The transcription provider rejected the request. Check your provider configuration and try again."
       },
       "fallback": {
         "title": "Fallback-Modus",
@@ -456,7 +431,7 @@
       "errorDescriptions": {
         "sessionExpired": "Deine OpenWhispr-Cloud-Sitzung ist nicht verfügbar. Bitte melde dich erneut über die Einstellungen an.",
         "offline": "Du bist offline. Die Cloud-Transkription benötigt eine Internetverbindung.",
-        "dailyLimitReached": "Du hast dein heutiges Transkriptionslimit erreicht. Versuch es morgen erneut oder upgrade deinen Plan."
+        "dailyLimitReached": "The transcription provider rejected the request. Check your provider configuration and try again."
       }
     },
     "clipboard": {
@@ -904,7 +879,6 @@
       "none": "Keine",
       "outputLabel": "Ausgabe",
       "processing": "Verarbeitung...",
-      "openwhisprCloud": "OpenWhispr Cloud",
       "providerLabel": "Anbieter",
       "run": "Test ausführen",
       "customEndpoint": "Benutzerdefinierter Endpoint"
@@ -926,10 +900,6 @@
       "account": {
         "description": "Profil & Anmeldung",
         "label": "Konto"
-      },
-      "plansBilling": {
-        "description": "Tarife, Nutzung & Abrechnung",
-        "label": "Tarife & Abrechnung"
       },
       "general": {
         "description": "Darstellung, Töne & Start",
@@ -954,192 +924,11 @@
       "system": {
         "description": "Updates, Speicher & Entwicklertools",
         "label": "System"
-      },
-      "workspace": {
-        "label": "Workspace",
-        "description": "Mitglieder, Teams, Abrechnung und API-Schlüssel"
       }
     },
     "title": "Einstellungen"
   },
   "settingsPage": {
-    "account": {
-      "badges": {
-        "free": "Kostenlos",
-        "limitReached": "Limit erreicht",
-        "pastDue": "Überfällig",
-        "pro": "Pro",
-        "business": "Business",
-        "trial": "Testversion"
-      },
-      "billing": {
-        "couldNotOpenDescription": "Die Abrechnungsseite konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
-        "couldNotOpenTitle": "Abrechnung konnte nicht geöffnet werden",
-        "manageBilling": "Abrechnung verwalten",
-        "opening": "Wird geöffnet...",
-        "updatePaymentMethod": "Zahlungsmethode aktualisieren"
-      },
-      "checkout": {
-        "couldNotOpenDescription": "Die Checkout-Seite konnte nicht geöffnet werden. Bitte versuchen Sie es erneut.",
-        "couldNotOpenTitle": "Checkout konnte nicht geöffnet werden",
-        "opening": "Wird geöffnet...",
-        "upgradeToPro": "Auf Pro upgraden"
-      },
-      "disabled": "Deaktiviert",
-      "featuresDisabled": "Kontofunktionen deaktiviert",
-      "featuresDisabledDescription": "Setzen Sie VITE_AUTH_URL in Ihrer .env-Datei, um Kontofunktionen zu aktivieren.",
-      "notConfigured": "Authentifizierung ist nicht konfiguriert",
-      "notSignedIn": "Nicht angemeldet",
-      "notSignedInDescription": "Erstellen Sie ein Konto, um Premium-Funktionen freizuschalten.",
-      "offline": "Offline",
-      "pastDue": {
-        "description": "Sie sind vorerst im kostenlosen Tarif. Aktualisieren Sie Ihre Zahlungsmethode, um wieder Pro zu erhalten.",
-        "title": "Ihre Zahlung konnte nicht verarbeitet werden"
-      },
-      "planDescriptions": {
-        "freeUsage": "{{used}} / {{limit}} Wörter diese Woche",
-        "nextBilling": "Nächste Abrechnung: {{date}}",
-        "pastDue": "{{used}} / {{limit}} kostenlose Wörter diese Woche – Zahlung aktualisieren, um Pro wiederherzustellen",
-        "trial": "Noch {{days}} Tage – unbegrenzte Transkriptionen",
-        "unlimited": "Unbegrenzt"
-      },
-      "planLabels": {
-        "free": "Kostenlos",
-        "pro": "Pro",
-        "business": "Business",
-        "trial": "Testversion"
-      },
-      "planTitle": "Tarif",
-      "pricing": {
-        "title": "Tarife",
-        "billedYearly": "Jährliche Abrechnung",
-        "free": {
-          "name": "Free",
-          "price": "$0",
-          "period": "für immer",
-          "features": [
-            "## OpenWhispr Cloud",
-            "2.000 Wörter/Woche Transkription",
-            "5 Stunden Meeting-Aufnahmen/Monat",
-            "## Immer kostenlos",
-            "Unbegrenzte lokale KI-Modelle",
-            "Unbegrenzte Cloud-Transkription mit eigenen API-Schlüsseln",
-            "Über 100 Sprachen unterstützt",
-            "Benutzerdefiniertes Wörterbuch",
-            "Keine Datenspeicherung",
-            "Community-Support"
-          ]
-        },
-        "pro": {
-          "name": "Pro",
-          "monthlyPrice": "$8",
-          "monthlyPeriod": "/Monat",
-          "annualPrice": "$80",
-          "annualPeriod": "/Jahr",
-          "annualEquivalent": "$6.67",
-          "includesPrefix": "Alle Free-Funktionen +",
-          "features": [
-            "Unbegrenzte Cloud-Transkription",
-            "20 Stunden Meeting-Aufnahmen/Monat",
-            "Geräteübergreifende Synchronisierung",
-            "Persönlicher API-Zugang",
-            "MCP-Integration in all deinen Apps",
-            "Mobile App (iOS demnächst verfügbar)",
-            "E-Mail-Support"
-          ],
-          "cta": "Jetzt starten",
-          "switchToAnnual": "Zum Jahresabo wechseln"
-        },
-        "business": {
-          "name": "Business",
-          "monthlyPrice": "$20",
-          "monthlyPeriod": "/Monat",
-          "annualPrice": "$200",
-          "annualPeriod": "/Jahr",
-          "annualEquivalent": "$16.67",
-          "includesPrefix": "Alle Pro-Funktionen +",
-          "badge": "Beliebteste Wahl",
-          "features": [
-            "Unbegrenzte Meeting-Aufnahmen",
-            "Agentenmodus",
-            "Chat über Ihre Daten",
-            "Prioritäts-Support"
-          ],
-          "cta": "Jetzt starten",
-          "switchToAnnual": "Zum Jahresabo wechseln"
-        },
-        "enterprise": {
-          "name": "Enterprise",
-          "price": "Individuell",
-          "subtitle": "Für erweiterte Sicherheit & Support",
-          "includesPrefix": "Alle Business-Funktionen +",
-          "features": [
-            "Verwaltete API-Guthaben",
-            "Cloud-Synchronisierung über Geräte hinweg",
-            "Team-Funktionen & Verwaltung",
-            "SSO & Compliance",
-            "Dedizierter Support"
-          ],
-          "cta": "Vertrieb kontaktieren"
-        },
-        "currentPlan": "Aktueller Tarif",
-        "upgrade": "Upgrade",
-        "downgrade": "Downgrade",
-        "planSwitched": "Plan erfolgreich aktualisiert",
-        "confirmSwitch": {
-          "title": "Planwechsel bestätigen",
-          "description": "Zu {{plan}} ({{interval}}) wechseln",
-          "monthly": "monatlich",
-          "yearly": "jährlich",
-          "chargeToday": "Heutige Belastung",
-          "accountCredit": "Kontoguthaben",
-          "newPrice": "Neuer Preis",
-          "nextBilling": "Nächste Abrechnung",
-          "mo": "mo",
-          "yr": "yr",
-          "cancel": "Abbrechen",
-          "confirm": "Bestätigen"
-        }
-      },
-      "rollingWeeklyLimit": "Rollierendes Wochenlimit",
-      "signOut": {
-        "failedDescription": "Beim Abmelden ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
-        "failedTitle": "Abmeldung fehlgeschlagen",
-        "signOut": "Abmelden",
-        "signingOut": "Abmeldung läuft..."
-      },
-      "signedIn": "Angemeldet",
-      "signedOutPlans": {
-        "button": "Kostenloses Konto erstellen"
-      },
-      "title": "Konto",
-      "toasts": {
-        "approachingLimit": {
-          "description": "Sie haben diese Woche {{used}} von {{limit}} kostenlosen Wörtern verwendet. Upgraden Sie auf Pro für unbegrenzte Nutzung.",
-          "title": "Wochenlimit fast erreicht"
-        }
-      },
-      "trialCta": {
-        "button": "Kostenloses Konto erstellen",
-        "description": "Unbegrenzte Transkriptionen, bevorzugte Verarbeitung und mehr.",
-        "title": "Pro 7 Tage kostenlos testen"
-      },
-      "user": "Benutzer",
-      "wordsRemaining": "{{remaining}} verbleibend",
-      "deleteAccount": {
-        "label": "Konto löschen",
-        "labelDescription": "Konto, alle Cloud-Daten und lokale Daten dauerhaft löschen. Diese Aktion kann nicht rückgängig gemacht werden.",
-        "button": "Mein Konto löschen",
-        "deleting": "Wird gelöscht...",
-        "title": "Konto löschen?",
-        "description": "Dies löscht dauerhaft Ihr OpenWhispr-Konto, alle in der Cloud synchronisierten Notizen und alle lokalen Daten, einschließlich Transkriptionen, Audioaufnahmen, heruntergeladene Modelle, Kalenderverbindungen und Einstellungen. Diese Aktion kann nicht rückgängig gemacht werden.",
-        "confirmText": "Alles löschen",
-        "successTitle": "Konto gelöscht",
-        "successDescription": "Ihr Konto und alle Daten wurden gelöscht. Die App wird jetzt neu geladen.",
-        "failedTitle": "Löschung fehlgeschlagen",
-        "failedDescription": "Beim Löschen Ihres Kontos ist ein Fehler aufgetreten. Ihre lokalen Daten wurden möglicherweise teilweise entfernt. Bitte versuchen Sie es erneut."
-      }
-    },
     "agentConfig": {
       "agentName": "Agent-Name",
       "description": "Benennen Sie Ihren KI-Assistenten, damit Sie ihn beim Diktieren direkt ansprechen können",
@@ -1168,7 +957,6 @@
       "enableTextCleanup": "Textbereinigung aktivieren",
       "enableTextCleanupDescription": "KI entfernt Füllwörter, korrigiert Grammatik und Zeichensetzung",
       "modes": {
-        "openwhispr": "OpenWhispr Cloud",
         "providers": "Cloud-Anbieter",
         "local": "Lokal",
         "selfHosted": "Selbst gehostet",
@@ -1179,13 +967,11 @@
         "enterprise": "Enterprise",
         "enterpriseDesc": "Nutzen Sie das Cloud-Konto Ihrer Organisation (AWS, Azure, GCP)."
       },
-      "openwhisprCloud": "OpenWhispr Cloud",
       "openwhisprCloudDescription": "Zuverlässige Ergebnisse. Keine Einrichtung nötig.",
       "title": "KI-Textverbesserung",
       "toasts": {
         "switchedCloud": {
-          "description": "Textverbesserung verwendet jetzt den OpenWhispr-Cloud-Dienst.",
-          "title": "Zu OpenWhispr Cloud gewechselt"
+          "description": "Textverbesserung verwendet jetzt den OpenWhispr-Cloud-Dienst."
         },
         "switchedCustom": {
           "description": "Konfigurieren Sie Ihren eigenen Anbieter und API-Schlüssel.",
@@ -1318,8 +1104,6 @@
         "disableAllDescription": "Alles stummschalten außer Fehlermeldungen",
         "meetingDetection": "Meeting-Erkennung",
         "meetingDetectionDescription": "Benachrichtigen, wenn ein Meeting erkannt wird, um die Aufnahme zu starten",
-        "calendarReminders": "Kalendererinnerungen",
-        "calendarRemindersDescription": "Benachrichtigen, wenn ein geplantes Meeting bald beginnt",
         "updates": "App-Updates",
         "updatesDescription": "Benachrichtigen, wenn eine neue Version verfügbar ist"
       },
@@ -1485,8 +1269,6 @@
       "cloudNotesMigrationDone": "Alle Notizen gesichert",
       "description": "Steuern Sie, welche Daten Ihr Gerät verlassen. Standardmäßig ist alles deaktiviert.",
       "title": "Datenschutz",
-      "usageAnalytics": "Nutzungsanalysen",
-      "usageAnalyticsDescription": "Helfen Sie uns, OpenWhispr zu verbessern, indem Sie anonyme Leistungsdaten teilen. Wir senden niemals Transkriptionsinhalte – nur Timing- und Fehlerdaten.",
       "dataRetention": "Datenaufbewahrung",
       "dataRetentionDescription": "Transkriptionen und Audio lokal im Verlauf speichern. Wenn deaktiviert, werden Transkriptionen eingefügt, aber nicht gespeichert.",
       "hoursAgo": "vor {{count}} Std.",
@@ -1546,7 +1328,6 @@
       "customSetupDescription": "Verwenden Sie Ihren eigenen Anbieter und API-Schlüssel.",
       "description": "Wählen Sie, wie OpenWhispr Ihre Stimme transkribiert",
       "modes": {
-        "openwhispr": "OpenWhispr Cloud",
         "providers": "Cloud-Anbieter",
         "local": "Lokal",
         "selfHosted": "Selbst gehostet",
@@ -1555,13 +1336,11 @@
         "localDesc": "Modelle auf dem Gerät. Voll privat.",
         "selfHostedDesc": "Eigener Server in Ihrem Netzwerk."
       },
-      "openwhisprCloud": "OpenWhispr Cloud",
       "openwhisprCloudDescription": "Zuverlässige Ergebnisse. Keine Einrichtung nötig.",
       "title": "Sprache-zu-Text",
       "toasts": {
         "switchedCloud": {
-          "description": "Transkription verwendet jetzt den OpenWhispr-Cloud-Dienst.",
-          "title": "Zu OpenWhispr Cloud gewechselt"
+          "description": "Transkription verwendet jetzt den OpenWhispr-Cloud-Dienst."
         },
         "switchedCustom": {
           "description": "Konfigurieren Sie Ihren eigenen Anbieter und API-Schlüssel.",
@@ -1647,91 +1426,6 @@
       "endpointUrl": "Endpunkt-URL",
       "serverUrl": "Server-URL",
       "apiKeyOptional": "API-Schlüssel (optional)"
-    },
-    "workspace": {
-      "title": "Workspace",
-      "description": "Arbeiten Sie zusammen, teilen Sie Notizen und verwalten Sie die Abrechnung an einem Ort.",
-      "empty": {
-        "title": "Ersten Workspace erstellen",
-        "description": "Workspaces ermöglichen die Zusammenarbeit und das Teilen von Notizen.",
-        "create": "Workspace erstellen"
-      },
-      "tab": {
-        "general": "Allgemein",
-        "members": "Mitglieder",
-        "teams": "Teams",
-        "billing": "Abrechnung",
-        "developer": "Entwickler"
-      },
-      "role": {
-        "owner": "Inhaber",
-        "admin": "Administrator",
-        "member": "Mitglied"
-      },
-      "general": {
-        "nameLabel": "Workspace-Name",
-        "slugLabel": "Slug",
-        "slugHint": "Wird in URLs verwendet. Nur Kleinbuchstaben, Ziffern und Bindestriche.",
-        "saved": "Workspace aktualisiert",
-        "dangerTitle": "Workspace löschen",
-        "dangerDescription": "Alle geteilten Notizen, Ordner und Integrationen werden gelöscht. Dies kann nicht rückgängig gemacht werden.",
-        "delete": "Workspace löschen",
-        "confirmTitle": "{{name}} löschen?",
-        "confirmDescription": "Dies kündigt das Abonnement und entfernt alle Workspace-Daten dauerhaft."
-      },
-      "members": {
-        "title": "Mitglieder",
-        "description": "{{count}} von {{seats}} Plätzen belegt.",
-        "invite": "Einladen",
-        "empty": "Noch keine Mitglieder.",
-        "roleUpdated": "Rolle aktualisiert",
-        "promote": "Zum Administrator machen",
-        "demote": "Zum Mitglied machen",
-        "transferOwnership": "Eigentum übertragen",
-        "remove": "Aus Workspace entfernen"
-      },
-      "invites": {
-        "title": "Ausstehende Einladungen",
-        "resend": "Erneut senden",
-        "revoke": "Widerrufen",
-        "resent": "Einladung erneut gesendet"
-      },
-      "teams": {
-        "title": "Teams",
-        "description": "Mitglieder gruppieren für gezieltes Teilen.",
-        "new": "Neues Team",
-        "empty": "Noch keine Teams.",
-        "createFirst": "Erstellen Sie Ihr erstes Team",
-        "createTitle": "Team erstellen",
-        "nameLabel": "Team-Name",
-        "descriptionLabel": "Beschreibung",
-        "memberCount": "{{count}} Mitglieder"
-      },
-      "billing": {
-        "title": "Abrechnung",
-        "description": "Plan, Plätze und Zahlung.",
-        "plan": "Plan",
-        "seats": "Plätze",
-        "nextInvoice": "Nächste Rechnung",
-        "manageStripe": "In Stripe verwalten",
-        "startSubscription": "Abonnement starten"
-      },
-      "developer": {
-        "title": "API-Schlüssel",
-        "description": "Programmatischer Zugriff auf diesen Workspace.",
-        "empty": "Noch keine API-Schlüssel. Erstellen Sie einen für Integrationen.",
-        "new": "Neuer Schlüssel",
-        "create": "Schlüssel erstellen",
-        "createTitle": "API-Schlüssel erstellen",
-        "createDescription": "Wählen Sie die Berechtigungen. Sie können den Schlüssel jederzeit widerrufen.",
-        "nameLabel": "Schlüsselname",
-        "namePlaceholder": "Produktionsintegration",
-        "revoke": "Schlüssel widerrufen",
-        "lastUsed": "Zuletzt verwendet {{date}}",
-        "neverUsed": "Nie verwendet",
-        "keyCreatedTitle": "API-Schlüssel erstellt",
-        "keyCreatedDescription": "Kopieren Sie diesen Schlüssel jetzt — Sie können ihn nicht erneut sehen."
-      }
     }
   },
   "models": {
@@ -1823,78 +1517,6 @@
         "segmentation": "Sprachgrenzerkennung für die Sprecherzuordnung",
         "embedding_en": "Stimmerkennung zur Sprecheridentifikation"
       }
-    }
-  },
-  "referral": {
-    "title": "Empfehlen und Belohnungen erhalten",
-    "subtitle": "Schenke einen Monat. Erhalte einen Monat.",
-    "modalTitle": "Freunde einladen",
-    "tabs": {
-      "refer": "Empfehlen",
-      "pastInvites": "Vergangene Einladungen"
-    },
-    "howItWorks": {
-      "shareLink": "Teile deinen Einladungslink",
-      "theySignUp": "Sie registrieren sich und erhalten einen ",
-      "freeMonthOfPro": "kostenlosen Monat Pro",
-      "youGet": "Du erhältst einen ",
-      "freeMonth": "kostenlosen Monat",
-      "whenTheyDictate": " wenn sie 2.000 Wörter diktieren"
-    },
-    "inviteLink": {
-      "title": "Dein Einladungslink",
-      "copy": "Kopieren",
-      "copied": "Kopiert"
-    },
-    "sendInvites": {
-      "title": "Einladungen senden",
-      "placeholder": "friend@example.com",
-      "send": "Senden",
-      "sending": "Wird gesendet"
-    },
-    "stats": {
-      "referred": "Empfohlen",
-      "converted": "Umgewandelt",
-      "monthsEarned": "Verdiente Monate"
-    },
-    "status": {
-      "converted": "Umgewandelt",
-      "opened": "Geöffnet",
-      "failed": "Fehlgeschlagen",
-      "sent": "Gesendet"
-    },
-    "empty": {
-      "title": "Noch keine Einladungen gesendet",
-      "description": "Teile deinen Link oder sende eine Einladung, um loszulegen"
-    },
-    "toasts": {
-      "copiedTitle": "Kopiert!",
-      "copiedDescription": "Empfehlungslink in die Zwischenablage kopiert",
-      "copyFailedTitle": "Kopieren fehlgeschlagen",
-      "copyFailedDescription": "Link konnte nicht in die Zwischenablage kopiert werden",
-      "invalidEmailTitle": "Ungültige E-Mail",
-      "invalidEmailDescription": "Bitte gib eine gültige E-Mail-Adresse ein",
-      "inviteSentTitle": "Einladung gesendet!",
-      "inviteSentDescription": "Einladung an {{email}} gesendet",
-      "sendFailedTitle": "Senden fehlgeschlagen",
-      "sendFailedDescription": "Einladung konnte nicht gesendet werden. Bitte versuche es erneut."
-    },
-    "errors": {
-      "unableToLoad": "Empfehlungsdaten konnten nicht geladen werden",
-      "unableToLoadStats": "Empfehlungsstatistiken konnten nicht geladen werden. Bitte versuche es später erneut."
-    },
-    "tryAgain": "Erneut versuchen",
-    "card": {
-      "brand": "OpenWhispr",
-      "signalId": "Signal ID",
-      "audioSignature": "Deine Audio-Signatur",
-      "stop": "Stopp",
-      "playSignal": "Signal abspielen"
-    },
-    "friends": {
-      "title": "Freunde",
-      "completed": "Abgeschlossen",
-      "sentInvites": "Gesendete Einladungen"
     }
   },
   "notes": {
@@ -2076,7 +1698,6 @@
       "setupTitle": "Transkription einrichten",
       "setupDescription": "Wähle, wie dein Audio transkribiert werden soll. Dies gilt auch für die Live-Diktierfunktion.",
       "continue": "Weiter",
-      "openwhisprCloud": "OpenWhispr Cloud",
       "custom": "Benutzerdefiniert",
       "selectFolder": "Ordner auswählen",
       "transcriptionFailed": "Transkription fehlgeschlagen",
@@ -2088,15 +1709,8 @@
       "fileTooLarge": "Diese Datei überschreitet das Limit von 500 MB.",
       "largeFileNote": "Große Dateien werden aufgeteilt und parallel transkribiert.",
       "chunkProgress": "Transkribiere Teil {{completed}} von {{total}}...",
-      "paidPlanRequired": "Cloud-Transkription für Dateien über 25 MB erfordert einen kostenpflichtigen Plan. Große Dateien werden mit OpenWhispr Cloud für zuverlässige, hochwertige Ergebnisse verarbeitet.",
       "byokTooLarge": "API-Schlüssel von Drittanbietern unterstützen nur Dateien bis 25 MB.",
-      "byokTooLargeDetail": "Für Dateien über 25 MB übernimmt OpenWhispr Cloud das Aufteilen, die parallele Verarbeitung und das Zusammenführen — so erhältst du zuverlässige Ergebnisse ohne die Einschränkungen von Drittanbietern.",
-      "byokTooLargeNeedsAccount": "Erstelle ein Konto und wechsle zu einem kostenpflichtigen Plan, um größere Dateien mit OpenWhispr Cloud zu transkribieren.",
-      "byokTooLargeNeedsUpgrade": "Wechsle zu einem kostenpflichtigen Plan, um größere Dateien mit OpenWhispr Cloud zu transkribieren.",
-      "switchToCloudForLargeFiles": "Wechsle zu OpenWhispr Cloud, um diese Datei zu transkribieren.",
-      "createAccount": "Konto erstellen",
-      "upgrade": "Upgraden",
-      "switchToCloud": "OpenWhispr Cloud"
+      "createAccount": "Konto erstellen"
     },
     "meeting": {
       "title": "Besprechungsnotizen",
@@ -2190,10 +1804,6 @@
         "enabled": "Aktiviert"
       }
     },
-    "realtimeBanner": {
-      "message": "Echtzeit-Transkription mit Pro verfügbar",
-      "upgrade": "Upgraden"
-    },
     "enhance": {
       "title": "Verbesserungsfehler"
     },
@@ -2279,21 +1889,15 @@
     "notes": "Notizen",
     "upload": "Hochladen",
     "dictionary": "Wörterbuch",
-    "referral": "Gratis-Monat erhalten",
     "settings": "Einstellungen",
     "support": "Support",
     "limitReached": "Wochenlimit erreicht",
-    "limitReachedDescription": "Upgraden Sie auf Pro für unbegrenzte Transkriptionen.",
-    "viewPlans": "Tarife ansehen",
-    "upgradeTitle": "Auf Pro upgraden",
-    "upgradeDescription": "Unbegrenzte Transkriptionen und mehr.",
+    "limitReachedDescription": "Configure a local model, BYOK provider, or self-hosted endpoint to continue.",
     "learnMore": "Mehr erfahren",
     "integrations": "Integrationen",
     "defaultUser": "Benutzer",
     "notSignedIn": "Nicht angemeldet",
-    "chat": "Chat",
-    "inviteTeammate": "Teammitglied einladen",
-    "createWorkspace": "Workspace erstellen"
+    "chat": "Chat"
   },
   "chat": {
     "newChat": "Neuer Chat",
@@ -2317,29 +1921,8 @@
     "searchDescription": "In allen Unterhaltungen suchen",
     "newChatEmpty": "Fragen Sie zu Ihren Notizen, Transkripten oder anderem"
   },
-  "usage": {
-    "approachingLimit": "Wochenlimit fast erreicht",
-    "approachingLimitDescription": "Du hast diese Woche {{wordsUsed}} von {{limit}} kostenlosen Wörtern verwendet.",
-    "yourPlan": "Dein Tarif",
-    "trial": "Testphase (noch {{days}} Tag)",
-    "trial_other": "Testphase (noch {{days}} Tage)",
-    "pro": "Pro",
-    "business": "Business",
-    "unlimitedTrial": "Unbegrenzte Transkriptionen während deiner Testphase",
-    "unlimited": "Unbegrenzte Transkriptionen",
-    "manageSubscription": "Abonnement verwalten",
-    "weeklyUsage": "Wöchentliche Nutzung",
-    "limitReached": "Limit erreicht",
-    "free": "Kostenlos",
-    "wordsRemaining": "Noch {{remaining}} Wörter",
-    "rollingLimit": "Rollierendes Wochenlimit",
-    "upgradeToPro": "Auf Pro upgraden",
-    "useYourOwnKey": "Eigenen API-Schlüssel verwenden",
-    "upgradeUnlimited": "Auf Pro upgraden – unbegrenzte Transkriptionen"
-  },
   "support": {
     "documentation": "Dokumentation",
-    "joinDiscord": "Discord beitreten",
     "contactSupport": "Support kontaktieren",
     "submitBug": "Fehler melden"
   },
@@ -2409,7 +1992,6 @@
     "enabled": "Enable voice agent",
     "enabledDescription": "Dictate instructions to your agent. Activate by saying \"{{agentName}}\". Configurable below.",
     "modes": {
-      "openwhispr": "OpenWhispr Cloud",
       "openwhisprDesc": "Use the OpenWhispr-managed agent — no API key needed.",
       "providers": "Bring your own key",
       "providersDesc": "Connect to OpenAI, Anthropic, Gemini, or Groq with your own API key.",
@@ -2436,7 +2018,6 @@
       "systemPromptDescription": "Benutzerdefinierte Anweisungen für den Agenten",
       "systemPromptPlaceholder": "Benutzerdefinierten System-Prompt eingeben...",
       "modes": {
-        "openwhispr": "OpenWhispr Cloud",
         "providers": "Cloud-Anbieter",
         "local": "Lokal",
         "selfHosted": "Selbst gehostet",
@@ -2447,7 +2028,6 @@
         "enterprise": "Enterprise",
         "enterpriseDesc": "Nutzen Sie das Cloud-Konto Ihrer Organisation (AWS, Azure, GCP)."
       },
-      "openwhisprCloud": "OpenWhispr Cloud",
       "openwhisprCloudDescription": "Zuverlässige Ergebnisse. Keine Einrichtung nötig.",
       "customSetup": "Eigene Konfiguration (BYOK)",
       "customSetupDescription": "Eigene API-Schlüssel verwenden und bevorzugtes Modell auswählen"
@@ -2483,7 +2063,6 @@
       "search_notesStatus": "Notizen werden durchsucht...",
       "web_searchStatus": "Websuche...",
       "copy_to_clipboardStatus": "In Zwischenablage kopieren...",
-      "get_calendar_eventsStatus": "Kalender wird geprüft...",
       "get_noteStatus": "Notiz wird gelesen...",
       "create_noteStatus": "Notiz wird erstellt...",
       "update_noteStatus": "Notiz wird aktualisiert...",
@@ -2493,8 +2072,6 @@
       "searchResults": "{{count}} Ergebnis gefunden",
       "searchResults_plural": "{{count}} Ergebnisse gefunden",
       "openNote": "Notiz öffnen",
-      "calendarEvents": "{{count}} Termin gefunden",
-      "calendarEvents_plural": "{{count}} Termine gefunden",
       "noResults": "Keine Ergebnisse",
       "error": "Werkzeugfehler",
       "unknownTool": "Unbekanntes Werkzeug: {{name}}",
@@ -2504,48 +2081,8 @@
   "integrations": {
     "title": "Integrationen",
     "description": "Verbinde Dienste, um deinen Workflow zu verbessern",
-    "googleCalendar": {
-      "title": "Google Calendar",
-      "optional": "Optional",
-      "description": "Meeting-Titel und Teilnehmer automatisch aus deinem Kalender übernehmen.",
-      "connect": "Google Calendar verbinden",
-      "connecting": "Verbinde...",
-      "connected": "Verbunden",
-      "addAnother": "Weiteren Kalender hinzufügen",
-      "primaryOnly": "Nur Hauptkalender synchronisieren",
-      "primaryOnlyDescription": "Termine aus mit dir geteilten Kalendern ignorieren.",
-      "disconnect": "Trennen",
-      "disconnectConfirm": "{{email}} trennen?",
-      "disconnectDescription": "Besprechungsnotizen werden von diesem Kalender nicht mehr aufgezeichnet.",
-      "systemAudioRequired": "Systemaudio-Berechtigung erforderlich",
-      "systemAudioDescription": "Zum Transkribieren von Meetings benötigt OpenWhispr die Systemaudio-Berechtigung, um den Ton anderer Teilnehmer aufzunehmen. Wir nehmen Ihren Bildschirm nie auf. Sie werden zu den Systemeinstellungen weitergeleitet, um diese zu aktivieren.",
-      "openSettings": "Systemeinstellungen öffnen"
-    },
     "sections": {
-      "calendar": "Kalender",
-      "api": "API",
-      "mcp": "MCP",
       "cli": "CLI"
-    },
-    "api": {
-      "title": "API-Schlüssel",
-      "description": "Verwalte API-Schlüssel für programmatischen Zugriff",
-      "proRequired": "Upgrade auf einen kostenpflichtigen Plan, um die API zu nutzen",
-      "manage": "Schlüssel verwalten",
-      "viewPlans": "Pläne ansehen",
-      "dialogTitle": "API-Schlüssel"
-    },
-    "mcp": {
-      "title": "Bring deine Notizen in deine KI-Tools",
-      "description": "Chatte, suche und arbeite mit deinen Notizen in Claude, ChatGPT und Cursor.",
-      "step1": "Füge OpenWhispr MCP in deinem KI-Tool mit der öffentlichen URL hinzu",
-      "step2": "Erstelle oben einen API-Schlüssel mit den benötigten Berechtigungen.",
-      "step3": "Füge den Schlüssel als Authorization-Header ein, um zu verbinden.",
-      "learnMore": "Mehr erfahren",
-      "viewPlans": "Pläne ansehen",
-      "copyUrl": "MCP-URL kopieren",
-      "proRequired": "Upgrade auf einen kostenpflichtigen Plan, um OpenWhispr mit Claude, ChatGPT und Cursor zu verbinden.",
-      "copied": "Kopiert"
     },
     "cli": {
       "title": "Kommandozeilen-Zugriff",
@@ -2554,7 +2091,6 @@
       "learnMore": "Dokumentation lesen",
       "copyDocsLink": "Doku-Link kopieren",
       "docsLinkCopied": "Doku-Link kopiert",
-      "viewPlans": "Pläne ansehen",
       "local": {
         "label": "Lokal",
         "freeBadge": "Kostenlos",
@@ -2565,70 +2101,10 @@
         "description": "Synchronisiere geräteübergreifend mit deinem API-Key.",
         "proRequired": "Upgrade auf einen kostenpflichtigen Plan, um die CLI im Cloud-Modus zu nutzen."
       }
-    },
-    "plan": {
-      "title": "Dein Plan",
-      "current": "Aktuell",
-      "free": "Kostenlos",
-      "freeLimit": "5 Meetings / Monat",
-      "essential": "Essential",
-      "essentialLimit": "20 Meetings / Monat",
-      "pro": "Pro",
-      "proLimit": "Unbegrenzt",
-      "upgrade": "Upgrade"
-    },
-    "notABot": {
-      "title": "OpenWhispr ist ein Meeting-Rekorder, kein Bot",
-      "description": "OpenWhispr erfasst Audio direkt von deinem System — es nimmt niemals als Teilnehmer an deinen Meetings teil. Verbinde einfach deinen Kalender und mach Notizen wie gewohnt."
-    }
-  },
-  "calendar": {
-    "title": "Google Kalender",
-    "status": "Status",
-    "connected": "Verbunden",
-    "disconnected": "Getrennt",
-    "notConnectedDescription": "Verbinden, um Meetings zu erkennen und aufzuzeichnen",
-    "connectCta": {
-      "title": "Kalender-Integration",
-      "description": "Meetings automatisch erkennen und Transkriptionen aufzeichnen"
-    },
-    "connect": "Google Kalender verbinden",
-    "connecting": "Verbinde...",
-    "disconnect": "Trennen",
-    "disconnecting": "Trennen...",
-    "sync": "Synchronisieren",
-    "syncing": "Synchronisiere...",
-    "calendarsTitle": "Kalender",
-    "upcomingTitle": "Anstehend",
-    "noUpcoming": "Keine anstehenden Ereignisse",
-    "meetingStarting": "Meeting beginnt jetzt",
-    "today": "Heute",
-    "tomorrow": "Morgen",
-    "detection": {
-      "title": "Meeting-Erkennung",
-      "description": "Automatisch erkennen, wenn du in einem Meeting bist",
-      "processDetection": "App-Erkennung",
-      "processDescription": "Erkennen, welche App du verwendest, wenn ein Meeting erkannt wird",
-      "audioDetection": "Audio-Erkennung",
-      "audioDescription": "Benachrichtigung bei anhaltender Mikrofonaktivität"
     }
   },
   "upcoming": {
-    "title": "Anstehende Meetings",
-    "transcriptions": "Transkriptionen",
-    "tomorrow": "Morgen",
-    "noMoreMeetings": "Keine weiteren Meetings heute",
-    "now": "Jetzt",
-    "join": "Beitreten",
-    "untitledEvent": "Unbenanntes Ereignis",
-    "systemAudioRequired": "Die Systemaudio-Berechtigung wird benötigt, um den Ton anderer Teilnehmer aufzunehmen.",
-    "openSettings": "Systemeinstellungen öffnen",
-    "signInRequired": "Melden Sie sich an, um Meeting-Aufnahmen zu nutzen",
-    "signInDescription": "Erstellen Sie ein Konto oder melden Sie sich an, um Meetings aufzunehmen und zu transkribieren.",
-    "connectCalendar": "Kalender verbinden",
-    "connectCalendarDescription": "Verknüpfe deinen Google Kalender, um anstehende Meetings zu sehen und automatisch Notizen aufzuzeichnen.",
-    "notABot": "OpenWhispr nimmt über dein Systemaudio auf — es tritt niemals als Bot deinen Meetings bei.",
-    "connectCalendarButton": "Kalender verbinden"
+    "tomorrow": "Morgen"
   },
   "notesView": {
     "searchPlaceholder": "Notizen durchsuchen…",
@@ -2652,37 +2128,7 @@
     "deleteNote": "Notiz löschen",
     "deleteConfirmTitle": "Notiz löschen?",
     "deleteConfirmDescription": "Diese Notiz wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.",
-    "deleteConfirm": "Löschen",
-    "share": {
-      "button": "Teilen",
-      "dialog": {
-        "title": "Notiz teilen",
-        "searchPlaceholder": "Personen per E-Mail hinzufügen",
-        "emailLabel": "E-Mail des Empfängers",
-        "shareButton": "Teilen",
-        "copyLink": "Link kopieren",
-        "copied": "Kopiert",
-        "owner": "Eigentümer",
-        "pending": "Ausstehend",
-        "accepted": "Hat Zugriff",
-        "resend": "Einladung erneut senden",
-        "revoke": "Entfernen",
-        "invitationActions": "Einladungsaktionen",
-        "permissionRequired": "Nur der Notiz-Eigentümer kann die Freigabe ändern.",
-        "visibility": {
-          "label": "Sichtbarkeit",
-          "link": "Jeder mit dem Link",
-          "domain": "Alle bei {{domain}} mit dem Link",
-          "invited": "Nur eingeladene Personen"
-        },
-        "error": {
-          "invalidEmail": "Gib eine gültige E-Mail-Adresse ein",
-          "alreadyInvited": "{{email}} ist bereits eingeladen",
-          "inviteFailed": "Die Einladung konnte nicht gesendet werden. Versuche es erneut.",
-          "linkUnavailable": "Generiere oder rotiere den Link, um ihn zu kopieren"
-        }
-      }
-    }
+    "deleteConfirm": "Löschen"
   },
   "commandSearch": {
     "title": "Suche",
@@ -2710,54 +2156,6 @@
     "title": "Berechtigungen erforderlich",
     "description": "OpenWhispr benötigt einige Berechtigungen, um auf diesem Computer zu funktionieren.",
     "continue": "Weiter"
-  },
-  "apiKeysSection": {
-    "title": "API-Schlüssel",
-    "description": "Erstellen Sie Schlüssel für den programmatischen Zugriff auf die OpenWhispr-API.",
-    "docsLink": "API-Dokumentation",
-    "empty": "Noch keine API-Schlüssel",
-    "createButton": "API-Schlüssel erstellen",
-    "create": {
-      "title": "API-Schlüssel erstellen",
-      "nameLabel": "Schlüsselname",
-      "namePlaceholder": "z. B. Meine Integration",
-      "scopesLabel": "Berechtigungen",
-      "expiryLabel": "Ablauf",
-      "expiryOptions": {
-        "never": "Läuft nicht ab",
-        "30days": "30 Tage",
-        "60days": "60 Tage",
-        "90days": "90 Tage",
-        "1year": "1 Jahr"
-      },
-      "submit": "Erstellen",
-      "cancel": "Abbrechen"
-    },
-    "created": {
-      "title": "API-Schlüssel erstellt",
-      "warning": "Kopieren Sie diesen Schlüssel jetzt. Er wird nicht erneut angezeigt.",
-      "copied": "Kopiert!",
-      "copyButton": "In die Zwischenablage kopieren",
-      "done": "Fertig"
-    },
-    "scopes": {
-      "notesRead": "Notizen lesen",
-      "notesWrite": "Notizen erstellen und bearbeiten",
-      "transcriptionsRead": "Transkriptionen lesen"
-    },
-    "revoke": {
-      "button": "Widerrufen",
-      "confirm": "Diesen Schlüssel widerrufen? Alle Integrationen, die ihn verwenden, funktionieren dann nicht mehr.",
-      "success": "API-Schlüssel widerrufen"
-    },
-    "neverUsed": "Nie verwendet",
-    "lastUsed": "Zuletzt verwendet {{time}}",
-    "maxKeysReached": "Maximal {{max}} Schlüssel erlaubt",
-    "errors": {
-      "loadFailed": "API-Schlüssel konnten nicht geladen werden",
-      "createFailed": "API-Schlüssel konnte nicht erstellt werden",
-      "revokeFailed": "API-Schlüssel konnte nicht widerrufen werden"
-    }
   },
   "embeddedChat": {
     "askPlaceholder": "Frag etwas...",
@@ -2830,54 +2228,6 @@
       "others": "Andere"
     }
   },
-  "workspaces": {
-    "switcher": {
-      "personal": "Persönlich",
-      "workspaces": "Workspaces",
-      "empty": "Noch keine Workspaces",
-      "create": "Workspace erstellen…"
-    },
-    "create": {
-      "title": "Workspace erstellen",
-      "description": "Workspaces ermöglichen Zusammenarbeit, geteilte Notizen und gemeinsame Abrechnung.",
-      "nameLabel": "Workspace-Name",
-      "namePlaceholder": "Acme Corp",
-      "submit": "Workspace erstellen",
-      "submitting": "Erstelle…",
-      "errorTitle": "Workspace konnte nicht erstellt werden"
-    },
-    "created": {
-      "title": "Workspace erstellt",
-      "description": "Sie sind nun Inhaber von {{name}}."
-    },
-    "invite": {
-      "title": "Zu {{workspace}} einladen",
-      "description": "Fügen Sie Teammitglieder per E-Mail hinzu. Sie erhalten einen Beitrittslink.",
-      "emailLabel": "E-Mail",
-      "roleLabel": "Rolle",
-      "teamsLabel": "Zu Teams hinzufügen",
-      "submit": "Einladung senden",
-      "submitting": "Sende…",
-      "sentTitle": "Einladung gesendet",
-      "sentDescription": "Einladung an {{email}} gesendet.",
-      "errorTitle": "Einladung konnte nicht gesendet werden",
-      "role": {
-        "admin": "Administrator",
-        "member": "Mitglied"
-      }
-    },
-    "accept": {
-      "title": "Workspace beitreten",
-      "description": "{{inviter}} hat Sie eingeladen, {{workspace}} als {{role}} beizutreten.",
-      "loading": "Lade Einladung…",
-      "accept": "Einladung annehmen",
-      "accepting": "Annehmen…",
-      "signInToAccept": "Anmelden zum Annehmen",
-      "successTitle": "Beigetreten",
-      "successDescription": "Willkommen bei {{name}}.",
-      "errorTitle": "Einladung konnte nicht angenommen werden"
-    }
-  },
   "meetingNotification": {
     "detectedTitle": "Meeting erkannt",
     "detectedBody": "Es klingt, als wären Sie in einem Meeting. Möchten Sie Notizen machen?",
@@ -2885,5 +2235,13 @@
     "upcomingBody": "Ihr Meeting beginnt. Möchten Sie Notizen machen?",
     "startRecording": "Aufnahme starten",
     "newNoteTitle": "Neue Notiz"
+  },
+  "meetingDetection": {
+    "title": "Meeting-Erkennung",
+    "description": "Automatisch erkennen, wenn du in einem Meeting bist",
+    "processDetection": "App-Erkennung",
+    "processDescription": "Erkennen, welche App du verwendest, wenn ein Meeting erkannt wird",
+    "audioDetection": "Audio-Erkennung",
+    "audioDescription": "Benachrichtigung bei anhaltender Mikrofonaktivität"
   }
 }

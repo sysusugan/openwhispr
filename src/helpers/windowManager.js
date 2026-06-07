@@ -31,7 +31,6 @@ class WindowManager {
     this.notificationPrefs = {
       notificationsEnabled: true,
       notifyMeetingDetection: true,
-      notifyCalendarReminders: true,
       notifyUpdates: true,
     };
     this.tray = null;
