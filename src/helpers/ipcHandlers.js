@@ -1551,7 +1551,7 @@ class IPCHandlers {
       return result;
     });
 
-    ipcMain.handle("export-note", async (event, noteId, format) => {
+    ipcMain.handle("export-note", async (event, noteId, options) => {
       try {
         const note = this.databaseManager.getNote(noteId);
         if (!note) return { success: false, error: "Note not found" };
@@ -1561,12 +1561,20 @@ class IPCHandlers {
         const path = require("path");
         const os = require("os");
         const {
-          appendUnreferencedNoteAssets,
           copyNoteAssetsForMarkdown,
           inlineNoteAssetsForHtml,
           markdownToHtml,
-          selectNoteExportContent,
+          normalizeNoteExportField,
         } = require("./noteAssetExport");
+        const { buildNoteExport } = require("./noteExportFormatter");
+        const requestedFormat = typeof options === "string" ? options : options?.format;
+        const format =
+          requestedFormat === "txt" || requestedFormat === "pdf" || requestedFormat === "md"
+            ? requestedFormat
+            : "md";
+        const field = normalizeNoteExportField(
+          typeof options === "object" && options ? options.field : "content"
+        );
         const ext = format === "txt" ? "txt" : format === "pdf" ? "pdf" : "md";
         const safeName = (note.title || "Untitled").replace(/[/\\?%*:|"<>]/g, "-");
         const filterByFormat = {
@@ -1586,24 +1594,11 @@ class IPCHandlers {
             ? result.filePath
             : `${result.filePath.replace(/\.[^.\\/]+$/, "")}.${ext}`;
 
-        let exportContent;
-        if (format === "txt") {
-          exportContent = selectNoteExportContent(note)
-            .replace(/<img\b[^>]*>/gi, "")
-            .replace(/#{1,6}\s+/g, "")
-            .replace(/[*_~`]+/g, "")
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-            .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-            .replace(/^>\s+/gm, "")
-            .trim();
-        } else {
-          exportContent = selectNoteExportContent(note);
-        }
-        exportContent = appendUnreferencedNoteAssets(
-          exportContent,
-          this.databaseManager,
-          note.id
-        );
+        const exportContent = buildNoteExport(note, {
+          format: format === "pdf" ? "md" : format,
+          fields: [field],
+          includeTitle: false,
+        });
 
         if (format === "pdf") {
           const markdown = inlineNoteAssetsForHtml(exportContent, this.databaseManager);
@@ -1703,11 +1698,12 @@ class IPCHandlers {
     ipcMain.handle("export-selected-notes", async (_event, noteIds, options) => {
       try {
         const {
-          buildSelectedNoteExport,
+          buildNoteExport,
           normalizeExportOptions,
           safeExportBaseName,
           uniqueExportPath,
         } = require("./noteExportFormatter");
+        const { copyNoteAssetsForMarkdown } = require("./noteAssetExport");
         const { dialog } = require("electron");
         const fs = require("fs");
 
@@ -1738,8 +1734,18 @@ class IPCHandlers {
         for (const note of notes) {
           const baseName = safeExportBaseName(note);
           const filePath = uniqueExportPath(directory, baseName, normalized.format);
-          const exportContent = buildSelectedNoteExport(note, normalized);
-          fs.writeFileSync(filePath, exportContent, "utf-8");
+          const exportContent = buildNoteExport(note, normalized);
+          if (normalized.format === "md") {
+            const markdownExport = copyNoteAssetsForMarkdown(
+              exportContent,
+              this.databaseManager,
+              filePath,
+              baseName
+            );
+            fs.writeFileSync(filePath, markdownExport.content, "utf-8");
+          } else {
+            fs.writeFileSync(filePath, exportContent, "utf-8");
+          }
         }
 
         return { success: true, exported: notes.length };

@@ -44,22 +44,8 @@ function collectNoteAssetIds(markdown) {
   );
 }
 
-function appendUnreferencedNoteAssets(markdown, databaseManager, noteId) {
-  const content = String(markdown || "");
-  if (!databaseManager?.getNoteAssets || !noteId) return content;
-
-  const assets = databaseManager.getNoteAssets(noteId);
-  if (!assets.length) return content;
-
-  const existingAssetIds = collectNoteAssetIds(content);
-  const missingAssets = assets.filter((asset) => asset?.id && !existingAssetIds.has(asset.id));
-  if (!missingAssets.length) return content;
-
-  const imageMarkdown = missingAssets
-    .map((asset) => `![${safeMarkdownAlt(asset.filename)}](openwhispr-note-asset://${asset.id})`)
-    .join("\n\n");
-
-  return `${content.trimEnd()}\n\n${imageMarkdown}`;
+function appendUnreferencedNoteAssets(markdown) {
+  return String(markdown || "");
 }
 
 function replaceNoteAssetImageReferences(markdown, replacer) {
@@ -86,13 +72,15 @@ function replaceNoteAssetImageReferences(markdown, replacer) {
   return content;
 }
 
-function selectNoteExportContent(note) {
+function normalizeNoteExportField(field) {
+  return field === "enhanced_content" ? "enhanced_content" : "content";
+}
+
+function selectNoteExportContent(note, field = "content") {
+  const exportField = normalizeNoteExportField(field);
   const content = String(note?.content || "");
   const enhancedContent = String(note?.enhanced_content || "");
-  if (hasNoteAssetImage(content) && !hasNoteAssetImage(enhancedContent)) {
-    return content;
-  }
-  return enhancedContent || content;
+  return exportField === "enhanced_content" ? enhancedContent : content;
 }
 
 function copyNoteAssetsForMarkdown(markdown, databaseManager, outputFilePath, safeBaseName) {
@@ -342,5 +330,6 @@ module.exports = {
   hasNoteAssetImage,
   inlineNoteAssetsForHtml,
   markdownToHtml,
+  normalizeNoteExportField,
   selectNoteExportContent,
 };

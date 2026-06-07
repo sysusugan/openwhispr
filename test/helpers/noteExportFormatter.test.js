@@ -5,7 +5,9 @@ const os = require("node:os");
 const path = require("node:path");
 
 const {
+  buildNoteExport,
   buildSelectedNoteExport,
+  getFieldValue,
   normalizeExportOptions,
   safeExportBaseName,
   uniqueExportPath,
@@ -39,6 +41,33 @@ test("buildSelectedNoteExport writes selected fields as markdown sections", () =
   assert.match(output, /## Notes/);
   assert.match(output, /# Raw note/);
   assert.doesNotMatch(output, /## Enhanced Content/);
+});
+
+test("getFieldValue returns explicit note fields without fallback", () => {
+  const note = makeNote({ enhanced_content: "" });
+
+  assert.equal(getFieldValue(note, "content", "md"), "# Raw note\n\nHello **world**.");
+  assert.equal(getFieldValue(note, "enhanced_content", "md"), "");
+});
+
+test("buildNoteExport can export a single content field without title wrapper", () => {
+  const output = buildNoteExport(makeNote(), {
+    format: "md",
+    fields: ["content"],
+    includeTitle: false,
+  });
+
+  assert.equal(output, "# Raw note\n\nHello **world**.\n");
+});
+
+test("buildNoteExport can export a single enhanced field without falling back to content", () => {
+  const output = buildNoteExport(makeNote({ enhanced_content: "" }), {
+    format: "md",
+    fields: ["enhanced_content"],
+    includeTitle: false,
+  });
+
+  assert.equal(output, "\n");
 });
 
 test("buildSelectedNoteExport strips markdown for text exports", () => {

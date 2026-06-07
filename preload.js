@@ -98,7 +98,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("save-note-image-asset", noteId, payload),
   deleteNoteImageAsset: (assetId) => ipcRenderer.invoke("delete-note-image-asset", assetId),
   importNoteFile: (noteId, filePath) => ipcRenderer.invoke("import-note-file", noteId, filePath),
-  exportNote: (noteId, format) => ipcRenderer.invoke("export-note", noteId, format),
+  exportNote: (noteId, options) => ipcRenderer.invoke("export-note", noteId, options),
   exportTranscript: (noteId, format) => ipcRenderer.invoke("export-transcript", noteId, format),
   exportSelectedNotes: (noteIds, options) =>
     ipcRenderer.invoke("export-selected-notes", noteIds, options),

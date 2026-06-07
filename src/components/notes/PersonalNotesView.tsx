@@ -107,6 +107,7 @@ import type {
   NoteExportField,
   NoteExportFormat,
   NoteSortBy,
+  SingleNoteExportOptions,
 } from "../../types/electron";
 
 const FOLDER_INPUT_CLASS =
@@ -704,9 +705,9 @@ export default function PersonalNotesView({
   ]);
 
   const handleExportNote = useCallback(
-    async (format: "md" | "txt" | "pdf") => {
+    async (options: SingleNoteExportOptions) => {
       if (!activeNoteId) return;
-      await window.electronAPI.exportNote(activeNoteId, format);
+      await window.electronAPI.exportNote(activeNoteId, options);
     },
     [activeNoteId]
   );

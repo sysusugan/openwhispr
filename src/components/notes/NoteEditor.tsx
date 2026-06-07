@@ -43,7 +43,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useToast } from "../ui/useToast";
 import { cn } from "../lib/utils";
-import type { NoteItem, FolderItem } from "../../types/electron";
+import type {
+  NoteItem,
+  FolderItem,
+  SingleNoteExportFormat,
+  SingleNoteExportOptions,
+} from "../../types/electron";
 import type { ActionProcessingState } from "../../hooks/useActionProcessing";
 import type { ActionOutputTarget } from "../../stores/actionProcessingCore";
 import ActionProcessingOverlay from "./ActionProcessingOverlay";
@@ -254,7 +259,7 @@ interface NoteEditorProps {
   isProcessing: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  onExportNote?: (format: "md" | "txt" | "pdf") => void;
+  onExportNote?: (options: SingleNoteExportOptions) => void;
   onExportTranscript?: (format: "txt" | "srt" | "json" | "md") => void;
   onDownloadOriginalAudio?: () => void;
   onShowOriginalAudioInFolder?: () => void;
@@ -1449,6 +1454,16 @@ export default function NoteEditor({
       })
     : t("notes.editor.transcriptNoSearch");
 
+  const handleExportCurrentNote = useCallback(
+    (format: SingleNoteExportFormat) => {
+      onExportNote?.({
+        format,
+        field: viewMode === "enhanced" ? "enhanced_content" : "content",
+      });
+    },
+    [onExportNote, viewMode]
+  );
+
   return (
     <div
       className="flex h-full min-w-0 min-h-0 overflow-hidden"
@@ -1836,21 +1851,21 @@ export default function NoteEditor({
                     ) : (
                       <>
                         <DropdownMenuItem
-                          onClick={() => onExportNote?.("md")}
+                          onClick={() => handleExportCurrentNote("md")}
                           className="text-xs gap-2"
                         >
                           <FileText size={13} className="text-foreground/40" />
                           {t("notes.editor.asMarkdown")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onExportNote?.("txt")}
+                          onClick={() => handleExportCurrentNote("txt")}
                           className="text-xs gap-2"
                         >
                           <FileText size={13} className="text-foreground/40" />
                           {t("notes.editor.asPlainText")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onExportNote?.("pdf")}
+                          onClick={() => handleExportCurrentNote("pdf")}
                           className="text-xs gap-2"
                         >
                           <FileText size={13} className="text-foreground/40" />

@@ -70,6 +70,12 @@ export type NoteSortBy = "updatedAt" | "createdAt" | "recordedAt";
 
 export type NoteExportField = "transcript" | "content" | "enhanced_content";
 export type NoteExportFormat = "md" | "txt";
+export type SingleNoteExportField = "content" | "enhanced_content";
+export type SingleNoteExportFormat = NoteExportFormat | "pdf";
+export type SingleNoteExportOptions = {
+  format: SingleNoteExportFormat;
+  field?: SingleNoteExportField;
+};
 
 export interface NoteAudioFile {
   id: number;
@@ -361,7 +367,6 @@ export interface ConversationPreview {
   last_message_role?: "user" | "assistant" | "system" | null;
 }
 
-
 declare global {
   interface Window {
     electronAPI: {
@@ -572,7 +577,7 @@ declare global {
       }>;
       exportNote: (
         noteId: number,
-        format: "txt" | "md" | "pdf"
+        options: SingleNoteExportFormat | SingleNoteExportOptions
       ) => Promise<{ success: boolean; error?: string }>;
       exportTranscript: (
         noteId: number,
@@ -1127,8 +1132,6 @@ declare global {
         code?: string;
       }>;
 
-
-
       // AssemblyAI Streaming
       assemblyAiStreamingWarmup?: (options?: {
         sampleRate?: number;
@@ -1162,7 +1165,6 @@ declare global {
       onAssemblyAiSessionEnd?: (
         callback: (data: { audioDuration?: number; text?: string }) => void
       ) => () => void;
-
 
       // Agent Mode
       updateAgentHotkey?: (hotkey: string) => Promise<{ success: boolean; message: string }>;

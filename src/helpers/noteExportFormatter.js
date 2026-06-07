@@ -110,28 +110,39 @@ function formatExportDate(value) {
 }
 
 function buildSelectedNoteExport(note, options) {
+  return buildNoteExport(note, { ...options, includeTitle: true });
+}
+
+function buildNoteExport(note, options = {}) {
   const { format, fields } = normalizeExportOptions(options);
+  const includeTitle = options.includeTitle !== false;
   const title = note.title || "Untitled";
   const created = formatExportDate(note.created_at);
 
   if (format === "txt") {
-    const lines = [title];
-    if (created) lines.push(`Created: ${created}`);
-    lines.push("");
+    const lines = [];
+    if (includeTitle) {
+      lines.push(title);
+      if (created) lines.push(`Created: ${created}`);
+      lines.push("");
+    }
     for (const field of fields) {
       const value = getFieldValue(note, field, format);
-      lines.push(FIELD_LABELS[field].toUpperCase());
+      if (includeTitle || fields.length > 1) lines.push(FIELD_LABELS[field].toUpperCase());
       if (value) lines.push(value);
       lines.push("");
     }
     return lines.join("\n").trimEnd() + "\n";
   }
 
-  const lines = [`# ${title}`, ""];
-  if (created) lines.push(`**Created:** ${created}`, "");
+  const lines = [];
+  if (includeTitle) {
+    lines.push(`# ${title}`, "");
+    if (created) lines.push(`**Created:** ${created}`, "");
+  }
   for (const field of fields) {
     const value = getFieldValue(note, field, format);
-    lines.push(`## ${FIELD_LABELS[field]}`, "");
+    if (includeTitle || fields.length > 1) lines.push(`## ${FIELD_LABELS[field]}`, "");
     if (value) lines.push(value, "");
   }
   return lines.join("\n").trimEnd() + "\n";
@@ -156,7 +167,9 @@ function uniqueExportPath(directory, baseName, extension) {
 }
 
 module.exports = {
+  buildNoteExport,
   buildSelectedNoteExport,
+  getFieldValue,
   normalizeExportOptions,
   safeExportBaseName,
   stripMarkdown,

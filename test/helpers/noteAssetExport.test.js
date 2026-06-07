@@ -29,10 +29,17 @@ test("detects note asset images embedded inside markdown content", () => {
 
   assert.equal(hasNoteAssetImage(content), true);
   assert.equal(hasNoteAssetImage(enhancedContent), false);
-  assert.equal(selectNoteExportContent({ content, enhanced_content: enhancedContent }), content);
+  assert.equal(
+    selectNoteExportContent({ content, enhanced_content: enhancedContent }, "content"),
+    content
+  );
+  assert.equal(
+    selectNoteExportContent({ content, enhanced_content: enhancedContent }, "enhanced_content"),
+    enhancedContent
+  );
 });
 
-test("appends note assets when editor markdown lost image references", () => {
+test("does not append note assets when current export content does not reference them", () => {
   const content = "纪要\n\n会议背景";
   const databaseManager = {
     getNoteAssets: () => [
@@ -43,8 +50,16 @@ test("appends note assets when editor markdown lost image references", () => {
 
   const result = appendUnreferencedNoteAssets(content, databaseManager, 34);
 
-  assert.match(result, /!\[image\.png\]\(openwhispr-note-asset:\/\/asset-a\)/);
-  assert.match(result, /!\[diagram\.png\]\(openwhispr-note-asset:\/\/asset-b\)/);
+  assert.equal(result, content);
+});
+
+test("selectNoteExportContent does not fall back from empty enhanced content to raw content", () => {
+  const note = {
+    content: "# Raw\n\n![image.png](openwhispr-note-asset://asset-a)",
+    enhanced_content: "",
+  };
+
+  assert.equal(selectNoteExportContent(note, "enhanced_content"), "");
 });
 
 test("renders pipe tables to HTML tables for note export", () => {
