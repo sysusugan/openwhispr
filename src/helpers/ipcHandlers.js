@@ -1042,7 +1042,10 @@ class IPCHandlers {
         throw new Error("aliases must be an array");
       }
       const result = this.databaseManager.setDictionaryAliases(aliases);
-      this.broadcastToWindows("dictionary-aliases-updated", this.databaseManager.getDictionaryAliases());
+      this.broadcastToWindows(
+        "dictionary-aliases-updated",
+        this.databaseManager.getDictionaryAliases()
+      );
       return result;
     });
 
@@ -1703,9 +1706,15 @@ class IPCHandlers {
           safeExportBaseName,
           uniqueExportPath,
         } = require("./noteExportFormatter");
-        const { copyNoteAssetsForMarkdown } = require("./noteAssetExport");
+        const {
+          copyNoteAssetsForMarkdown,
+          inlineNoteAssetsForHtml,
+          markdownToHtml,
+        } = require("./noteAssetExport");
         const { dialog } = require("electron");
         const fs = require("fs");
+        const os = require("os");
+        const path = require("path");
 
         if (!Array.isArray(noteIds) || noteIds.length === 0) {
           return { success: false, error: "No notes selected" };
@@ -1734,7 +1743,10 @@ class IPCHandlers {
         for (const note of notes) {
           const baseName = safeExportBaseName(note);
           const filePath = uniqueExportPath(directory, baseName, normalized.format);
-          const exportContent = buildNoteExport(note, normalized);
+          const exportContent = buildNoteExport(note, {
+            ...normalized,
+            format: normalized.format === "pdf" ? "md" : normalized.format,
+          });
           if (normalized.format === "md") {
             const markdownExport = copyNoteAssetsForMarkdown(
               exportContent,
@@ -1743,6 +1755,38 @@ class IPCHandlers {
               baseName
             );
             fs.writeFileSync(filePath, markdownExport.content, "utf-8");
+          } else if (normalized.format === "pdf") {
+            const markdown = inlineNoteAssetsForHtml(exportContent, this.databaseManager);
+            const html = markdownToHtml(markdown, note.title);
+            const tempPath = path.join(
+              os.tmpdir(),
+              `openwhispr-selected-note-${note.id}-${Date.now()}.html`
+            );
+            const win = new BrowserWindow({
+              show: false,
+              webPreferences: {
+                contextIsolation: true,
+                nodeIntegration: false,
+                sandbox: true,
+              },
+            });
+            try {
+              fs.writeFileSync(tempPath, html, "utf-8");
+              await win.loadFile(tempPath);
+              const pdf = await win.webContents.printToPDF({
+                printBackground: true,
+                pageSize: "A4",
+                margins: {
+                  marginType: "default",
+                },
+              });
+              fs.writeFileSync(filePath, pdf);
+            } finally {
+              if (!win.isDestroyed()) win.destroy();
+              try {
+                fs.unlinkSync(tempPath);
+              } catch {}
+            }
           } else {
             fs.writeFileSync(filePath, exportContent, "utf-8");
           }
@@ -3973,7 +4017,6 @@ class IPCHandlers {
       });
     });
 
-
     ipcMain.handle("auth-clear-session", async (event) => {
       try {
         tokenStore.clear();
@@ -3988,7 +4031,10 @@ class IPCHandlers {
       }
     });
 
-    ipcMain.handle("auth-get-token", () => tokenStore.get() || process.env.OPENWHISPR_API_TOKEN || "");
+    ipcMain.handle(
+      "auth-get-token",
+      () => tokenStore.get() || process.env.OPENWHISPR_API_TOKEN || ""
+    );
     ipcMain.handle("auth-set-token", (_event, token) => {
       if (typeof token === "string" && token) {
         tokenStore.set(token);
@@ -4023,7 +4069,9 @@ class IPCHandlers {
       );
 
     const getAuthUrl = () =>
-      normalizeSelfHostedApiUrl(process.env.AUTH_URL || process.env.VITE_AUTH_URL || runtimeEnv.VITE_AUTH_URL || "");
+      normalizeSelfHostedApiUrl(
+        process.env.AUTH_URL || process.env.VITE_AUTH_URL || runtimeEnv.VITE_AUTH_URL || ""
+      );
 
     const getSessionCookiesFromWindow = async (win) => {
       const scopedUrls = [getAuthUrl(), getApiUrl()].filter(Boolean);
@@ -4404,9 +4452,7 @@ class IPCHandlers {
           throw err;
         }
         const errorData = await tokenResponse.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || `Failed to get realtime token: ${tokenResponse.status}`
-        );
+        throw new Error(errorData.error || `Failed to get realtime token: ${tokenResponse.status}`);
       }
 
       const { token } = await tokenResponse.json();
@@ -4858,7 +4904,11 @@ class IPCHandlers {
 
         let token = this.deepgramStreaming.getCachedToken();
         if (!token) {
-          debugLogger.debug("Fetching new Deepgram streaming token from self-hosted API", {}, "streaming");
+          debugLogger.debug(
+            "Fetching new Deepgram streaming token from self-hosted API",
+            {},
+            "streaming"
+          );
           token = await fetchDeepgramStreamingToken(event);
         }
 
@@ -4919,7 +4969,11 @@ class IPCHandlers {
 
         let token = this.deepgramStreaming.getCachedToken();
         if (!token) {
-          debugLogger.debug("Fetching Deepgram streaming token from self-hosted API", {}, "streaming");
+          debugLogger.debug(
+            "Fetching Deepgram streaming token from self-hosted API",
+            {},
+            "streaming"
+          );
           token = await fetchDeepgramStreamingToken(event);
           this.deepgramStreaming.cacheToken(token);
         } else {

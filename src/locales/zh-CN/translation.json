@@ -1668,7 +1668,8 @@
       "successTitle": "笔记已导出",
       "successDescription": "已导出 {{count}} 个文件。",
       "errorTitle": "无法导出笔记",
-      "errorDescription": "请重试或选择其他文件夹。"
+      "errorDescription": "请重试或选择其他文件夹。",
+      "formatPdf": "PDF (.pdf)"
     },
     "participants": {
       "attendee": "位参会者",

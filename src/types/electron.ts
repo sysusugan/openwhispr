@@ -69,7 +69,7 @@ export interface NoteItem {
 export type NoteSortBy = "updatedAt" | "createdAt" | "recordedAt";
 
 export type NoteExportField = "transcript" | "content" | "enhanced_content";
-export type NoteExportFormat = "md" | "txt";
+export type NoteExportFormat = "md" | "txt" | "pdf";
 export type SingleNoteExportField = "content" | "enhanced_content";
 export type SingleNoteExportFormat = NoteExportFormat | "pdf";
 export type SingleNoteExportOptions = {

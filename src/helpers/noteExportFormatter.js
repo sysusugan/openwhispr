@@ -8,7 +8,7 @@ const FIELD_LABELS = {
 };
 
 const VALID_FIELDS = new Set(Object.keys(FIELD_LABELS));
-const VALID_FORMATS = new Set(["md", "txt"]);
+const VALID_FORMATS = new Set(["md", "txt", "pdf"]);
 
 function stripMarkdown(text) {
   return String(text || "")

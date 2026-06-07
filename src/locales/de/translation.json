@@ -1665,7 +1665,8 @@
       "successTitle": "Notes exported",
       "successDescription": "Exported {{count}} file(s).",
       "errorTitle": "Could not export notes",
-      "errorDescription": "Try again or choose a different folder."
+      "errorDescription": "Try again or choose a different folder.",
+      "formatPdf": "PDF (.pdf)"
     },
     "participants": {
       "attendee": "Teilnehmer",

@@ -105,8 +105,19 @@ test("normalizeExportOptions filters unsupported fields and formats", () => {
       format: "pdf",
       fields: ["content", "bad", "transcript"],
     }),
-    { format: "md", fields: ["content", "transcript"] }
+    { format: "pdf", fields: ["content", "transcript"] }
   );
+});
+
+test("buildNoteExport keeps markdown field structure for pdf input", () => {
+  const output = buildNoteExport(makeNote(), {
+    format: "md",
+    fields: ["content", "enhanced_content"],
+  });
+
+  assert.match(output, /^# Planning \/ Notes/);
+  assert.match(output, /## Notes\n\n# Raw note/);
+  assert.match(output, /## Enhanced Content\n\n## Summary/);
 });
 
 test("safeExportBaseName removes path-unsafe characters and includes note id", () => {

@@ -1796,6 +1796,7 @@ export default function PersonalNotesView({
                 <SelectContent>
                   <SelectItem value="md">{t("notes.bulkExport.formatMarkdown")}</SelectItem>
                   <SelectItem value="txt">{t("notes.bulkExport.formatText")}</SelectItem>
+                  <SelectItem value="pdf">{t("notes.bulkExport.formatPdf")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
