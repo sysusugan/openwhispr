@@ -158,6 +158,92 @@ function stripOnnxruntimeBinaries(context) {
   }
 }
 
+function findNodeOnnxruntimeLibrary(context) {
+  const platform = context.electronPlatformName;
+  const archName = Arch[context.arch];
+  const resourcesDir = resolveResourcesDir(context);
+
+  if (!["darwin", "linux"].includes(platform)) {
+    return null;
+  }
+
+  const onnxPlatformArchDir = path.join(
+    resourcesDir,
+    "app.asar.unpacked",
+    "node_modules",
+    "onnxruntime-node",
+    "bin",
+    "napi-v6",
+    platform,
+    archName
+  );
+
+  if (!fs.existsSync(onnxPlatformArchDir)) {
+    return null;
+  }
+
+  const pattern =
+    platform === "darwin" ? /^libonnxruntime\.\d+\.\d+\.\d+\.dylib$/ : /^libonnxruntime\.so\.\d+$/;
+
+  return (
+    fs
+      .readdirSync(onnxPlatformArchDir)
+      .filter((file) => pattern.test(file))
+      .map((file) => path.join(onnxPlatformArchDir, file))
+      .sort()
+      .pop() || null
+  );
+}
+
+function linkResourceOnnxruntimeToNodeModule(context) {
+  const platform = context.electronPlatformName;
+
+  if (!["darwin", "linux"].includes(platform)) {
+    return;
+  }
+
+  const resourcesDir = resolveResourcesDir(context);
+  const binDir = path.join(resourcesDir, "bin");
+
+  if (!fs.existsSync(binDir)) {
+    return;
+  }
+
+  const nodeOnnxruntimePath = findNodeOnnxruntimeLibrary(context);
+
+  if (!nodeOnnxruntimePath) {
+    console.warn(
+      "  afterPack: onnxruntime-node library not found; leaving resource libraries intact"
+    );
+    return;
+  }
+
+  const resourceLibraryPattern =
+    platform === "darwin"
+      ? /^libonnxruntime(?:\.\d+\.\d+\.\d+)?\.dylib$/
+      : /^libonnxruntime\.so(?:\.\d+)?$/;
+
+  const resourceLibraries = fs
+    .readdirSync(binDir)
+    .filter((file) => resourceLibraryPattern.test(file));
+
+  if (resourceLibraries.length === 0) {
+    return;
+  }
+
+  const relativeTarget = path.relative(binDir, nodeOnnxruntimePath);
+
+  for (const libraryName of resourceLibraries) {
+    const libraryPath = path.join(binDir, libraryName);
+    fs.rmSync(libraryPath, { force: true });
+    fs.symlinkSync(relativeTarget, libraryPath);
+  }
+
+  console.log(
+    `  afterPack: linked ${resourceLibraries.length} resource onnxruntime libraries to ${path.basename(nodeOnnxruntimePath)}`
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Linux XWayland wrapper
 // ---------------------------------------------------------------------------
@@ -227,6 +313,7 @@ function verifyMeetingAecHelper(context) {
 
 exports.default = async function (context) {
   stripOnnxruntimeBinaries(context);
+  linkResourceOnnxruntimeToNodeModule(context);
   wrapLinuxBinary(context);
   verifyMeetingAecHelper(context);
   registerMacResourceBinariesForSigning(context);
