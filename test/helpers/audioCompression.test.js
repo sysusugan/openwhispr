@@ -243,24 +243,20 @@ test("compressToOpusWebm removes temp output when validation fails", async (t) =
   const dir = makeTempDir(t);
   const input = path.join(dir, "tone.wav");
   const output = path.join(dir, "tone.webm");
+  const tempPath = path.join(dir, "failed-compress-temp.webm");
   writeToneWav(input, { durationSec: 1 });
-  const tempFilesBefore = fs
-    .readdirSync(os.tmpdir())
-    .filter((f) => f.includes("openwhispr-opus-compress"));
 
   await assert.rejects(
     () =>
       compressToOpusWebm(input, output, {
         audibleThresholdDb: -90,
         silentOutputThresholdDb: 0,
+        tempPath,
       }),
     /compressed audio is silent/
   );
 
-  const tempFilesAfter = fs
-    .readdirSync(os.tmpdir())
-    .filter((f) => f.includes("openwhispr-opus-compress"));
-  assert.deepEqual(tempFilesAfter, tempFilesBefore);
+  assert.equal(fs.existsSync(tempPath), false);
   assert.equal(fs.existsSync(output), false);
 });
 

@@ -635,8 +635,8 @@ async function validateCompressedAudio(inputPath, outputPath, options = {}) {
 }
 
 function compressToOpusWebm(inputPath, outputPath, options = {}) {
-  const { signal, ...encodeOpts } = options;
-  const tempPath = makeTempPath("opus-compress");
+  const { signal, tempPath: providedTempPath, ...encodeOpts } = options;
+  const tempPath = providedTempPath || makeTempPath("opus-compress");
 
   return _runFFmpeg(
     _buildOpusEncodeArgs({ input: inputPath, output: tempPath, ...encodeOpts }),
