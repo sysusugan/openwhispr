@@ -521,6 +521,34 @@ export default function PersonalNotesView({
     }, 1000);
   }, []);
 
+  const flushPendingNoteSaves = useCallback(async (noteId: number) => {
+    const updates: { title?: string; content?: string; enhanced_content?: string | null } = {};
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+      updates.title = localTitleRef.current;
+      updates.content = localContentRef.current;
+    }
+
+    if (enhancedSaveTimeoutRef.current) {
+      clearTimeout(enhancedSaveTimeoutRef.current);
+      enhancedSaveTimeoutRef.current = null;
+      updates.enhanced_content = localEnhancedContentRef.current;
+    }
+
+    if (Object.keys(updates).length === 0) return;
+
+    setIsSaving(true);
+    try {
+      await window.electronAPI.updateNote(noteId, updates);
+    } catch (err) {
+      logger.warn("Failed to flush pending note save", { error: (err as Error).message }, "notes");
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -1564,11 +1592,15 @@ export default function PersonalNotesView({
               actionOutputTarget={actionOutputTarget}
               actionPicker={
                 <ActionPicker
-                  onRunAction={(action) => {
+                  onRunAction={async (action) => {
                     if (!editorNote) return;
+                    await flushPendingNoteSaves(editorNote.id);
                     const rawTranscript = realtimeTranscript || editorNote.transcript;
+                    const currentTitle = localTitleRef.current;
+                    const currentContent = localContentRef.current;
+                    const currentEnhancedContent = localEnhancedContentRef.current;
                     const actionInput = buildNoteActionInput({
-                      noteContent: editorNote.content,
+                      noteContent: currentContent,
                       rawTranscript,
                       speakerLabels: {
                         you: t("notes.speaker.you"),
@@ -1581,9 +1613,9 @@ export default function PersonalNotesView({
                       isCloudMode,
                       modelId: effectiveModelId,
                       isMeetingNote: actionInput.isMeetingNote,
-                      currentTitle: editorNote.title,
-                      currentContent: editorNote.content,
-                      currentEnhancedContent: editorNote.enhanced_content,
+                      currentTitle,
+                      currentContent,
+                      currentEnhancedContent,
                       currentTranscript: rawTranscript,
                       currentRecordedAt: editorNote.recorded_at,
                       currentCreatedAt: editorNote.created_at,

@@ -12,7 +12,7 @@ import { buildNoteActionInput } from "../components/notes/noteActionInput";
 import {
   applyActionTitleDatePrefix,
   buildActionOutputUpdates,
-  shouldAutoGenerateActionTitle,
+  shouldGenerateTitleForExplicitAction,
 } from "./actionProcessingCore";
 
 interface RunNoteActionOnceInput {
@@ -100,7 +100,7 @@ export async function runNoteActionOnce({
     contentHash: actionInput.contentHash,
   });
 
-  if (settings.autoGenerateNoteTitle && shouldAutoGenerateActionTitle(note.title)) {
+  if (shouldGenerateTitleForExplicitAction(note.title)) {
     const title = await generateNoteTitle(
       generatedContent,
       selectedModel,

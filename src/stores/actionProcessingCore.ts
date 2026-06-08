@@ -13,6 +13,10 @@ export function shouldAutoGenerateActionTitle(title: string | null | undefined):
   return DEFAULT_NOTE_TITLES.has((title ?? "").trim());
 }
 
+export function shouldGenerateTitleForExplicitAction(title: string | null | undefined): boolean {
+  return shouldAutoGenerateActionTitle(title);
+}
+
 function formatTwoDigit(value: number): string {
   return String(value).padStart(2, "0");
 }
