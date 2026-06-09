@@ -23,7 +23,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
 import type { FolderItem } from "../../types/electron";
-import { findDefaultFolder, MEETINGS_FOLDER_NAME } from "./shared";
+import { findDefaultFolder } from "./shared";
 import { useSettings } from "../../hooks/useSettings";
 import { getAllReasoningModels } from "../../models/ModelRegistry";
 import {
@@ -923,26 +923,15 @@ function CompleteView({
               <SelectValue placeholder={t("notes.upload.selectFolder")} />
             </SelectTrigger>
             <SelectContent>
-              {folders.map((f) => {
-                const isMeetings = f.name === MEETINGS_FOLDER_NAME && !!f.is_default;
-                return (
-                  <SelectItem
-                    key={f.id}
-                    value={String(f.id)}
-                    disabled={isMeetings}
-                    className="text-xs py-1.5 pl-2.5 pr-7 rounded-md"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {f.name}
-                      {isMeetings && (
-                          <span className="text-[8px] uppercase tracking-wider text-muted-foreground font-semibold">
-                          {t("notes.folders.soon")}
-                        </span>
-                      )}
-                    </span>
-                  </SelectItem>
-                );
-              })}
+              {folders.map((f) => (
+                <SelectItem
+                  key={f.id}
+                  value={String(f.id)}
+                  className="text-xs py-1.5 pl-2.5 pr-7 rounded-md"
+                >
+                  {f.name}
+                </SelectItem>
+              ))}
               <SelectSeparator />
               <SelectItem value="__create_new__" className="text-xs py-1.5 pl-2.5 pr-7 rounded-md">
                 <span className="flex items-center gap-1.5 text-muted-foreground">
