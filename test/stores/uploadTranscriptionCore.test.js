@@ -7,6 +7,7 @@ const {
   completeUploadTask,
   failUploadTask,
   resetUploadTask,
+  buildUploadTranscriptSegments,
   buildUploadNoteSaveArgs,
 } = require("../../src/stores/uploadTranscriptionCore");
 
@@ -59,7 +60,50 @@ test("upload transcription failures preserve selected file for retry", () => {
   assert.equal(failed.progress, 0);
 });
 
-test("upload note save args write uploaded transcript to both content and transcript", () => {
+test("upload plain text transcript is converted to a structured timeline segment", () => {
+  assert.deepEqual(buildUploadTranscriptSegments("raw uploaded transcript"), [
+    {
+      id: "upload-0",
+      text: "raw uploaded transcript",
+      source: "system",
+      timestamp: 0,
+      speaker: "speaker_0",
+      speakerIsPlaceholder: true,
+    },
+  ]);
+});
+
+test("upload transcript builder preserves provider segment timestamps when available", () => {
+  assert.deepEqual(
+    buildUploadTranscriptSegments("fallback text", {
+      segments: [
+        { text: "first speaker", timestamp: 12.5, speaker: "speaker_2" },
+        { text: "second speaker", start: 18, speakerName: "Ada" },
+      ],
+    }),
+    [
+      {
+        id: "upload-0",
+        text: "first speaker",
+        source: "system",
+        timestamp: 12.5,
+        speaker: "speaker_2",
+        speakerIsPlaceholder: true,
+      },
+      {
+        id: "upload-1",
+        text: "second speaker",
+        source: "system",
+        timestamp: 18,
+        speaker: "speaker_0",
+        speakerName: "Ada",
+        speakerIsPlaceholder: true,
+      },
+    ]
+  );
+});
+
+test("upload note save args keep content plain and transcript structured", () => {
   const args = buildUploadNoteSaveArgs({
     title: "Meeting title",
     transcript: "raw uploaded transcript",
@@ -74,6 +118,38 @@ test("upload note save args write uploaded transcript to both content and transc
     sourceFile: "meeting.mp3",
     audioDuration: null,
     folderId: 3,
-    transcript: "raw uploaded transcript",
+    transcript: JSON.stringify([
+      {
+        id: "upload-0",
+        text: "raw uploaded transcript",
+        source: "system",
+        timestamp: 0,
+        speaker: "speaker_0",
+        speakerIsPlaceholder: true,
+      },
+    ]),
   });
+});
+
+test("upload note save args use provider segments when provided", () => {
+  const args = buildUploadNoteSaveArgs({
+    title: "Segmented upload",
+    transcript: "fallback text",
+    segments: [{ text: "timed text", startTime: 7, speaker: "speaker_3" }],
+    fileName: "meeting.wav",
+    folderId: 4,
+  });
+
+  assert.equal(args.content, "fallback text");
+  assert.equal(args.noteType, "upload");
+  assert.deepEqual(JSON.parse(args.transcript), [
+    {
+      id: "upload-0",
+      text: "timed text",
+      source: "system",
+      timestamp: 7,
+      speaker: "speaker_3",
+      speakerIsPlaceholder: true,
+    },
+  ]);
 });

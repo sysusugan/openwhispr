@@ -21,6 +21,17 @@ export interface UploadTranscriptionFile {
 export interface UploadTranscriptionResult {
   success: boolean;
   text?: string;
+  segments?: Array<{
+    id?: string;
+    text?: string;
+    source?: "mic" | "system";
+    timestamp?: number;
+    start?: number;
+    startTime?: number;
+    speaker?: string;
+    speakerName?: string;
+    speakerIsPlaceholder?: boolean;
+  }>;
   error?: string;
   code?: string;
   warning?: string | null;
@@ -201,6 +212,7 @@ export const useUploadTranscriptionStore = create<UploadTranscriptionStoreState>
         const noteArgs = buildUploadNoteSaveArgs({
           title: aiTitle || fallbackTitle,
           transcript: response.text,
+          segments: response.segments,
           fileName: file.name,
           folderId,
         });

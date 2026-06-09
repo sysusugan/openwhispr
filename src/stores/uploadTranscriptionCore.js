@@ -72,7 +72,50 @@ export function resetUploadTask(_current, options = {}) {
   });
 }
 
-export function buildUploadNoteSaveArgs({ title, transcript, fileName, folderId }) {
+function normalizeUploadTranscriptSegment(segment, index) {
+  const text = String(segment?.text || "").trim();
+  if (!text) return null;
+  const timestamp = Number(segment?.timestamp ?? segment?.start ?? segment?.startTime ?? 0);
+  const source = segment?.source === "mic" ? "mic" : "system";
+  const speaker = String(segment?.speaker || "speaker_0");
+
+  const normalized = {
+    id: String(segment?.id || `upload-${index}`),
+    text,
+    source,
+    timestamp: Number.isFinite(timestamp) ? timestamp : 0,
+    speaker,
+    speakerIsPlaceholder:
+      typeof segment?.speakerIsPlaceholder === "boolean" ? segment.speakerIsPlaceholder : true,
+  };
+  if (segment?.speakerName) normalized.speakerName = segment.speakerName;
+  return normalized;
+}
+
+export function buildUploadTranscriptSegments(transcriptText, options = {}) {
+  const sourceSegments = Array.isArray(options.segments) ? options.segments : [];
+  const normalizedSegments = sourceSegments
+    .map((segment, index) => normalizeUploadTranscriptSegment(segment, index))
+    .filter(Boolean);
+  if (normalizedSegments.length > 0) return normalizedSegments;
+
+  const text = String(transcriptText || "").trim();
+  if (!text) return [];
+
+  return [
+    {
+      id: "upload-0",
+      text,
+      source: "system",
+      timestamp: 0,
+      speaker: "speaker_0",
+      speakerIsPlaceholder: true,
+    },
+  ];
+}
+
+export function buildUploadNoteSaveArgs({ title, transcript, fileName, folderId, segments }) {
+  const transcriptSegments = buildUploadTranscriptSegments(transcript, { segments });
   return {
     title,
     content: transcript,
@@ -80,7 +123,7 @@ export function buildUploadNoteSaveArgs({ title, transcript, fileName, folderId 
     sourceFile: fileName,
     audioDuration: null,
     folderId,
-    transcript,
+    transcript: JSON.stringify(transcriptSegments),
   };
 }
 
@@ -92,5 +135,6 @@ export default {
   completeUploadTask,
   failUploadTask,
   resetUploadTask,
+  buildUploadTranscriptSegments,
   buildUploadNoteSaveArgs,
 };
