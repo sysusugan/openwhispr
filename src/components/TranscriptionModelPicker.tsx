@@ -86,8 +86,8 @@ function LocalModelCard({
   return (
     <div
       onClick={handleClick}
-      className={`relative w-full text-left overflow-hidden rounded-md border transition-colors duration-200 group ${
-        isSelected ? cardStyles.modelCard.selected : cardStyles.modelCard.default
+      className={`ow-model-row group overflow-hidden ${
+        isSelected ? "ow-model-row-active" : "ow-model-row-idle"
       } ${isDownloaded && !isSelected ? "cursor-pointer" : ""}`}
     >
       <div className="flex items-center gap-1.5 p-2">
@@ -691,7 +691,7 @@ export default function TranscriptionModelPicker({
         : localModels;
 
     return (
-      <div className="space-y-0.5">
+      <div className="ow-model-list">
         {modelsToRender.map((model) => {
           const modelId = model.model;
           const info = WHISPER_MODEL_INFO[modelId] ?? {
@@ -764,7 +764,7 @@ export default function TranscriptionModelPicker({
         : parakeetModels;
 
     return (
-      <div className="space-y-0.5">
+      <div className="ow-model-list">
         {modelsToRender.map((model) => {
           const modelId = model.model;
           const info = PARAKEET_MODEL_INFO[modelId] ?? {
@@ -809,7 +809,7 @@ export default function TranscriptionModelPicker({
   };
 
   return (
-    <div className={`space-y-2 ${className}`}>
+    <div className={`ow-model-picker ${className}`}>
       {!mode && <ModeToggle useLocalWhisper={effectiveLocal} onModeChange={handleModeChange} />}
 
       {!effectiveLocal ? (
@@ -822,7 +822,7 @@ export default function TranscriptionModelPicker({
             scrollable
           />
 
-          <div>
+          <div className="min-w-0">
             {selectedCloudProvider === "custom" ? (
               <div className="space-y-2">
                 <div className="space-y-1.5">
@@ -982,7 +982,7 @@ export default function TranscriptionModelPicker({
               </div>
             )}
 
-          <div>
+          <div className="min-w-0">
             {internalLocalProvider === "whisper" && renderLocalModels()}
             {internalLocalProvider === "nvidia" && renderParakeetModels()}
           </div>

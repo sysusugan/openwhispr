@@ -297,7 +297,15 @@
       "rawTranscript": "Trascrizione grezza",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "La pulizia IA non è riuscita; è stata mantenuta la trascrizione originale"
+      "cleanupFailed": "La pulizia IA non è riuscita; è stata mantenuta la trascrizione originale",
+      "emptyDescription": "Le dettature recenti appariranno qui dopo la prima nota vocale.",
+      "deskTitle": "Postazione dettatura",
+      "deskDescription": "Acquisisci voce, regola il vocabolario e rivedi le trascrizioni in uno spazio focalizzato.",
+      "hotkeyLabel": "Pronto per input vocale",
+      "hotkeyDescription": "Usa la scorciatoia globale per avviare una dettatura da qualsiasi punto.",
+      "quickUpload": "Carica audio",
+      "quickDictionary": "Modifica dizionario",
+      "quickSettings": "Configura trascrizione"
     },
     "cloudMigration": {
       "viewSettings": "Apri impostazioni"
@@ -1861,7 +1869,9 @@
       "filterEmpty": "Nessun contenuto per i parlanti selezionati",
       "filterAria": "Filtra i parlanti della trascrizione",
       "currentSessionSpeakers": "Sessione corrente"
-    }
+    },
+    "collapseNoteList": "Comprimi elenco note",
+    "expandNoteList": "Espandi elenco note"
   },
   "dictionary": {
     "addWord": "Aggiungi parola",
@@ -1905,7 +1915,9 @@
     "integrations": "Integrazioni",
     "defaultUser": "Utente",
     "notSignedIn": "Non hai effettuato l'accesso",
-    "chat": "Chat"
+    "chat": "Chat",
+    "collapse": "Comprimi barra laterale",
+    "expand": "Espandi barra laterale"
   },
   "chat": {
     "newChat": "Nuova chat",
@@ -1927,7 +1939,9 @@
     "searchChats": "Cerca chat",
     "searchTitle": "Cerca conversazioni",
     "searchDescription": "Cerca in tutte le conversazioni",
-    "newChatEmpty": "Chiedi delle tue note, trascrizioni o qualsiasi altra cosa"
+    "newChatEmpty": "Chiedi delle tue note, trascrizioni o qualsiasi altra cosa",
+    "collapseConversationList": "Comprimi elenco conversazioni",
+    "expandConversationList": "Espandi elenco conversazioni"
   },
   "support": {
     "documentation": "Documentazione",

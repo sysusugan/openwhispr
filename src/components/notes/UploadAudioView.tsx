@@ -137,7 +137,9 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
   }
 
   useEffect(() => {
-    window.electronAPI.getFolders?.().then((f) => {
+    const foldersPromise = window.electronAPI?.getFolders?.();
+    if (!foldersPromise) return;
+    foldersPromise.then((f) => {
       setFolders(f);
       const personal = findDefaultFolder(f);
       if (personal) setDefaultFolderId(String(personal.id));
@@ -378,10 +380,19 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
 
   return (
     <div className="ow-workspace-page overflow-y-auto">
-      <div className="ow-page-column max-w-3xl">
+      <div className="ow-page-column">
+        <div className="ow-page-header">
+          <div className="ow-page-heading">
+            <h1 className="ow-page-title">{t("notes.upload.title")}</h1>
+            <p className="ow-page-description">
+              {t("notes.upload.using", { model: getActiveModelLabel() })}
+            </p>
+          </div>
+        </div>
+
         <div className="w-full shrink-0" style={{ animation: "float-up 0.4s ease-out" }}>
           {showSetup && (
-            <div className="mb-6" style={{ animation: "float-up 0.3s ease-out" }}>
+            <div className="mx-auto mb-6 w-full max-w-4xl" style={{ animation: "float-up 0.3s ease-out" }}>
               <div className="flex flex-col items-center mb-5">
                 <div className="w-10 h-10 rounded-md bg-muted border border-border flex items-center justify-center mb-3">
                   <Upload size={17} strokeWidth={1.5} className="text-muted-foreground" />
@@ -412,7 +423,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
             </div>
           )}
 
-          <div className="mx-auto w-full max-w-2xl">
+          <div className="mx-auto w-full max-w-4xl">
             {state === "idle" && providerReady === false && (
               <NoProviderView t={t} onOpenSettings={() => onOpenSettings?.("transcription")} />
             )}
@@ -471,7 +482,7 @@ export default function UploadAudioView({ onNoteCreated, onOpenSettings }: Uploa
           </div>
 
           {!showSetup && (state === "idle" || state === "selected") && (
-            <div className="mx-auto mt-5" style={{ maxWidth: advancedOpen ? "560px" : "320px" }}>
+            <div className="mx-auto mt-5 w-full max-w-4xl">
               <button
                 onClick={() => setAdvancedOpen(!advancedOpen)}
                 className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors mx-auto"
@@ -600,18 +611,6 @@ function IdleView({
 
   return (
     <>
-      <div className="mb-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-md bg-muted border border-border flex items-center justify-center">
-          <Upload size={17} strokeWidth={1.5} className="text-muted-foreground" />
-        </div>
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-foreground">{t("notes.upload.title")}</h2>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {t("notes.upload.using", { model: getActiveModelLabel() })}
-          </p>
-        </div>
-      </div>
-
       <input
         ref={fileInputRef}
         type="file"
@@ -638,12 +637,11 @@ function IdleView({
         onClick={handleBrowse}
         onKeyDown={handleKeyDown}
         className={cn(
-          "group relative cursor-pointer rounded-md p-8 text-center transition-[background-color,border-color,transform] duration-300",
-          "bg-muted/30",
-          "border border-dashed border-border",
-          "hover:bg-muted hover:border-border-hover",
+          "ow-surface-focus group relative cursor-pointer p-7 text-center transition-[background-color,border-color,transform] duration-300",
+          "border-dashed bg-card/70",
+          "hover:bg-muted/50 hover:border-border-hover",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/30",
-          isDragOver && "border-border-hover bg-muted/60 scale-[1.01]"
+          isDragOver && "border-border-active bg-accent/50 scale-[1.01]"
         )}
         style={isDragOver ? { animation: "drag-pulse 1.5s ease-in-out infinite" } : undefined}
       >
@@ -655,24 +653,24 @@ function IdleView({
         </div>
 
         {!isDragOver ? (
-          <div className="flex flex-col items-center gap-2 relative">
-            <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center mb-1">
+          <div className="ow-empty-state relative">
+            <div className="ow-empty-state-visual mb-1 h-12 w-12">
               <Upload
-                size={14}
-                className="text-muted-foreground group-hover:text-foreground transition-colors"
+                size={18}
+                className="transition-colors"
               />
             </div>
-            <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+            <p className="ow-empty-state-title">
               {t("notes.upload.dropOrBrowse")}
             </p>
-            <p className="text-xs text-muted-foreground tracking-wide">
+            <p className="ow-empty-state-description">
               {t("notes.upload.supportedFormats")}
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 relative">
+          <div className="ow-empty-state relative">
             <Upload size={18} className="text-foreground/55" />
-            <p className="text-xs text-foreground/60 font-medium">
+            <p className="ow-empty-state-title">
               {t("notes.upload.dropToUpload")}
             </p>
           </div>

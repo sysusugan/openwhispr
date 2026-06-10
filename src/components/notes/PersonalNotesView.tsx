@@ -1437,66 +1437,11 @@ export default function PersonalNotesView({
                   <Loader2 size={12} className="animate-spin text-foreground/15" />
                 </div>
               ) : notes.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 px-4">
-                  <svg
-                    className="text-foreground dark:text-white mb-3"
-                    width="40"
-                    height="36"
-                    viewBox="0 0 40 36"
-                    fill="none"
-                  >
-                    <rect
-                      x="12"
-                      y="1"
-                      width="20"
-                      height="26"
-                      rx="2"
-                      transform="rotate(5 22 14)"
-                      fill="currentColor"
-                      fillOpacity={0.025}
-                      stroke="currentColor"
-                      strokeOpacity={0.06}
-                    />
-                    <rect
-                      x="8"
-                      y="3"
-                      width="20"
-                      height="26"
-                      rx="2"
-                      fill="currentColor"
-                      fillOpacity={0.04}
-                      stroke="currentColor"
-                      strokeOpacity={0.08}
-                    />
-                    <rect
-                      x="12"
-                      y="9"
-                      width="10"
-                      height="1.5"
-                      rx="0.75"
-                      fill="currentColor"
-                      fillOpacity={0.07}
-                    />
-                    <rect
-                      x="12"
-                      y="13"
-                      width="12"
-                      height="1.5"
-                      rx="0.75"
-                      fill="currentColor"
-                      fillOpacity={0.05}
-                    />
-                    <rect
-                      x="12"
-                      y="17"
-                      width="8"
-                      height="1.5"
-                      rx="0.75"
-                      fill="currentColor"
-                      fillOpacity={0.04}
-                    />
-                  </svg>
-                  <p className="text-xs text-muted-foreground mb-3">
+                <div className="ow-empty-state py-8 px-4">
+                  <div className="ow-empty-state-visual mb-3 h-12 w-12">
+                    <SquarePen size={18} strokeWidth={1.7} />
+                  </div>
+                  <p className="ow-empty-state-description mb-3">
                     {t("notes.empty.emptyFolder")}
                   </p>
                   <div className="flex flex-col gap-1.5 w-full max-w-36">
@@ -1551,8 +1496,8 @@ export default function PersonalNotesView({
             type="button"
             className="ow-pane-toggle"
             onClick={() => setIsMiddlePaneCollapsed((value) => !value)}
-            aria-label={isMiddlePaneCollapsed ? "展开笔记列表" : "收起笔记列表"}
-            title={isMiddlePaneCollapsed ? "展开笔记列表" : "收起笔记列表"}
+            aria-label={isMiddlePaneCollapsed ? t("notes.expandNoteList") : t("notes.collapseNoteList")}
+            title={isMiddlePaneCollapsed ? t("notes.expandNoteList") : t("notes.collapseNoteList")}
           >
             {isMiddlePaneCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
@@ -1670,112 +1615,19 @@ export default function PersonalNotesView({
             <ActionManagerDialog open={showActionManager} onOpenChange={setShowActionManager} />
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center -mt-6">
-            <svg
-              className="text-foreground dark:text-white mb-5"
-              width="72"
-              height="64"
-              viewBox="0 0 72 64"
-              fill="none"
-            >
-              <rect
-                x="22"
-                y="2"
-                width="32"
-                height="42"
-                rx="3"
-                transform="rotate(6 38 23)"
-                fill="currentColor"
-                fillOpacity={0.025}
-                stroke="currentColor"
-                strokeOpacity={0.06}
-              />
-              <rect
-                x="18"
-                y="5"
-                width="32"
-                height="42"
-                rx="3"
-                transform="rotate(3 34 26)"
-                fill="currentColor"
-                fillOpacity={0.04}
-                stroke="currentColor"
-                strokeOpacity={0.08}
-              />
-              <rect
-                x="14"
-                y="8"
-                width="32"
-                height="42"
-                rx="3"
-                fill="currentColor"
-                fillOpacity={0.05}
-                stroke="currentColor"
-                strokeOpacity={0.1}
-              />
-              <rect
-                x="20"
-                y="16"
-                width="16"
-                height="2"
-                rx="1"
-                fill="currentColor"
-                fillOpacity={0.08}
-              />
-              <rect
-                x="20"
-                y="21"
-                width="20"
-                height="2"
-                rx="1"
-                fill="currentColor"
-                fillOpacity={0.06}
-              />
-              <rect
-                x="20"
-                y="26"
-                width="12"
-                height="2"
-                rx="1"
-                fill="currentColor"
-                fillOpacity={0.05}
-              />
-              <rect
-                x="20"
-                y="31"
-                width="18"
-                height="2"
-                rx="1"
-                fill="currentColor"
-                fillOpacity={0.04}
-              />
-              <circle
-                cx="54"
-                cy="50"
-                r="5"
-                fill="currentColor"
-                fillOpacity={0.03}
-                stroke="currentColor"
-                strokeOpacity={0.06}
-              />
-              <path
-                d="M51.5 50L53 51.5L56.5 48"
-                stroke="currentColor"
-                strokeOpacity={0.12}
-                strokeWidth={1.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <div className="ow-empty-state flex-1 -mt-6">
+            <div className="ow-empty-state-visual">
+              <SquarePen size={24} strokeWidth={1.7} />
+            </div>
             {notes.length === 0 ? (
               <>
-                <h3 className="text-xs font-semibold text-foreground mb-1">
+                <h3 className="ow-empty-state-title">
                   {t("notes.empty.title")}
                 </h3>
-                <p className="text-xs text-muted-foreground text-center max-w-55 mb-4">
+                <p className="ow-empty-state-description">
                   {t("notes.empty.description")}
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="ow-empty-state-actions">
                   <button
                     onClick={handleNewNote}
                     className="flex items-center gap-1.5 px-4 h-7 rounded-md bg-foreground text-background border border-foreground text-xs font-semibold hover:bg-foreground/90 transition-colors"
@@ -1793,10 +1645,10 @@ export default function PersonalNotesView({
               </>
             ) : (
               <>
-                <h3 className="text-xs font-semibold text-foreground mb-1">
+                <h3 className="ow-empty-state-title">
                   {t("notes.empty.selectTitle")}
                 </h3>
-                <p className="text-xs text-muted-foreground text-center max-w-50">
+                <p className="ow-empty-state-description">
                   {t("notes.empty.selectDescription")}
                 </p>
               </>

@@ -20,9 +20,9 @@ const platform = getCachedPlatform();
 function NewChatEmptyState() {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col items-center justify-center h-full -mt-6 select-none">
+    <div className="ow-empty-state h-full -mt-6 select-none">
       <ChatEmptyIllustration />
-      <p className="text-xs text-foreground/50 dark:text-foreground/25 text-center max-w-48 mt-4">
+      <p className="ow-empty-state-description mt-4">
         {t("chat.newChatEmpty")}
       </p>
     </div>
@@ -179,13 +179,21 @@ export default function ChatView() {
             type="button"
             className="ow-pane-toggle"
             onClick={() => setIsListCollapsed((value) => !value)}
-            aria-label={isListCollapsed ? "展开会话列表" : "收起会话列表"}
-            title={isListCollapsed ? "展开会话列表" : "收起会话列表"}
+            aria-label={isListCollapsed ? t("chat.expandConversationList") : t("chat.collapseConversationList")}
+            title={isListCollapsed ? t("chat.expandConversationList") : t("chat.collapseConversationList")}
           >
             {isListCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
           </button>
         </div>
         <div className="flex-1 min-w-0 flex flex-col bg-background">
+          <div className="ow-page-column h-auto max-w-4xl pb-0">
+            <div className="ow-page-header mb-0">
+              <div className="ow-page-heading">
+                <h1 className="ow-page-title">{t("sidebar.chat")}</h1>
+                <p className="ow-page-description">{t("chat.newChatEmpty")}</p>
+              </div>
+            </div>
+          </div>
           {hasActiveChat ? (
             <>
               <ChatMessages messages={persistence.messages} emptyState={<NewChatEmptyState />} />

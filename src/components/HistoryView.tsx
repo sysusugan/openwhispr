@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
-import { Loader2, Sparkles, Cloud, X, Mic, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, Cloud, X, Mic, Trash2, Upload, BookOpen, Settings2 } from "lucide-react";
 import TranscriptionItem from "./ui/TranscriptionItem";
 import type { TranscriptionItem as TranscriptionItemType } from "../types/electron";
 import { formatHotkeyLabel } from "../utils/hotkeys";
@@ -22,6 +22,8 @@ interface HistoryViewProps {
   deleteTranscription: (id: number) => void;
   clearAllTranscriptions: () => void;
   onOpenSettings: (section?: string) => void;
+  onOpenUpload?: () => void;
+  onOpenDictionary?: () => void;
   onShowAudioInFolder: (id: number) => void;
   onRetryTranscription: (id: number) => Promise<void>;
 }
@@ -39,6 +41,8 @@ export default function HistoryView({
   deleteTranscription,
   clearAllTranscriptions,
   onOpenSettings,
+  onOpenUpload,
+  onOpenDictionary,
   onShowAudioInFolder,
   onRetryTranscription,
 }: HistoryViewProps) {
@@ -73,6 +77,13 @@ export default function HistoryView({
           "max-w-4xl xl:max-w-4xl"
         )}
       >
+        <div className="ow-page-header">
+          <div className="ow-page-heading">
+            <h1 className="ow-page-title">{t("sidebar.home")}</h1>
+            <p className="ow-page-description">{t("controlPanel.history.deskDescription")}</p>
+          </div>
+        </div>
+
         {showCloudMigrationBanner && (
           <div className="ow-panel mb-3 relative p-3">
             <button
@@ -167,98 +178,73 @@ export default function HistoryView({
                 </div>
               </div>
             ) : history.length === 0 ? (
-              <div className="min-h-[420px] flex items-center justify-center">
-                <div className="flex flex-col items-center justify-center px-4">
-                  <svg
-                    className="text-muted-foreground mb-5"
-                    width="64"
-                    height="64"
-                    viewBox="0 0 64 64"
-                    fill="none"
-                  >
-                    <rect
-                      x="24"
-                      y="6"
-                      width="16"
-                      height="28"
-                      rx="8"
-                      fill="currentColor"
-                      fillOpacity={0.04}
-                      stroke="currentColor"
-                      strokeOpacity={0.1}
-                    />
-                    <rect
-                      x="28"
-                      y="12"
-                      width="8"
-                      height="3"
-                      rx="1.5"
-                      fill="currentColor"
-                      fillOpacity={0.06}
-                    />
-                    <path
-                      d="M18 28c0 7.7 6.3 14 14 14s14-6.3 14-14"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeOpacity={0.07}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    <line
-                      x1="32"
-                      y1="42"
-                      x2="32"
-                      y2="50"
-                      stroke="currentColor"
-                      strokeOpacity={0.07}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    <line
-                      x1="26"
-                      y1="50"
-                      x2="38"
-                      y2="50"
-                      stroke="currentColor"
-                      strokeOpacity={0.07}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M12 20a2 2 0 0 1 0 8"
-                      stroke="currentColor"
-                      strokeOpacity={0.04}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M8 18a2 2 0 0 1 0 12"
-                      stroke="currentColor"
-                      strokeOpacity={0.03}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M52 20a2 2 0 0 0 0 8"
-                      stroke="currentColor"
-                      strokeOpacity={0.04}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M56 18a2 2 0 0 0 0 12"
-                      stroke="currentColor"
-                      strokeOpacity={0.03}
-                      strokeWidth={1.5}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <h3 className="text-sm font-semibold text-foreground mb-2">
+              <div className="grid min-h-[420px] items-center gap-4 px-4 py-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(260px,0.85fr)]">
+                <div className="ow-surface-focus overflow-hidden">
+                  <div className="border-b border-border/60 px-5 py-4 dark:border-white/8">
+                    <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                      <Mic size={22} strokeWidth={1.7} />
+                    </div>
+                    <h3 className="text-lg font-semibold tracking-tight text-foreground">
+                      {t("controlPanel.history.deskTitle")}
+                    </h3>
+                    <p className="mt-1 max-w-lg text-sm leading-relaxed text-muted-foreground">
+                      {t("controlPanel.history.deskDescription")}
+                    </p>
+                  </div>
+                  <div className="grid gap-0 divide-y divide-border/50 dark:divide-white/8">
+                    <div className="flex items-center justify-between gap-3 px-5 py-3">
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">
+                          {t("controlPanel.history.hotkeyLabel")}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {t("controlPanel.history.hotkeyDescription")}
+                        </p>
+                      </div>
+                      <div className="ow-status-pill shrink-0">
+                        <kbd className="font-mono text-xs font-semibold text-foreground">
+                          {formatHotkeyLabel(hotkey)}
+                        </kbd>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-3">
+                      <button
+                        type="button"
+                        onClick={onOpenUpload}
+                        className="flex min-w-0 items-center gap-2 rounded-md border border-border/70 bg-background/70 px-3 py-2 text-left text-xs font-semibold text-foreground transition-colors hover:border-border-hover hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+                      >
+                        <Upload size={14} className="shrink-0 text-primary" />
+                        <span className="truncate">{t("controlPanel.history.quickUpload")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={onOpenDictionary}
+                        className="flex min-w-0 items-center gap-2 rounded-md border border-border/70 bg-background/70 px-3 py-2 text-left text-xs font-semibold text-foreground transition-colors hover:border-border-hover hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+                      >
+                        <BookOpen size={14} className="shrink-0 text-primary" />
+                        <span className="truncate">{t("controlPanel.history.quickDictionary")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpenSettings("transcription")}
+                        className="flex min-w-0 items-center gap-2 rounded-md border border-border/70 bg-background/70 px-3 py-2 text-left text-xs font-semibold text-foreground transition-colors hover:border-border-hover hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+                      >
+                        <Settings2 size={14} className="shrink-0 text-primary" />
+                        <span className="truncate">{t("controlPanel.history.quickSettings")}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="ow-surface-focus px-5 py-4">
+                  <p className="text-xs font-semibold text-foreground">
                     {t("controlPanel.history.empty")}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {t("controlPanel.history.emptyDescription")}
+                  </p>
+                  <div className="mt-4 inline-flex max-w-full items-center gap-2 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-xs font-medium text-primary">
                     <span>{t("controlPanel.history.press")}</span>
-                    <kbd className="inline-flex items-center h-5 px-1.5 rounded-sm bg-background border border-border text-xs font-mono font-semibold text-foreground">
+                    <kbd className="rounded-sm bg-background/80 px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground">
                       {formatHotkeyLabel(hotkey)}
                     </kbd>
                     <span>{t("controlPanel.history.toStart")}</span>
@@ -266,11 +252,11 @@ export default function HistoryView({
                 </div>
               </div>
             ) : (
-              <div className="group border-y border-border/60 px-4 pb-4 dark:border-white/8">
+              <div className="group px-4 pb-4">
                 {groupedHistory.map((group, index) => (
-                  <div key={group.label} className={index > 0 ? "mt-4" : ""}>
-                    <div className="sticky -top-4 z-10 -mx-4 flex items-center justify-between border-b border-border/60 bg-background px-5 pt-4 pb-2 dark:border-white/8">
-                      <span className="text-[11px] font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wide">
+                  <div key={group.label} className={index > 0 ? "mt-6" : ""}>
+                    <div className="sticky -top-4 z-10 -mx-4 flex items-center justify-between bg-background/95 px-5 pt-4 pb-2 backdrop-blur-sm">
+                      <span className="rounded-sm bg-muted/60 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-white/[0.06]">
                         {group.label}
                       </span>
                       {index === 0 && (
@@ -283,7 +269,7 @@ export default function HistoryView({
                         </button>
                       )}
                     </div>
-                    <div className="space-y-1.5 relative z-0">
+                    <div className="relative z-0 space-y-2">
                       {group.items.map((item) => (
                         <TranscriptionItem
                           key={item.id}

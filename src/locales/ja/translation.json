@@ -297,7 +297,15 @@
       "rawTranscript": "生の文字起こし",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "AIクリーンアップに失敗したため、元の文字起こしを保持しました"
+      "cleanupFailed": "AIクリーンアップに失敗したため、元の文字起こしを保持しました",
+      "emptyDescription": "最初の音声メモを録音すると、最近の音声入力がここに表示されます。",
+      "deskTitle": "音声入力デスク",
+      "deskDescription": "音声の記録、語彙の調整、文字起こしの確認をひとつの作業スペースで行えます。",
+      "hotkeyLabel": "音声入力の準備完了",
+      "hotkeyDescription": "グローバルホットキーでどこからでも新しい音声入力を開始できます。",
+      "quickUpload": "音声をアップロード",
+      "quickDictionary": "辞書を編集",
+      "quickSettings": "文字起こし設定"
     },
     "cloudMigration": {
       "viewSettings": "設定を表示"
@@ -1861,7 +1869,9 @@
       "filterEmpty": "選択した話者の内容はありません",
       "filterAria": "文字起こしの話者を絞り込む",
       "currentSessionSpeakers": "現在のセッション"
-    }
+    },
+    "collapseNoteList": "ノートリストを折りたたむ",
+    "expandNoteList": "ノートリストを展開"
   },
   "dictionary": {
     "addWord": "単語を追加",
@@ -1905,7 +1915,9 @@
     "integrations": "連携",
     "defaultUser": "ユーザー",
     "notSignedIn": "未サインイン",
-    "chat": "チャット"
+    "chat": "チャット",
+    "collapse": "サイドバーを折りたたむ",
+    "expand": "サイドバーを展開"
   },
   "chat": {
     "newChat": "新しいチャット",
@@ -1927,7 +1939,9 @@
     "searchChats": "チャットを検索",
     "searchTitle": "会話を検索",
     "searchDescription": "すべての会話を検索",
-    "newChatEmpty": "ノートや文字起こし、その他なんでも聞いてください"
+    "newChatEmpty": "ノートや文字起こし、その他なんでも聞いてください",
+    "collapseConversationList": "会話リストを折りたたむ",
+    "expandConversationList": "会話リストを展開"
   },
   "support": {
     "documentation": "ドキュメント",

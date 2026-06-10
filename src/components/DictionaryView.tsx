@@ -172,8 +172,12 @@ export default function DictionaryView() {
           variant="destructive"
         />
 
-        <div className="pb-5">
-          <div className="ow-segmented inline-flex text-xs">
+        <div className="ow-page-header">
+          <div className="ow-page-heading">
+            <h1 className="ow-page-title">{t("dictionary.title")}</h1>
+            <p className="ow-page-description">{activeTabDescription}</p>
+          </div>
+          <div className="ow-segmented inline-flex shrink-0 text-xs">
             <button
               onClick={() => setActiveTab("dictionary")}
               className={`ow-segmented-item ${
@@ -191,16 +195,15 @@ export default function DictionaryView() {
               {t("dictionary.people")}
             </button>
           </div>
-          <p className="mt-3 max-w-2xl text-xs leading-relaxed text-muted-foreground">
-            {activeTabDescription}
-          </p>
         </div>
 
+        <div className="ow-page-body">
         {activeTab === "people" ? (
           <>
-            <div className="flex items-baseline justify-between pb-3">
+            <div className="ow-section">
+            <div className="ow-section-header">
               <div className="flex items-baseline gap-2">
-                <h2 className="text-sm font-semibold text-foreground">
+                <h2 className="ow-section-title">
                   {t("dictionary.peopleTitle")}
                 </h2>
                 <span className="text-xs text-muted-foreground font-mono tabular-nums">
@@ -208,7 +211,7 @@ export default function DictionaryView() {
                 </span>
               </div>
             </div>
-            <div className="rounded-md bg-muted/25 p-3 dark:bg-white/[0.025]">
+            <div className="ow-section-muted">
               {renderAddInput(
                 newSpeakerName,
                 setNewSpeakerName,
@@ -218,19 +221,19 @@ export default function DictionaryView() {
               )}
             </div>
             {speakerNames.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center px-8 -mt-8">
-                <div className="w-10 h-10 rounded-[10px] bg-foreground/[0.03] border border-foreground/8 flex items-center justify-center mb-4">
+              <div className="ow-empty-state-card mx-auto mt-4">
+                <div className="ow-empty-state-visual mx-auto h-11 w-11">
                   <Users size={17} strokeWidth={1.5} className="text-muted-foreground" />
                 </div>
-                <h2 className="text-xs font-semibold text-foreground mb-1">
+                <h2 className="ow-empty-state-title">
                   {t("dictionary.peopleTitle")}
                 </h2>
-                <p className="text-xs text-muted-foreground text-center leading-relaxed max-w-[260px]">
+                <p className="ow-empty-state-description mx-auto">
                   {t("dictionary.peopleDescription")}
                 </p>
               </div>
             ) : (
-              <div className="mt-3 flex-1 overflow-y-auto rounded-md bg-muted/20 p-3 dark:bg-white/[0.02]">
+              <div className="ow-section-muted mt-3">
                 <div className="flex flex-wrap gap-1.5">
                   {speakerNames.map((entry) => (
                     <span
@@ -250,18 +253,19 @@ export default function DictionaryView() {
                 </div>
               </div>
             )}
+            </div>
           </>
         ) : isEmpty ? (
           /* ─── Empty state ─── */
-          <div className="flex-1 flex flex-col items-center justify-center px-8">
-            <div className="w-11 h-11 rounded-md bg-muted/60 border border-border/70 flex items-center justify-center mb-4">
+          <div className="ow-empty-state-card mx-auto mt-8">
+            <div className="ow-empty-state-visual mx-auto h-11 w-11">
               <BookOpen size={17} strokeWidth={1.5} className="text-foreground/35" />
             </div>
 
-            <h2 className="text-lg font-semibold tracking-tight text-foreground mb-1">
+            <h2 className="ow-empty-state-title">
               {t("dictionary.title")}
             </h2>
-            <p className="text-sm text-muted-foreground text-center leading-relaxed max-w-[320px] mb-6">
+            <p className="ow-empty-state-description mx-auto mb-5">
               {t("dictionary.description")}
             </p>
 
@@ -323,10 +327,10 @@ export default function DictionaryView() {
         ) : (
           /* ─── Populated state ─── */
           <>
-            <div className="flex min-h-0 max-w-full flex-col gap-3">
-              <div className="flex items-center justify-between px-1">
+            <div className="ow-section flex min-h-0 max-w-full flex-col p-0">
+              <div className="ow-section-header mb-0 px-4 pt-4">
                 <div className="flex items-baseline gap-2">
-                  <h2 className="text-sm font-semibold text-foreground">{t("dictionary.title")}</h2>
+                  <h2 className="ow-section-title">{t("dictionary.title")}</h2>
                   <span className="text-xs text-muted-foreground font-mono tabular-nums">
                     {customDictionary.length}
                   </span>
@@ -342,7 +346,7 @@ export default function DictionaryView() {
                 </Button>
               </div>
 
-              <div className="rounded-md bg-muted/25 p-3 dark:bg-white/[0.025]">
+              <div className="ow-section-flat">
                 <div className="relative">
                   <Input
                     placeholder={t("dictionary.addPlaceholder")}
@@ -375,7 +379,7 @@ export default function DictionaryView() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto rounded-md bg-muted/20 p-3 dark:bg-white/[0.02]">
+              <div className="ow-section-divider ow-section-flat">
                 <div className="flex flex-wrap gap-2">
                   {customDictionary.map((word) => {
                     const isAgentName = word === agentName;
@@ -411,7 +415,7 @@ export default function DictionaryView() {
                 </div>
               </div>
 
-              <div className="rounded-md bg-muted/20 p-3 dark:bg-white/[0.02]">
+              <div className="ow-section-divider ow-section-flat">
                 <div className="mb-2 flex items-baseline justify-between gap-3">
                   <div>
                     <h3 className="text-xs font-semibold text-foreground">
@@ -485,6 +489,7 @@ export default function DictionaryView() {
             </div>
           </>
         )}
+        </div>
       </div>
     </div>
   );

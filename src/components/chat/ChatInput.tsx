@@ -82,12 +82,10 @@ export function ChatInput({
   }, [isIdle]);
 
   return (
-    <div className="shrink-0 border-t border-border bg-card px-3 pb-3 pt-3">
+    <div className="ow-chat-input-shell">
       <div
         className={cn(
-          "flex items-center gap-2 min-h-11 px-3 rounded-md",
-          "bg-background border border-border shadow-sm",
-          "transition-colors duration-150",
+          "ow-chat-input-inner",
           isIdle && "focus-within:border-border-hover focus-within:ring-2 focus-within:ring-ring/15"
         )}
       >

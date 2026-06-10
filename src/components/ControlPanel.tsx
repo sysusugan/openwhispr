@@ -713,13 +713,9 @@ export default function ControlPanel() {
         </div>
         <main className="min-w-0 flex-1 flex flex-col overflow-hidden bg-background">
           <div
-            className="h-10 shrink-0 bg-background"
-            style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
-          />
-          <div
             className={cn(
               "min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background",
-              activeView === "chat" || activeView === "personal-notes" ? "p-0" : "p-5"
+              "p-0"
             )}
           >
             {(gpuAccelAvailable.cuda || gpuAccelAvailable.vulkan) &&
@@ -786,6 +782,8 @@ export default function ControlPanel() {
                   setSettingsSection(section);
                   setShowSettings(true);
                 }}
+                onOpenUpload={() => setActiveView("upload")}
+                onOpenDictionary={() => setActiveView("dictionary")}
               />
             )}
             {activeView === "chat" && (

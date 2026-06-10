@@ -83,7 +83,13 @@ import { useToast } from "./ui/useToast";
 import { useTheme } from "../hooks/useTheme";
 import type { GpuDevice, LocalTranscriptionProvider, InferenceMode } from "../types/electron";
 import logger from "../utils/logger";
-import { SettingsRow, InferenceModeSelector } from "./ui/SettingsSection";
+import {
+  SettingsPanel,
+  SettingsPanelRow,
+  SettingsRow,
+  SectionHeader,
+  InferenceModeSelector,
+} from "./ui/SettingsSection";
 import type { InferenceModeOption } from "./ui/SettingsSection";
 import { useSettingsLayout } from "./ui/useSettingsLayout";
 import { cn } from "./lib/utils";
@@ -122,45 +128,6 @@ const UI_LANGUAGE_OPTIONS: import("./ui/LanguageSelector").LanguageOption[] = [
 ];
 
 const noop = () => {};
-
-function SettingsPanel({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`ow-panel divide-y divide-border/50 dark:divide-white/8 ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function SettingsPanelRow({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const { isCompact } = useSettingsLayout();
-
-  return <div className={`${isCompact ? "px-3 py-2.5" : "px-4 py-3.5"} ${className}`}>{children}</div>;
-}
-
-function SectionHeader({ title, description }: { title: string; description?: string }) {
-  return (
-    <div className="mb-3">
-      <h3 className="text-sm font-semibold text-foreground tracking-tight">{title}</h3>
-      {description && (
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
-      )}
-    </div>
-  );
-}
 
 interface TranscriptionSectionProps {
   isSignedIn: boolean;

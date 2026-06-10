@@ -42,7 +42,7 @@ export const SettingsGroup: React.FC<SettingsGroupProps> = ({
   variant = "default",
   className = "",
 }) => {
-  const baseClasses = "space-y-3 p-3 rounded-md border shadow-sm";
+  const baseClasses = "space-y-3 p-3 rounded-md border shadow-none";
   const variantClasses = {
     default: "bg-background dark:bg-white/[0.02] border-border/60 dark:border-white/8",
     highlighted: "bg-muted/50 dark:bg-white/[0.04] border-border/70 dark:border-white/10",
@@ -95,7 +95,7 @@ export function SettingsPanel({
 }) {
   return (
     <div
-      className={`ow-panel divide-y divide-border/50 dark:divide-white/8 ${className}`}
+      className={`ow-surface-focus divide-y divide-border/50 dark:divide-white/8 ${className}`}
     >
       {children}
     </div>
@@ -180,12 +180,12 @@ export function InferenceModeSelector({
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-foreground">{mode.label}</span>
                   {isActive && !isDisabled && (
-                    <span className="text-xs font-medium text-foreground/70 bg-muted px-1.5 py-px rounded-sm">
+                    <span className="ow-status-pill text-foreground">
                       {t("common.active")}
                     </span>
                   )}
                   {isDisabled && mode.badge && (
-                    <span className="text-xs font-medium text-muted-foreground bg-muted/80 dark:bg-surface-3 px-1.5 py-px rounded-sm">
+                    <span className="ow-status-pill">
                       {mode.badge}
                     </span>
                   )}

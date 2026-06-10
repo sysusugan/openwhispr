@@ -55,8 +55,8 @@ export default function ControlPanelSidebar({
   onCollapsedChange,
 }: ControlPanelSidebarProps) {
   const { t } = useTranslation();
-  const collapseLabel = "收起侧边栏";
-  const expandLabel = "展开侧边栏";
+  const collapseLabel = t("sidebar.collapse");
+  const expandLabel = t("sidebar.expand");
 
   const navItems: {
     id: ControlPanelView;
@@ -73,7 +73,7 @@ export default function ControlPanelSidebar({
 
   if (collapsed) {
     return (
-      <div className="w-[4.5rem] h-full shrink-0 flex flex-col items-center bg-sidebar dark:bg-surface-1">
+      <div className="ow-surface-pane w-[4.5rem] h-full shrink-0 flex flex-col items-center">
         <div
           className="w-full h-10 shrink-0"
           style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
@@ -84,7 +84,7 @@ export default function ControlPanelSidebar({
           onClick={() => onCollapsedChange?.(false)}
           title={expandLabel}
           aria-label={expandLabel}
-          className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground shadow-sm outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
+          className="mb-3 flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-card/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
         >
           <PanelLeftOpen size={18} />
@@ -96,7 +96,7 @@ export default function ControlPanelSidebar({
             onClick={onOpenSearch}
             title={t("commandSearch.shortPlaceholder")}
             aria-label={t("commandSearch.shortPlaceholder")}
-            className="mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card text-muted-foreground shadow-sm outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
+            className="mb-3 flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-card/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
           >
             <Search size={18} />
           </button>
@@ -115,10 +115,10 @@ export default function ControlPanelSidebar({
                 title={item.label}
                 aria-label={item.label}
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-md border outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring/20",
+                  "ow-nav-item flex h-10 w-10 justify-center px-0",
                   isActive
-                    ? "border-border bg-muted text-foreground shadow-sm dark:border-white/10 dark:bg-white/10"
-                    : "border-transparent text-muted-foreground hover:border-border/70 hover:bg-card hover:text-foreground dark:hover:bg-white/8"
+                    ? "ow-nav-item-active"
+                    : ""
                 )}
               >
                 <Icon size={18} />
@@ -135,7 +135,7 @@ export default function ControlPanelSidebar({
             onClick={onOpenSettings}
             title={t("sidebar.settings")}
             aria-label={t("sidebar.settings")}
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none transition-colors hover:border-border/70 hover:bg-card hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
+            className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-card/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
           >
             <Settings size={17} />
           </button>
@@ -146,17 +146,17 @@ export default function ControlPanelSidebar({
                 type="button"
                 title={t("sidebar.support")}
                 aria-label={t("sidebar.support")}
-                className="flex h-10 w-10 items-center justify-center rounded-md border border-transparent text-muted-foreground outline-none transition-colors hover:border-border/70 hover:bg-card hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
+                className="flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-card/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/20"
               >
                 <HelpCircle size={17} />
               </button>
             }
           />
 
-          <div className="my-2 h-px w-10 bg-border" />
+          <div className="my-2 h-px w-10 bg-border/70" />
 
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-card shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-md bg-card/60"
             title={userName || userEmail || t("sidebar.defaultUser")}
           >
             {userImage ? (
@@ -171,7 +171,7 @@ export default function ControlPanelSidebar({
   }
 
   return (
-    <div className="h-full w-full shrink-0 flex flex-col bg-sidebar dark:bg-surface-1">
+    <div className="ow-surface-pane h-full w-full shrink-0 flex flex-col">
       <div
         className="w-full h-10 shrink-0"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
@@ -201,17 +201,17 @@ export default function ControlPanelSidebar({
         <div className="px-4 pt-2 pb-2">
           <button
             onClick={onOpenSearch}
-            className="group flex items-center w-full h-10 px-3 rounded-md border border-border bg-card hover:bg-muted transition-colors gap-2 outline-none focus-visible:ring-2 focus-visible:ring-ring/20 shadow-sm"
+            className="ow-command-field group h-10 px-3"
           >
             <Search size={15} className="text-muted-foreground shrink-0" />
             <span className="flex-1 text-xs text-left font-medium text-muted-foreground">
               {t("commandSearch.shortPlaceholder")}
             </span>
             <div className="flex items-center gap-0.5 shrink-0">
-              <kbd className="text-[10px] px-1 py-px rounded border border-border bg-background text-muted-foreground font-mono leading-tight">
+              <kbd className="text-[10px] px-1 py-px rounded-sm border border-border/70 bg-background text-muted-foreground font-mono leading-tight">
                 {platform === "darwin" ? "⌘" : "Ctrl"}
               </kbd>
-              <kbd className="text-[10px] px-1 py-px rounded border border-border bg-background text-muted-foreground font-mono leading-tight">
+              <kbd className="text-[10px] px-1 py-px rounded-sm border border-border/70 bg-background text-muted-foreground font-mono leading-tight">
                 K
               </kbd>
             </div>
@@ -229,18 +229,15 @@ export default function ControlPanelSidebar({
               key={item.id}
               onClick={() => onViewChange(item.id)}
               className={cn(
-                "group relative flex items-center gap-3 w-full h-10 px-3 rounded-md border outline-none transition-colors duration-150 text-left",
-                "focus-visible:ring-2 focus-visible:ring-ring/20",
-                isActive
-                  ? "border-border bg-muted text-foreground shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-foreground"
-                  : "border-transparent text-muted-foreground hover:border-border/70 hover:bg-card hover:text-foreground dark:hover:bg-white/8"
+                "ow-nav-item group h-10",
+                isActive && "ow-nav-item-active"
               )}
             >
               <Icon
                 size={16}
                 className={cn(
                   "shrink-0 transition-colors duration-150",
-                  isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               <span
@@ -268,7 +265,7 @@ export default function ControlPanelSidebar({
         <button
           onClick={onOpenSettings}
           aria-label={t("sidebar.settings")}
-          className="group flex items-center gap-3 w-full h-10 px-3 rounded-md border border-transparent text-left outline-none text-muted-foreground hover:border-border/70 hover:bg-card hover:text-foreground dark:hover:bg-white/8 focus-visible:ring-2 focus-visible:ring-ring/20 transition-colors duration-150"
+          className="ow-nav-item group h-10"
         >
           <Settings
             size={15}
@@ -283,7 +280,7 @@ export default function ControlPanelSidebar({
           trigger={
             <button
               aria-label={t("sidebar.support")}
-              className="group flex items-center gap-3 w-full h-10 px-3 rounded-md border border-transparent text-left outline-none text-muted-foreground hover:border-border/70 hover:bg-card hover:text-foreground dark:hover:bg-white/8 focus-visible:ring-2 focus-visible:ring-ring/20 transition-colors duration-150"
+              className="ow-nav-item group h-10"
             >
               <HelpCircle
                 size={15}

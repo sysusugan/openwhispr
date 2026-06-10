@@ -297,7 +297,15 @@
       "rawTranscript": "原始轉錄",
       "dictionaryCorrections": "詞典糾錯",
       "addCorrectionAlias": "新增常見誤識別規則：{{from}} -> {{to}}",
-      "cleanupFailed": "AI 潤飾失敗，已保留原始轉錄"
+      "cleanupFailed": "AI 潤飾失敗，已保留原始轉錄",
+      "emptyDescription": "完成第一次語音記錄後，最近的聽寫內容會出現在這裡。",
+      "deskTitle": "聽寫工作台",
+      "deskDescription": "在一個聚焦的工作區完成語音記錄、詞彙校準和轉錄回看。",
+      "hotkeyLabel": "語音輸入已就緒",
+      "hotkeyDescription": "使用全域快捷鍵，在任何位置開始一段新的聽寫。",
+      "quickUpload": "上傳音訊",
+      "quickDictionary": "編輯詞典",
+      "quickSettings": "轉錄設定"
     },
     "cloudMigration": {
       "viewSettings": "查看設定"
@@ -1861,7 +1869,9 @@
       "filterEmpty": "沒有符合的發言者內容",
       "filterAria": "篩選轉錄發言者",
       "currentSessionSpeakers": "目前會話"
-    }
+    },
+    "collapseNoteList": "收合筆記列表",
+    "expandNoteList": "展開筆記列表"
   },
   "dictionary": {
     "addWord": "新增詞語",
@@ -1905,7 +1915,9 @@
     "integrations": "整合",
     "defaultUser": "使用者",
     "notSignedIn": "尚未登入",
-    "chat": "聊天"
+    "chat": "聊天",
+    "collapse": "收合側邊欄",
+    "expand": "展開側邊欄"
   },
   "chat": {
     "newChat": "新對話",
@@ -1927,7 +1939,9 @@
     "searchChats": "搜尋聊天",
     "searchTitle": "搜尋對話",
     "searchDescription": "搜尋所有對話",
-    "newChatEmpty": "詢問關於筆記、轉錄或其他任何內容"
+    "newChatEmpty": "詢問關於筆記、轉錄或其他任何內容",
+    "collapseConversationList": "收合對話列表",
+    "expandConversationList": "展開對話列表"
   },
   "support": {
     "documentation": "文件",

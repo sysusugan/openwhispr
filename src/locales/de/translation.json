@@ -297,7 +297,15 @@
       "rawTranscript": "Rohtranskript",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "KI-Bereinigung fehlgeschlagen; die Rohtranskription wurde beibehalten"
+      "cleanupFailed": "KI-Bereinigung fehlgeschlagen; die Rohtranskription wurde beibehalten",
+      "emptyDescription": "Ihre letzten Diktate erscheinen hier, nachdem Sie Ihre erste Sprachnotiz aufgenommen haben.",
+      "deskTitle": "Diktat-Arbeitsplatz",
+      "deskDescription": "Sprache erfassen, Vokabular anpassen und Transkripte in einem fokussierten Bereich prüfen.",
+      "hotkeyLabel": "Bereit für Spracheingabe",
+      "hotkeyDescription": "Nutzen Sie den globalen Hotkey, um überall ein neues Diktat zu starten.",
+      "quickUpload": "Audio hochladen",
+      "quickDictionary": "Wörterbuch bearbeiten",
+      "quickSettings": "Transkription einrichten"
     },
     "cloudMigration": {
       "viewSettings": "Einstellungen anzeigen"
@@ -1862,7 +1870,9 @@
       "filterEmpty": "Keine Inhalte für die ausgewählten Sprecher",
       "filterAria": "Sprecher im Transkript filtern",
       "currentSessionSpeakers": "Aktuelle Sitzung"
-    }
+    },
+    "collapseNoteList": "Notizenliste einklappen",
+    "expandNoteList": "Notizenliste ausklappen"
   },
   "dictionary": {
     "addWord": "Wort hinzufügen",
@@ -1906,7 +1916,9 @@
     "integrations": "Integrationen",
     "defaultUser": "Benutzer",
     "notSignedIn": "Nicht angemeldet",
-    "chat": "Chat"
+    "chat": "Chat",
+    "collapse": "Seitenleiste einklappen",
+    "expand": "Seitenleiste ausklappen"
   },
   "chat": {
     "newChat": "Neuer Chat",
@@ -1928,7 +1940,9 @@
     "searchChats": "Chats suchen",
     "searchTitle": "Unterhaltungen suchen",
     "searchDescription": "In allen Unterhaltungen suchen",
-    "newChatEmpty": "Fragen Sie zu Ihren Notizen, Transkripten oder anderem"
+    "newChatEmpty": "Fragen Sie zu Ihren Notizen, Transkripten oder anderem",
+    "collapseConversationList": "Konversationsliste einklappen",
+    "expandConversationList": "Konversationsliste ausklappen"
   },
   "support": {
     "documentation": "Dokumentation",

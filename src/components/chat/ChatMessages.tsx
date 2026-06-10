@@ -34,11 +34,11 @@ export function ChatMessages({
   }, [messages]);
 
   return (
-    <div ref={scrollRef} className={cn("flex-1 overflow-y-auto agent-chat-scroll", "px-3 py-2")}>
+    <div ref={scrollRef} className={cn("flex-1 overflow-y-auto agent-chat-scroll")}>
       {messages.length === 0 ? (
         (emptyState ?? null)
       ) : (
-        <div className="flex flex-col gap-1.5">
+        <div className="ow-chat-stream">
           {messages
             .filter((msg) => msg.role !== "tool")
             .map((msg) => (

@@ -296,7 +296,15 @@
       "clearAllErrorDescription": "Something went wrong. Please try again.",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "AI cleanup failed; the raw transcription was kept"
+      "cleanupFailed": "AI cleanup failed; the raw transcription was kept",
+      "emptyDescription": "Your recent dictations will appear here after you capture your first voice note.",
+      "deskTitle": "Dictation desk",
+      "deskDescription": "Capture speech, tune vocabulary, and review transcripts from one focused workspace.",
+      "hotkeyLabel": "Ready for voice input",
+      "hotkeyDescription": "Use the global hotkey to start a new dictation from anywhere.",
+      "quickUpload": "Upload audio",
+      "quickDictionary": "Edit dictionary",
+      "quickSettings": "Transcription setup"
     },
     "cloudMigration": {
       "viewSettings": "View Settings"
@@ -1533,7 +1541,9 @@
     "integrations": "Integrations",
     "defaultUser": "User",
     "notSignedIn": "Not signed in",
-    "chat": "Chat"
+    "chat": "Chat",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   },
   "chat": {
     "newChat": "New chat",
@@ -1555,7 +1565,9 @@
     "searchChats": "Search chats",
     "searchTitle": "Search conversations",
     "searchDescription": "Search across all your conversations",
-    "newChatEmpty": "Ask about your notes, transcripts, or anything else"
+    "newChatEmpty": "Ask about your notes, transcripts, or anything else",
+    "collapseConversationList": "Collapse conversation list",
+    "expandConversationList": "Expand conversation list"
   },
   "notes": {
     "sidebar": {
@@ -1899,7 +1911,9 @@
       "filterEmpty": "No content for the selected speakers",
       "filterAria": "Filter transcript speakers",
       "currentSessionSpeakers": "Current session"
-    }
+    },
+    "collapseNoteList": "Collapse note list",
+    "expandNoteList": "Expand note list"
   },
   "dictionary": {
     "title": "Custom Dictionary",

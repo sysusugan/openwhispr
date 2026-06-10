@@ -297,7 +297,15 @@
       "rawTranscript": "Transcription brute",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "Le nettoyage IA a échoué ; la transcription brute a été conservée"
+      "cleanupFailed": "Le nettoyage IA a échoué ; la transcription brute a été conservée",
+      "emptyDescription": "Vos dictées récentes apparaîtront ici après votre première note vocale.",
+      "deskTitle": "Bureau de dictée",
+      "deskDescription": "Capturez la voix, ajustez le vocabulaire et relisez les transcriptions dans un espace dédié.",
+      "hotkeyLabel": "Prêt pour la saisie vocale",
+      "hotkeyDescription": "Utilisez le raccourci global pour lancer une dictée depuis n’importe où.",
+      "quickUpload": "Importer audio",
+      "quickDictionary": "Modifier le dictionnaire",
+      "quickSettings": "Configurer la transcription"
     },
     "cloudMigration": {
       "viewSettings": "Voir les paramètres"
@@ -1532,7 +1540,9 @@
     "integrations": "Intégrations",
     "defaultUser": "Utilisateur",
     "notSignedIn": "Non connecté",
-    "chat": "Chat"
+    "chat": "Chat",
+    "collapse": "Réduire la barre latérale",
+    "expand": "Développer la barre latérale"
   },
   "chat": {
     "newChat": "Nouveau chat",
@@ -1554,7 +1564,9 @@
     "searchChats": "Rechercher",
     "searchTitle": "Rechercher des conversations",
     "searchDescription": "Rechercher dans toutes vos conversations",
-    "newChatEmpty": "Posez des questions sur vos notes, transcriptions ou autre"
+    "newChatEmpty": "Posez des questions sur vos notes, transcriptions ou autre",
+    "collapseConversationList": "Réduire la liste des conversations",
+    "expandConversationList": "Développer la liste des conversations"
   },
   "notes": {
     "sidebar": {
@@ -1898,7 +1910,9 @@
       "filterEmpty": "Aucun contenu pour les intervenants sélectionnés",
       "filterAria": "Filtrer les intervenants de la transcription",
       "currentSessionSpeakers": "Session actuelle"
-    }
+    },
+    "collapseNoteList": "Réduire la liste des notes",
+    "expandNoteList": "Développer la liste des notes"
   },
   "dictionary": {
     "title": "Dictionnaire personnalisé",

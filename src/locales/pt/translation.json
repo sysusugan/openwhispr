@@ -284,7 +284,15 @@
       "rawTranscript": "Transcrição bruta",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "A limpeza por IA falhou; a transcrição original foi mantida"
+      "cleanupFailed": "A limpeza por IA falhou; a transcrição original foi mantida",
+      "emptyDescription": "Seus ditados recentes aparecerão aqui depois da primeira nota de voz.",
+      "deskTitle": "Mesa de ditado",
+      "deskDescription": "Capture fala, ajuste o vocabulário e revise transcrições em um espaço focado.",
+      "hotkeyLabel": "Pronto para entrada por voz",
+      "hotkeyDescription": "Use o atalho global para iniciar um ditado de qualquer lugar.",
+      "quickUpload": "Enviar áudio",
+      "quickDictionary": "Editar dicionário",
+      "quickSettings": "Configurar transcrição"
     },
     "cloudMigration": {
       "viewSettings": "Ver configurações"
@@ -1861,7 +1869,9 @@
       "filterEmpty": "Nenhum conteúdo para os falantes selecionados",
       "filterAria": "Filtrar falantes da transcrição",
       "currentSessionSpeakers": "Sessão atual"
-    }
+    },
+    "collapseNoteList": "Recolher lista de notas",
+    "expandNoteList": "Expandir lista de notas"
   },
   "dictionary": {
     "addWord": "Adicionar palavra",
@@ -1905,7 +1915,9 @@
     "integrations": "Integrações",
     "defaultUser": "Usuário",
     "notSignedIn": "Não conectado",
-    "chat": "Chat"
+    "chat": "Chat",
+    "collapse": "Recolher barra lateral",
+    "expand": "Expandir barra lateral"
   },
   "chat": {
     "newChat": "Novo chat",
@@ -1927,7 +1939,9 @@
     "searchChats": "Pesquisar chats",
     "searchTitle": "Pesquisar conversas",
     "searchDescription": "Pesquisar em todas as conversas",
-    "newChatEmpty": "Pergunte sobre suas notas, transcrições ou qualquer coisa"
+    "newChatEmpty": "Pergunte sobre suas notas, transcrições ou qualquer coisa",
+    "collapseConversationList": "Recolher lista de conversas",
+    "expandConversationList": "Expandir lista de conversas"
   },
   "support": {
     "documentation": "Documentação",

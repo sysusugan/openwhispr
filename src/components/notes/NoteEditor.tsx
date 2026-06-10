@@ -1537,7 +1537,8 @@ export default function NoteEditor({
       onDrop={handleNoteDrop}
     >
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <div className="min-w-0 px-5 pt-4 pb-3">
+        <div className="ow-page-header mx-5 mb-0 min-w-0 pt-4 pb-3">
+          <div className="min-w-0 flex-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
           <div
             ref={titleRef}
             contentEditable
@@ -1978,6 +1979,7 @@ export default function NoteEditor({
                 </DropdownMenu>
               )}
             </div>
+          </div>
           </div>
         </div>
 

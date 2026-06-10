@@ -115,10 +115,10 @@ export default function TranscriptionItem({
   return (
     <div
       className={cn(
-        "group rounded-md border px-3 py-2.5 transition-colors duration-150",
+        "group relative rounded-md px-3 py-2.5 transition-colors duration-150",
         isFailed
-          ? "border-destructive/30 bg-destructive/5 hover:bg-destructive/10"
-          : "border-border/60 dark:border-border-subtle/70 bg-background dark:bg-surface-2/50 hover:bg-muted/30 dark:hover:bg-surface-2/80"
+          ? "bg-destructive/[0.055] hover:bg-destructive/[0.075] before:absolute before:bottom-2 before:left-0 before:top-2 before:w-0.5 before:rounded-full before:bg-destructive/70"
+          : "border border-border/60 bg-background hover:bg-muted/30 dark:border-border-subtle/70 dark:bg-surface-2/50 dark:hover:bg-surface-2/80"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -132,9 +132,9 @@ export default function TranscriptionItem({
 
         {isFailed ? (
           <div className="flex-1 min-w-0 flex items-start gap-2">
-            <AlertCircle size={14} className="shrink-0 text-destructive mt-0.5" />
+            <AlertCircle size={14} className="shrink-0 text-destructive/80 mt-0.5" />
             <div className="min-w-0">
-              <p className="text-sm text-destructive font-medium">
+              <p className="text-sm text-destructive/90 font-semibold">
                 {t("controlPanel.history.transcriptionFailed")}
               </p>
               {item.error_message && (
@@ -195,7 +195,7 @@ export default function TranscriptionItem({
                 variant="ghost"
                 onClick={handleRetry}
                 disabled={isRetrying}
-                className="h-6 w-6 rounded-sm text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="h-6 w-6 rounded-sm text-destructive/80 hover:text-destructive hover:bg-destructive/10"
               >
                 {isRetrying ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -249,7 +249,6 @@ export default function TranscriptionItem({
               </Button>
             </Tooltip>
           )}
-          {showUtilityGroup && <div className="w-px h-3 bg-border/30" />}
           {!isFailed && (
             <Tooltip content={t("controlPanel.history.copyText")}>
               <Button

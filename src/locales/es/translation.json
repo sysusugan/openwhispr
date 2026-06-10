@@ -297,7 +297,15 @@
       "rawTranscript": "Transcripción sin procesar",
       "dictionaryCorrections": "Dictionary corrections",
       "addCorrectionAlias": "Add common misrecognition: {{from}} -> {{to}}",
-      "cleanupFailed": "La limpieza con IA falló; se conservó la transcripción original"
+      "cleanupFailed": "La limpieza con IA falló; se conservó la transcripción original",
+      "emptyDescription": "Tus dictados recientes aparecerán aquí después de capturar tu primera nota de voz.",
+      "deskTitle": "Mesa de dictado",
+      "deskDescription": "Captura voz, ajusta el vocabulario y revisa transcripciones desde un espacio enfocado.",
+      "hotkeyLabel": "Listo para entrada de voz",
+      "hotkeyDescription": "Usa el atajo global para iniciar un dictado desde cualquier lugar.",
+      "quickUpload": "Subir audio",
+      "quickDictionary": "Editar diccionario",
+      "quickSettings": "Configurar transcripción"
     },
     "cloudMigration": {
       "viewSettings": "Ver ajustes"
@@ -1861,7 +1869,9 @@
       "filterEmpty": "No hay contenido para los hablantes seleccionados",
       "filterAria": "Filtrar hablantes de la transcripción",
       "currentSessionSpeakers": "Sesión actual"
-    }
+    },
+    "collapseNoteList": "Contraer lista de notas",
+    "expandNoteList": "Expandir lista de notas"
   },
   "dictionary": {
     "addWord": "Añadir palabra",
@@ -1905,7 +1915,9 @@
     "integrations": "Integraciones",
     "defaultUser": "Usuario",
     "notSignedIn": "Sin sesión iniciada",
-    "chat": "Chat"
+    "chat": "Chat",
+    "collapse": "Contraer barra lateral",
+    "expand": "Expandir barra lateral"
   },
   "chat": {
     "newChat": "Nuevo chat",
@@ -1927,7 +1939,9 @@
     "searchChats": "Buscar chats",
     "searchTitle": "Buscar conversaciones",
     "searchDescription": "Buscar en todas tus conversaciones",
-    "newChatEmpty": "Pregunta sobre tus notas, transcripciones o lo que quieras"
+    "newChatEmpty": "Pregunta sobre tus notas, transcripciones o lo que quieras",
+    "collapseConversationList": "Contraer lista de conversaciones",
+    "expandConversationList": "Expandir lista de conversaciones"
   },
   "support": {
     "documentation": "Documentación",

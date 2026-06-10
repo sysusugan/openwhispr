@@ -269,15 +269,13 @@ export function ChatMessage({
   if (role === "user") {
     return (
       <div
-        className="flex justify-end"
+        className="ow-chat-message-row ow-chat-message-row-user"
         style={{ animation: "agent-message-in 200ms ease-out both" }}
       >
         <div
           data-chat-bubble
           className={cn(
-            "max-w-[80%] px-3 py-2 rounded-lg rounded-br-sm",
-            "bg-foreground text-background",
-            "text-[13px] leading-relaxed"
+            "ow-chat-bubble ow-chat-bubble-user"
           )}
         >
           {content}
@@ -292,15 +290,13 @@ export function ChatMessage({
 
   return (
     <div
-      className="group/msg flex justify-start"
+      className="group/msg ow-chat-message-row ow-chat-message-row-assistant"
       style={{ animation: "agent-message-in 200ms ease-out both" }}
     >
       <div
         data-chat-bubble
         className={cn(
-          "max-w-[85%] px-3 py-2 rounded-lg rounded-bl-sm",
-          "bg-surface-1 border border-border/30 text-foreground",
-          "text-[13px] leading-relaxed"
+          "ow-chat-bubble ow-chat-bubble-assistant"
         )}
       >
         {hasToolCalls && (
