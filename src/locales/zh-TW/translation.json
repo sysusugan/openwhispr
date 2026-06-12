@@ -1668,7 +1668,14 @@
       "rediarizeModeMore": "嘗試識別更多發言者",
       "rediarizeModeFixed": "指定發言者人數",
       "rediarizeExpectedCount": "發言者人數",
-      "rediarizeStart": "開始重新識別"
+      "rediarizeStart": "開始重新識別",
+      "audioPlayerPrepare": "準備播放音訊",
+      "audioPlayerSeek": "跳轉音訊進度",
+      "audioPlayerBack15": "後退 15 秒",
+      "audioPlayerForward15": "前進 15 秒",
+      "audioPlayerPlay": "播放",
+      "audioPlayerPause": "暫停",
+      "audioPlayerRate": "播放速度：{{rate}}"
     },
     "bulkExport": {
       "select": "選擇",

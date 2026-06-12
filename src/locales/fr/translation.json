@@ -1709,7 +1709,14 @@
       "rediarizeModeMore": "Try to identify more speakers",
       "rediarizeModeFixed": "Specify speaker count",
       "rediarizeExpectedCount": "Speaker count",
-      "rediarizeStart": "Start re-identification"
+      "rediarizeStart": "Start re-identification",
+      "audioPlayerPrepare": "Préparer l'audio",
+      "audioPlayerSeek": "Parcourir l'audio",
+      "audioPlayerBack15": "Reculer de 15 secondes",
+      "audioPlayerForward15": "Avancer de 15 secondes",
+      "audioPlayerPlay": "Lire",
+      "audioPlayerPause": "Mettre en pause",
+      "audioPlayerRate": "Vitesse : {{rate}}"
     },
     "bulkExport": {
       "select": "Select",

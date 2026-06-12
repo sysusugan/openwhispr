@@ -38,6 +38,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
+import { Tooltip } from "../ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -248,10 +249,18 @@ function TranscriptAudioPlayer({
   if (audioFiles.length === 0) return null;
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const prepareLabel =
+    audioFiles.length > 1 ? t("notes.editor.mergeAudio") : t("notes.editor.audioPlayerPrepare");
+  const playLabel = isPlaying
+    ? t("notes.editor.audioPlayerPause")
+    : t("notes.editor.audioPlayerPlay");
+  const rateLabel = t("notes.editor.audioPlayerRate", { rate: `${rate}x` });
+  const iconButtonClass =
+    "inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-45 disabled:pointer-events-none";
 
   return (
-    <div className="border-b border-border/40 bg-white px-8 py-2">
-      <div className="mx-auto max-w-5xl">
+    <div className="border-b border-border/50 bg-white px-8 py-2">
+      <div className="mx-auto flex max-w-5xl items-center gap-3 text-xs text-muted-foreground">
         <audio
           ref={audioRef}
           src={playbackUrl || undefined}
@@ -269,8 +278,11 @@ function TranscriptAudioPlayer({
           }}
           onTimeUpdate={(event) => reportTime(event.currentTarget.currentTime || 0)}
         />
+        <span className="w-11 shrink-0 tabular-nums">{formatPlaybackTime(currentTime)}</span>
         <input
           type="range"
+          aria-label={t("notes.editor.audioPlayerSeek")}
+          title={t("notes.editor.audioPlayerSeek")}
           min={0}
           max={duration || 0}
           value={Math.min(currentTime, duration || currentTime)}
@@ -282,20 +294,22 @@ function TranscriptAudioPlayer({
             if (audio) audio.currentTime = next;
             reportTime(next);
           }}
-          className="h-1.5 w-full cursor-pointer accent-indigo-500"
+          className="h-1.5 min-w-0 flex-1 cursor-pointer accent-indigo-500"
           style={{
             background: `linear-gradient(to right, #6366f1 ${progress}%, #e5e7eb ${progress}%)`,
           }}
         />
-        <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[11px] text-muted-foreground">
-          <span className="tabular-nums">{formatPlaybackTime(currentTime)}</span>
-          <div className="flex items-center gap-3">
+        <span className="w-11 shrink-0 text-right tabular-nums">
+          {duration ? formatPlaybackTime(duration) : playbackUrl ? "--:--" : ""}
+        </span>
+        <div className="ml-1 flex shrink-0 items-center gap-1.5 border-l border-border/60 pl-3">
+          <Tooltip content={prepareLabel}>
             <button
               type="button"
               onClick={() => preparePlayback()}
-              className="text-muted-foreground transition-colors hover:text-foreground"
-              title={t("notes.editor.mergeAudio")}
-              aria-label={t("notes.editor.mergeAudio")}
+              className={iconButtonClass}
+              title={prepareLabel}
+              aria-label={prepareLabel}
             >
               {isPreparing || isMerging ? (
                 <Loader2 size={15} className="animate-spin" />
@@ -303,43 +317,56 @@ function TranscriptAudioPlayer({
                 <ListMusic size={15} />
               )}
             </button>
+          </Tooltip>
+          <Tooltip content={t("notes.editor.audioPlayerBack15")}>
             <button
               type="button"
               onClick={() => jumpBy(-15)}
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className={iconButtonClass}
+              title={t("notes.editor.audioPlayerBack15")}
+              aria-label={t("notes.editor.audioPlayerBack15")}
             >
-              <RotateCcw size={17} />
+              <RotateCcw size={16} />
             </button>
+          </Tooltip>
+          <Tooltip content={playLabel}>
             <button
               type="button"
               onClick={togglePlayback}
               disabled={isPreparing || isMerging}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-colors hover:bg-indigo-200 disabled:opacity-50"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-colors hover:bg-indigo-200 disabled:opacity-50 disabled:pointer-events-none"
+              title={playLabel}
+              aria-label={playLabel}
             >
               {isPlaying ? (
-                <Pause size={14} fill="currentColor" />
+                <Pause size={15} fill="currentColor" />
               ) : (
-                <Play size={14} fill="currentColor" />
+                <Play size={15} fill="currentColor" />
               )}
             </button>
+          </Tooltip>
+          <Tooltip content={t("notes.editor.audioPlayerForward15")}>
             <button
               type="button"
               onClick={() => jumpBy(15)}
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className={iconButtonClass}
+              title={t("notes.editor.audioPlayerForward15")}
+              aria-label={t("notes.editor.audioPlayerForward15")}
             >
-              <RotateCw size={17} />
+              <RotateCw size={16} />
             </button>
+          </Tooltip>
+          <Tooltip content={rateLabel}>
             <button
               type="button"
               onClick={toggleRate}
-              className="min-w-7 text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex h-7 min-w-9 items-center justify-center rounded-md px-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-slate-100 hover:text-slate-900"
+              title={rateLabel}
+              aria-label={rateLabel}
             >
               {rate}x
             </button>
-          </div>
-          <span className="text-right tabular-nums">
-            {duration ? formatPlaybackTime(duration) : playbackUrl ? "--:--" : ""}
-          </span>
+          </Tooltip>
         </div>
       </div>
     </div>

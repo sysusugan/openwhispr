@@ -1640,7 +1640,14 @@
       "rediarizeModeMore": "Try to identify more speakers",
       "rediarizeModeFixed": "Specify speaker count",
       "rediarizeExpectedCount": "Speaker count",
-      "rediarizeStart": "Start re-identification"
+      "rediarizeStart": "Start re-identification",
+      "audioPlayerPrepare": "音声を準備",
+      "audioPlayerSeek": "音声をシーク",
+      "audioPlayerBack15": "15 秒戻る",
+      "audioPlayerForward15": "15 秒進む",
+      "audioPlayerPlay": "再生",
+      "audioPlayerPause": "一時停止",
+      "audioPlayerRate": "再生速度: {{rate}}"
     },
     "bulkExport": {
       "select": "Select",
