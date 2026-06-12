@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { RichTextEditor } from "../ui/RichTextEditor";
 import type { Editor } from "@tiptap/react";
-import { MeetingTranscriptChat, SelectionBar } from "./MeetingTranscriptChat";
+import { MeetingTranscriptChat } from "./MeetingTranscriptChat";
 import type { TranscriptSegment } from "../../stores/meetingRecordingStore";
 import {
   Dialog,
@@ -78,7 +78,6 @@ import {
 } from "../../utils/transcriptSpeakerState";
 import { parseImportedTranscriptTxt } from "../../utils/importTranscriptTxt";
 import {
-  assignSelectedTranscriptSegments,
   assignSpeakerGroupName,
   filterTranscriptSegmentsBySpeaker,
   getTranscriptSpeakerFilterOptions,
@@ -1079,81 +1078,21 @@ export default function NoteEditor({
     [displaySegments, diarizedSegments, isRecording, persistDisplaySegments]
   );
 
-  const [selectedSegmentIds, setSelectedSegmentIds] = useState<Set<string>>(new Set());
-  const [selectionNoteId, setSelectionNoteId] = useState(note.id);
-  if (selectionNoteId !== note.id) {
-    setSelectionNoteId(note.id);
-    setSelectedSegmentIds(new Set());
-  }
-
-  const handleToggleSelect = useCallback((segmentId: string) => {
-    setSelectedSegmentIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(segmentId)) next.delete(segmentId);
-      else next.add(segmentId);
-      return next;
-    });
-  }, []);
-
-  const handleClearSelection = useCallback(() => {
-    setSelectedSegmentIds(new Set());
-  }, []);
-
-  useEffect(() => {
-    if (selectedSegmentIds.size === 0) return;
-    const visibleIds = new Set(visibleTranscriptSegments.map((segment) => segment.id));
-    setSelectedSegmentIds((prev) => {
-      const next = new Set([...prev].filter((id) => visibleIds.has(id)));
-      return next.size === prev.size ? prev : next;
-    });
-  }, [selectedSegmentIds.size, visibleTranscriptSegments]);
-
-  useEffect(() => {
-    if (selectedSegmentIds.size === 0) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClearSelection();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [selectedSegmentIds.size, handleClearSelection]);
-
-  const handleBulkAssignName = useCallback(
-    async (displayName: string, _email?: string | null, profileId?: number) => {
-      if (!selectedSegmentIds.size) return;
-      await rememberSpeakerName(displayName, _email ?? null);
-      const nextSegments = assignSelectedTranscriptSegments(
-        displaySegments,
-        selectedSegmentIds,
-        displayName
-      ).map((segment) =>
-        selectedSegmentIds.has(segment.id)
-          ? { ...segment, suggestedProfileId: profileId ?? segment.suggestedProfileId }
-          : segment
-      );
-      await persistDisplaySegments(nextSegments);
-      refreshSpeakerNames();
-      handleClearSelection();
-    },
-    [
-      displaySegments,
-      selectedSegmentIds,
-      persistDisplaySegments,
-      rememberSpeakerName,
-      refreshSpeakerNames,
-      handleClearSelection,
-    ]
-  );
-
   const handleAssignSingleSegmentName = useCallback(
     async (segmentId: string, displayName: string, email?: string | null, profileId?: number) => {
       await rememberSpeakerName(displayName, email ?? null);
-      const nextSegments = assignSelectedTranscriptSegments(
-        displaySegments,
-        new Set([segmentId]),
-        displayName
-      ).map((segment) =>
+      const nextSegments = displaySegments.map((segment) =>
         segment.id === segmentId
-          ? { ...segment, suggestedProfileId: profileId ?? segment.suggestedProfileId }
+          ? lockTranscriptSpeaker(segment, {
+              speaker:
+                !segment.speaker || segment.speaker === "you"
+                  ? `manual_${segment.id.replace(/[^a-zA-Z0-9_-]/g, "_")}`
+                  : segment.speaker,
+              speakerName: displayName,
+              speakerIsPlaceholder: false,
+              suggestedName: undefined,
+              suggestedProfileId: profileId ?? segment.suggestedProfileId,
+            })
           : segment
       );
       await persistDisplaySegments(nextSegments);
@@ -1489,7 +1428,6 @@ export default function NoteEditor({
     setFindText("");
     setReplaceText("");
     setIgnoreCase(true);
-    setSelectedSegmentIds(new Set());
     setIsTranscriptEditing(true);
   }, [canEditTranscript, displaySegments, effectiveTranscript]);
 
@@ -2343,13 +2281,7 @@ export default function NoteEditor({
                 onConfirmSuggestion={handleConfirmSuggestion}
                 onDismissSuggestion={handleDismissSuggestion}
                 onAttachSpeakerEmail={handleAttachSpeakerEmail}
-                selectedSegmentIds={
-                  !isRecording && !isTranscriptEditing ? selectedSegmentIds : undefined
-                }
                 recordingStartedAt={recordingStartedAt}
-                onToggleSelect={
-                  !isRecording && !isTranscriptEditing ? handleToggleSelect : undefined
-                }
                 onSeekToSegment={
                   !isRecording && !isTranscriptEditing ? handleSeekToTranscriptSegment : undefined
                 }
@@ -2434,18 +2366,6 @@ export default function NoteEditor({
               background: "linear-gradient(to bottom, transparent, var(--color-background))",
             }}
           />
-          {!isRecording && selectedSegmentIds.size > 0 && (
-            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 pointer-events-auto">
-              <SelectionBar
-                count={selectedSegmentIds.size}
-                onClear={handleClearSelection}
-                speakerProfiles={knownSpeakers}
-                participants={parsedParticipants}
-                onAssignName={handleBulkAssignName}
-                t={t}
-              />
-            </div>
-          )}
           <NoteBottomBar
             isRecording={isRecording}
             isProcessing={isProcessing}

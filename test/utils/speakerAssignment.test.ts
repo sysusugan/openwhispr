@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  assignSelectedTranscriptSegments,
   assignSpeakerGroupName,
   filterTranscriptSegmentsBySpeaker,
   getTranscriptSpeakerDisplay,
@@ -26,21 +25,6 @@ test("manual speaker names override the default self label", () => {
 
   assert.equal(display.label, "Vicky");
   assert.equal(display.isSelf, false);
-});
-
-test("selected segment assignment only changes selected segments", () => {
-  const segments = [
-    { id: "seg-1", text: "first", source: "mic" as const, speaker: "you" },
-    { id: "seg-2", text: "second", source: "mic" as const, speaker: "you" },
-  ];
-
-  const next = assignSelectedTranscriptSegments(segments, new Set(["seg-1"]), "Vicky");
-
-  assert.equal(next[0].speakerName, "Vicky");
-  assert.equal(next[0].speakerLocked, true);
-  assert.equal(next[0].speakerLockSource, "user");
-  assert.equal(next[1].speakerName, undefined);
-  assert.equal(next[1].speakerLocked, undefined);
 });
 
 test("speaker group assignment renames every segment with the same speaker id", () => {

@@ -82,16 +82,6 @@ export function getTranscriptSpeakerDisplay<T extends AssignableTranscriptSegmen
   };
 }
 
-export function assignSelectedTranscriptSegments<T extends AssignableTranscriptSegment>(
-  segments: T[],
-  selectedSegmentIds: Set<string>,
-  displayName: string
-): T[] {
-  return segments.map((segment) =>
-    selectedSegmentIds.has(segment.id) ? lockSpeakerName(segment, displayName) : segment
-  );
-}
-
 export function assignSpeakerGroupName<T extends AssignableTranscriptSegment>(
   segments: T[],
   speakerId: string,

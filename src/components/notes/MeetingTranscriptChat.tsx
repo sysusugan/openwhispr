@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Loader2, Pencil, Users, X } from "lucide-react";
+import { Check, Loader2, Pencil, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { cn } from "../lib/utils";
 import type { TranscriptSegment } from "../../stores/meetingRecordingStore";
@@ -541,88 +541,6 @@ function SpeakerLabel({
   );
 }
 
-function SelectCheckbox({
-  isSelected,
-  onToggle,
-  className,
-}: {
-  isSelected: boolean;
-  onToggle: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggle();
-      }}
-      aria-pressed={isSelected}
-      className={cn(
-        "w-4 h-4 rounded-full border flex items-center justify-center transition-all cursor-pointer",
-        isSelected
-          ? "border-foreground/70 bg-foreground text-background opacity-100"
-          : "border-border/60 bg-background/80 opacity-0 group-hover:opacity-100 hover:border-foreground/50",
-        className
-      )}
-    >
-      {isSelected && <Check size={10} strokeWidth={3} />}
-    </button>
-  );
-}
-
-export function SelectionBar({
-  count,
-  onClear,
-  speakerProfiles,
-  participants,
-  onAssignName,
-  t,
-}: {
-  count: number;
-  onClear: () => void;
-  speakerProfiles?: SpeakerProfileLite[];
-  participants?: Array<{ email: string; displayName: string | null }>;
-  onAssignName: (name: string, email?: string | null, profileId?: number) => void;
-  t: (key: string, opts?: Record<string, unknown>) => string;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div
-      className="flex items-center gap-3 rounded-md border border-border/40 bg-surface-2/95 backdrop-blur px-3 py-1.5 text-xs shadow-lg"
-      style={{ animation: "agent-message-in 150ms ease-out both" }}
-    >
-      <span className="text-foreground/70 tabular-nums">
-        {t("notes.speaker.selected", { n: count })}
-      </span>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <button className="inline-flex items-center gap-1 px-2 py-1 rounded text-foreground hover:bg-foreground/10 transition-colors cursor-pointer">
-            <Users size={12} />
-            {t("notes.speaker.assignTo")}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-72 p-0">
-          <SpeakerPicker
-            speakerProfiles={speakerProfiles}
-            participants={participants}
-            onSelectName={(name, email, profileId) => {
-              onAssignName(name, email, profileId);
-              setOpen(false);
-            }}
-            t={t}
-          />
-        </PopoverContent>
-      </Popover>
-      <button
-        onClick={onClear}
-        className="px-2 py-1 rounded text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer"
-      >
-        {t("notes.speaker.deselectAll")}
-      </button>
-    </div>
-  );
-}
-
 interface MeetingTranscriptChatProps {
   segments: TranscriptSegment[];
   isEditing?: boolean;
@@ -636,7 +554,6 @@ interface MeetingTranscriptChatProps {
   speakerMappings?: Record<string, string>;
   speakerProfiles?: SpeakerProfileLite[];
   participants?: Array<{ email: string; displayName: string | null }>;
-  selectedSegmentIds?: Set<string>;
   activeSegmentId?: string | null;
   isRecording?: boolean;
   isDiarizing?: boolean;
@@ -656,7 +573,6 @@ interface MeetingTranscriptChatProps {
   onConfirmSuggestion?: (speakerId: string, suggestedName: string, profileId: number) => void;
   onDismissSuggestion?: (speakerId: string) => void;
   onAttachSpeakerEmail?: (profileId: number, email: string | null) => void;
-  onToggleSelect?: (segmentId: string) => void;
   onSeekToSegment?: (segment: TranscriptSegment) => void;
   emptyMessage?: string;
 }
@@ -674,7 +590,6 @@ export function MeetingTranscriptChat({
   speakerMappings,
   speakerProfiles,
   participants,
-  selectedSegmentIds,
   activeSegmentId,
   isRecording,
   isDiarizing,
@@ -684,7 +599,6 @@ export function MeetingTranscriptChat({
   onConfirmSuggestion,
   onDismissSuggestion,
   onAttachSpeakerEmail,
-  onToggleSelect,
   onSeekToSegment,
   emptyMessage,
 }: MeetingTranscriptChatProps) {
@@ -852,8 +766,6 @@ export function MeetingTranscriptChat({
             const effectiveKey = getEffectiveSpeakerKey(segment, speakerMappings);
             const colorIdx =
               hasSpeaker && !isOriginallyYou ? (colorByKey.get(effectiveKey) ?? 0) : 0;
-            const isSelected = selectedSegmentIds?.has(segment.id) ?? false;
-            const selectable = !!onToggleSelect;
             const hasSearchMatch =
               isEditing &&
               !!searchTerm &&
@@ -932,8 +844,7 @@ export function MeetingTranscriptChat({
                 className={cn(
                   "group grid grid-cols-[10px_minmax(0,1fr)] gap-3 border-l-2 border-transparent px-2 py-1.5 transition-colors",
                   onSeekToSegment && "cursor-pointer hover:bg-slate-50/80",
-                  isActiveSegment && "border-l-indigo-500 bg-indigo-50/70",
-                  selectable && "pl-7"
+                  isActiveSegment && "border-l-indigo-500 bg-indigo-50/70"
                 )}
                 onClick={() => onSeekToSegment?.(segment)}
                 style={{ animation: "agent-message-in 200ms ease-out both" }}
@@ -946,13 +857,6 @@ export function MeetingTranscriptChat({
                     )}
                     aria-hidden="true"
                   />
-                  {selectable && (
-                    <SelectCheckbox
-                      isSelected={isSelected}
-                      onToggle={() => onToggleSelect?.(segment.id)}
-                      className="absolute -left-6 top-0.5 opacity-100"
-                    />
-                  )}
                 </div>
                 <div className="min-w-0">
                   {labelElement}
@@ -982,7 +886,7 @@ export function MeetingTranscriptChat({
                     <div
                       className={cn(
                         "mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-950 transition-colors",
-                        isSelected && "bg-primary/5 ring-1 ring-primary/30"
+                        isActiveSegment && "bg-indigo-50/50"
                       )}
                     >
                       <HighlightedText
