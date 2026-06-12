@@ -33,6 +33,20 @@ test("formats structured transcript segments with speaker labels", () => {
   assert.equal(result?.contentHash, `${result?.content.length}-${result?.content.slice(0, 50)}`);
 });
 
+test("includes all structured transcript segments from appended recordings", () => {
+  const result = buildNoteActionInput({
+    noteContent: "",
+    rawTranscript: JSON.stringify([
+      { source: "system", text: "第一段两小时会议内容", timestamp: 162 },
+      { source: "system", text: "第二段几十秒补充内容", timestamp: 163 },
+    ]),
+    speakerLabels: { you: "You", them: "Them" },
+  });
+
+  assert.match(result?.content ?? "", /第一段两小时会议内容/);
+  assert.match(result?.content ?? "", /第二段几十秒补充内容/);
+});
+
 test("action content hash changes when transcript changes even if note content is empty", () => {
   const first = buildNoteActionInput({
     noteContent: "",

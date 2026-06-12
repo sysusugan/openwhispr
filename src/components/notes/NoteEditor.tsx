@@ -19,6 +19,11 @@ import {
   X,
   Filter,
   FileUp,
+  ListMusic,
+  Pause,
+  Play,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import { RichTextEditor } from "../ui/RichTextEditor";
 import type { Editor } from "@tiptap/react";
@@ -44,6 +49,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { useToast } from "../ui/useToast";
 import { cn } from "../lib/utils";
 import type {
+  NoteAudioFile,
   NoteItem,
   FolderItem,
   SingleNoteExportFormat,
@@ -113,6 +119,212 @@ function parseDateTimeLocalValue(value: string): string | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
+}
+
+function formatPlaybackTime(seconds: number): string {
+  const safe = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const secs = safe % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+  return `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+
+function TranscriptAudioPlayer({
+  noteId,
+  audioFiles,
+  audioActionKey,
+  seekSeconds,
+  onMergeAudioFiles,
+}: {
+  noteId: number;
+  audioFiles: NoteAudioFile[];
+  audioActionKey?: string | null;
+  seekSeconds: number | null;
+  onMergeAudioFiles?: () => Promise<NoteAudioFile | null>;
+}) {
+  const { t } = useTranslation();
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [rate, setRate] = useState(1);
+
+  const playableFile = audioFiles.length === 1 ? audioFiles[0] : null;
+  const audioFileIdsKey = useMemo(() => audioFiles.map((file) => file.id).join(":"), [audioFiles]);
+  const isMerging = audioActionKey === "merge";
+
+  const preparePlayback = useCallback(async () => {
+    if (isPreparing || playbackUrl) return playbackUrl;
+    if (audioFiles.length === 0) return null;
+    setIsPreparing(true);
+    try {
+      let target = playableFile;
+      if (!target && onMergeAudioFiles) {
+        target = await onMergeAudioFiles();
+      }
+      if (!target) return null;
+      const result = await window.electronAPI.getNoteAudioPlaybackUrl?.(noteId, target.id);
+      if (!result?.success || !result.url) return null;
+      setPlaybackUrl(result.url);
+      return result.url;
+    } finally {
+      setIsPreparing(false);
+    }
+  }, [audioFiles.length, isPreparing, noteId, onMergeAudioFiles, playableFile, playbackUrl]);
+
+  useEffect(() => {
+    setPlaybackUrl(null);
+    setCurrentTime(0);
+    setDuration(0);
+    setIsPlaying(false);
+  }, [noteId, audioFileIdsKey]);
+
+  useEffect(() => {
+    if (seekSeconds == null) return;
+    const seek = async () => {
+      const url = playbackUrl || (await preparePlayback());
+      const audio = audioRef.current;
+      if (!url || !audio) return;
+      audio.currentTime = Math.max(0, seekSeconds);
+      setCurrentTime(audio.currentTime);
+    };
+    seek();
+  }, [playbackUrl, preparePlayback, seekSeconds]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.playbackRate = rate;
+  }, [rate, playbackUrl]);
+
+  const togglePlayback = async () => {
+    const url = playbackUrl || (await preparePlayback());
+    const audio = audioRef.current;
+    if (!url || !audio) return;
+    if (audio.paused) {
+      await audio.play();
+    } else {
+      audio.pause();
+    }
+  };
+
+  const jumpBy = async (delta: number) => {
+    const url = playbackUrl || (await preparePlayback());
+    const audio = audioRef.current;
+    if (!url || !audio) return;
+    audio.currentTime = Math.max(
+      0,
+      Math.min(audio.duration || Infinity, audio.currentTime + delta)
+    );
+    setCurrentTime(audio.currentTime);
+  };
+
+  const toggleRate = () => {
+    setRate((current) => {
+      if (current === 1) return 1.25;
+      if (current === 1.25) return 1.5;
+      if (current === 1.5) return 2;
+      return 1;
+    });
+  };
+
+  if (audioFiles.length === 0) return null;
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="border-b border-border/50 bg-white px-8 py-5">
+      <div className="mx-auto max-w-5xl">
+        <audio
+          ref={audioRef}
+          src={playbackUrl || undefined}
+          preload="metadata"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || 0)}
+          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime || 0)}
+        />
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          value={Math.min(currentTime, duration || currentTime)}
+          step={0.1}
+          onPointerDown={() => preparePlayback()}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            const audio = audioRef.current;
+            if (audio) audio.currentTime = next;
+            setCurrentTime(next);
+          }}
+          className="w-full accent-indigo-500"
+          style={{
+            background: `linear-gradient(to right, #6366f1 ${progress}%, #e5e7eb ${progress}%)`,
+          }}
+        />
+        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-sm text-muted-foreground">
+          <span className="tabular-nums">{formatPlaybackTime(currentTime)}</span>
+          <div className="flex items-center gap-5">
+            <button
+              type="button"
+              onClick={() => preparePlayback()}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              title={t("notes.editor.mergeAudio")}
+              aria-label={t("notes.editor.mergeAudio")}
+            >
+              {isPreparing || isMerging ? (
+                <Loader2 size={22} className="animate-spin" />
+              ) : (
+                <ListMusic size={22} />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => jumpBy(-15)}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <RotateCcw size={24} />
+            </button>
+            <button
+              type="button"
+              onClick={togglePlayback}
+              disabled={isPreparing || isMerging}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-colors hover:bg-indigo-200 disabled:opacity-50"
+            >
+              {isPlaying ? (
+                <Pause size={22} fill="currentColor" />
+              ) : (
+                <Play size={22} fill="currentColor" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => jumpBy(15)}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <RotateCw size={24} />
+            </button>
+            <button
+              type="button"
+              onClick={toggleRate}
+              className="min-w-10 text-left text-lg text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {rate}x
+            </button>
+          </div>
+          <span className="text-right tabular-nums">
+            {duration ? formatPlaybackTime(duration) : playbackUrl ? "--:--" : ""}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export interface Enhancement {
@@ -266,6 +478,9 @@ interface NoteEditorProps {
   onShowOriginalAudioInFolder?: () => void;
   onManageSavedAudio?: () => void;
   hasDownloadableAudio?: boolean;
+  noteAudioFiles?: NoteAudioFile[];
+  audioActionKey?: string | null;
+  onMergeAudioFiles?: () => Promise<NoteAudioFile | null>;
   enhancement?: Enhancement;
   actionPicker?: React.ReactNode;
   actionProcessingState?: ActionProcessingState;
@@ -277,15 +492,8 @@ interface NoteEditorProps {
   meetingSegments?: TranscriptSegment[];
   meetingMicPartial?: string;
   meetingSystemPartial?: string;
-  meetingSystemPartialSpeakerId?: string | null;
-  meetingSystemPartialSpeakerName?: string | null;
   onLiveSpeakerLock?: (speakerId: string, displayName: string) => void;
   liveTranscript?: string;
-  sessionDiarizationEnabled?: boolean;
-  sessionExpectedCount?: number;
-  userTouchedStepper?: boolean;
-  onSetSessionDiarizationEnabled?: (enabled: boolean) => void;
-  onSetSessionExpectedCount?: (count: number) => void;
   folderName?: string | null;
   folders?: FolderItem[];
   onMoveToFolder?: (noteId: number, folderId: number) => void;
@@ -308,6 +516,9 @@ export default function NoteEditor({
   onShowOriginalAudioInFolder,
   onManageSavedAudio,
   hasDownloadableAudio = !!note.source_file,
+  noteAudioFiles = [],
+  audioActionKey,
+  onMergeAudioFiles,
   enhancement,
   actionPicker,
   actionProcessingState,
@@ -319,15 +530,8 @@ export default function NoteEditor({
   meetingSegments,
   meetingMicPartial,
   meetingSystemPartial,
-  meetingSystemPartialSpeakerId,
-  meetingSystemPartialSpeakerName,
   onLiveSpeakerLock,
   liveTranscript,
-  sessionDiarizationEnabled,
-  sessionExpectedCount,
-  userTouchedStepper,
-  onSetSessionDiarizationEnabled,
-  onSetSessionExpectedCount,
   folderName,
   folders,
   onMoveToFolder,
@@ -372,6 +576,8 @@ export default function NoteEditor({
     ignoreCase: boolean;
   } | null>(null);
   const [diarizedSegments, setDiarizedSegments] = useState<TranscriptSegment[] | null>(null);
+  const [activePlaybackSegmentId, setActivePlaybackSegmentId] = useState<string | null>(null);
+  const [playbackSeekSeconds, setPlaybackSeekSeconds] = useState<number | null>(null);
   const [speakerMappings, setSpeakerMappings] = useState<Record<string, string>>({});
   const [speakerProfiles, setSpeakerProfiles] = useState<
     Array<{ id: number; display_name: string; email: string | null }>
@@ -603,6 +809,8 @@ export default function NoteEditor({
         setFindText("");
         setReplaceText("");
         setSpeakerMappings({});
+        setActivePlaybackSegmentId(null);
+        setPlaybackSeekSeconds(null);
         if (!isRecording) {
           setViewMode("raw");
         }
@@ -750,6 +958,12 @@ export default function NoteEditor({
     },
     [note.id]
   );
+
+  const handleSeekToTranscriptSegment = useCallback((segment: TranscriptSegment) => {
+    if (typeof segment.timestamp !== "number" || !Number.isFinite(segment.timestamp)) return;
+    setActivePlaybackSegmentId(segment.id);
+    setPlaybackSeekSeconds(Math.max(0, segment.timestamp));
+  }, []);
 
   const handleMapSpeaker = useCallback(
     async (
@@ -1538,452 +1752,466 @@ export default function NoteEditor({
     >
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <div className="ow-page-header mx-5 mb-0 min-w-0 pt-4 pb-3">
-          <div className="min-w-0 flex-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
           <div
-            ref={titleRef}
-            contentEditable
-            suppressContentEditableWarning
-            onInput={handleTitleInput}
-            onKeyDown={handleTitleKeyDown}
-            onPaste={handleTitlePaste}
-            data-placeholder={t("notes.editor.untitled")}
-            className="min-h-9 max-w-full -mx-2 rounded-lg border border-transparent px-2 py-1 text-lg font-semibold leading-7 text-foreground bg-transparent outline-none tracking-[-0.01em] transition-colors empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none hover:border-border/70 hover:bg-background/75 focus:border-ring/45 focus:bg-background focus:shadow-sm"
-            role="textbox"
-            aria-label={t("notes.editor.noteTitle")}
-          />
-          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
-            {shortDate && (
-              <Popover open={isRecordedDateOpen} onOpenChange={setIsRecordedDateOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    className="inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground"
-                    title={t("notes.editor.recordedDateTitle", { date: noteDate })}
-                    aria-label={t("notes.editor.editRecordedDate")}
-                    onClick={openRecordedDateEditor}
-                  >
-                    <Calendar size={11} className="shrink-0" />
-                    {shortDate}
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent align="start" sideOffset={6} className="w-64 p-3">
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-xs font-medium text-foreground">
-                        {t("notes.editor.recordedDate")}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {t("notes.editor.recordedDateDescription")}
-                      </p>
-                    </div>
-                    <input
-                      type="datetime-local"
-                      value={recordedDateInput}
-                      onChange={(event) => setRecordedDateInput(event.target.value)}
-                      className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-ring/50"
-                    />
-                    <div className="flex justify-end gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setIsRecordedDateOpen(false)}
-                        className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
-                      >
-                        {t("common.cancel")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSaveRecordedDate}
-                        disabled={isSavingRecordedDate}
-                        className="h-7 rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                      >
-                        {isSavingRecordedDate ? t("common.saving") : t("common.save")}
-                      </button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            <NoteParticipants noteId={note.id} participants={parsedParticipants} />
-            {folders && onMoveToFolder && (
-              <DropdownMenu
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setFolderSearch("");
-                    setIsCreatingFolder(false);
-                    setNewFolderName("");
-                  }
-                }}
-              >
-                <DropdownMenuTrigger asChild>
-                  <button className="inline-flex h-6 max-w-44 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors duration-150 hover:border-border hover:bg-muted/70 hover:text-foreground cursor-pointer outline-none">
-                    <FolderOpen size={11} className="shrink-0" />
-                    <span className="truncate">{folderName || t("notes.editor.noFolder")}</span>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 p-1">
-                  {folders.length > 5 && (
-                    <>
-                      <div className="relative px-1.5 py-0.5">
-                        <Search
-                          size={9}
-                          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/15 pointer-events-none"
-                        />
-                        <input
-                          value={folderSearch}
-                          onChange={(e) => setFolderSearch(e.target.value)}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          placeholder={t("notes.context.searchFolders")}
-                          className="input-inline w-full pl-4.5 pr-1 py-0.5 text-xs text-foreground placeholder:text-foreground/15 outline-none border-none appearance-none"
-                        />
-                      </div>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <div className="overflow-y-auto max-h-48">
-                    {filteredFolders.map((folder) => {
-                      const isCurrent = folder.id === note.folder_id;
-                      return (
-                        <DropdownMenuItem
-                          key={folder.id}
-                          disabled={isCurrent}
-                          onClick={() => onMoveToFolder(note.id, folder.id)}
-                          className="text-xs gap-2 rounded-md px-2 py-1.5"
-                        >
-                          <FolderOpen size={11} className="text-foreground/30 shrink-0" />
-                          <span className="truncate flex-1">{folder.name}</span>
-                          {isCurrent && <Check size={9} className="text-foreground/65 shrink-0" />}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                    {folderSearch && filteredFolders.length === 0 && (
-                      <p className="text-xs text-foreground/20 text-center py-1.5">
-                        {t("notes.context.noResults")}
-                      </p>
-                    )}
-                  </div>
-                  {onCreateFolderAndMove && (
-                    <>
-                      <DropdownMenuSeparator />
-                      {isCreatingFolder ? (
-                        <div className="px-1">
-                          <input
-                            autoFocus
-                            value={newFolderName}
-                            onChange={(e) => setNewFolderName(e.target.value)}
-                            onKeyDown={(e) => {
-                              e.stopPropagation();
-                              if (e.key === "Enter" && newFolderName.trim()) {
-                                onCreateFolderAndMove(note.id, newFolderName.trim());
-                                setNewFolderName("");
-                                setIsCreatingFolder(false);
-                              }
-                              if (e.key === "Escape") {
-                                setIsCreatingFolder(false);
-                                setNewFolderName("");
-                              }
-                            }}
-                            placeholder={t("notes.folders.folderName")}
-                            className="input-inline w-full px-2 py-1.5 rounded-md bg-transparent text-xs text-foreground placeholder:text-foreground/20 outline-none border-none appearance-none"
-                          />
-                        </div>
-                      ) : (
-                        <DropdownMenuItem
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            setIsCreatingFolder(true);
-                          }}
-                          className="text-xs gap-2 rounded-md px-2 py-1.5 text-foreground/40"
-                        >
-                          <Plus size={10} />
-                          {t("notes.context.newFolder")}
-                        </DropdownMenuItem>
-                      )}
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            {isSaving && (
-              <span className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap text-[11px] text-muted-foreground tabular-nums">
-                <Loader2 size={8} className="animate-spin" />
-                {t("notes.editor.saving")}
-              </span>
-            )}
-            <div className="flex min-w-0 flex-wrap items-center gap-1 pl-1">
-              <div className="ow-segmented flex shrink-0 items-center gap-0.5 shadow-none">
-                <div
-                  className={cn(
-                    "flex h-6 shrink-0 items-center rounded-md",
-                    viewMode === "transcript" && "bg-background shadow-sm"
-                  )}
-                >
-                  <button
-                    data-segment-button
-                    data-segment-value="transcript"
-                    onClick={() => setViewMode("transcript")}
-                    className={cn(
-                      "ow-segmented-item h-6 shrink-0 whitespace-nowrap rounded-r-none px-2 py-0 text-[11px]",
-                      viewMode === "transcript" && "bg-transparent text-foreground shadow-none"
-                    )}
-                  >
-                    <MessageSquareText size={10} />
-                    {t("notes.editor.transcript")}
-                  </button>
-                  {hasTranscriptEditControls && !isTranscriptEditing && (
+            className="min-w-0 flex-1"
+            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          >
+            <div
+              ref={titleRef}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={handleTitleInput}
+              onKeyDown={handleTitleKeyDown}
+              onPaste={handleTitlePaste}
+              data-placeholder={t("notes.editor.untitled")}
+              className="min-h-9 max-w-full -mx-2 rounded-lg border border-transparent px-2 py-1 text-lg font-semibold leading-7 text-foreground bg-transparent outline-none tracking-[-0.01em] transition-colors empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none hover:border-border/70 hover:bg-background/75 focus:border-ring/45 focus:bg-background focus:shadow-sm"
+              role="textbox"
+              aria-label={t("notes.editor.noteTitle")}
+            />
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5">
+              {shortDate && (
+                <Popover open={isRecordedDateOpen} onOpenChange={setIsRecordedDateOpen}>
+                  <PopoverTrigger asChild>
                     <button
                       type="button"
-                      onClick={handleStartTranscriptEdit}
-                      disabled={!canEditTranscript}
-                      className={cn(
-                        "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-l transition-colors",
-                        viewMode === "transcript"
-                          ? "border-border/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          : "border-transparent text-muted-foreground/70 hover:bg-background/80 hover:text-foreground",
-                        "disabled:cursor-not-allowed disabled:opacity-40"
-                      )}
-                      aria-label={t("notes.editor.transcriptEdit")}
-                      title={
-                        isRecording
-                          ? t("notes.editor.transcriptEditDisabledRecording")
-                          : t("notes.editor.transcriptEdit")
-                      }
+                      className="inline-flex h-6 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground"
+                      title={t("notes.editor.recordedDateTitle", { date: noteDate })}
+                      aria-label={t("notes.editor.editRecordedDate")}
+                      onClick={openRecordedDateEditor}
                     >
-                      <Pencil size={10} />
+                      <Calendar size={11} className="shrink-0" />
+                      {shortDate}
                     </button>
-                  )}
-                </div>
-                <button
-                  data-segment-button
-                  data-segment-value="raw"
-                  onClick={() => {
-                    if (!isTranscriptEditing) setViewMode("raw");
-                  }}
-                  className={cn(
-                    "ow-segmented-item h-6 shrink-0 whitespace-nowrap px-2 py-0 text-[11px]",
-                    viewMode === "raw" && "ow-segmented-item-active",
-                    isTranscriptEditing && viewMode !== "raw" && "cursor-not-allowed opacity-40"
-                  )}
-                >
-                  <AlignLeft size={10} />
-                  {t("notes.editor.notes")}
-                </button>
-                {enhancement && (
-                  <button
-                    data-segment-button
-                    data-segment-value="enhanced"
-                    onClick={() => {
-                      if (!isTranscriptEditing) setViewMode("enhanced");
-                    }}
-                    className={cn(
-                      "ow-segmented-item h-6 shrink-0 whitespace-nowrap px-2 py-0 text-[11px]",
-                      viewMode === "enhanced" && "ow-segmented-item-active",
-                      isTranscriptEditing &&
-                        viewMode !== "enhanced" &&
-                        "cursor-not-allowed opacity-40"
-                    )}
-                  >
-                    <Sparkles size={9} />
-                    {t("notes.editor.enhanced")}
-                    {enhancement.isStale && (
-                      <span
-                        className="w-1 h-1 rounded-full bg-amber-400/60"
-                        title={t("notes.editor.staleIndicator")}
+                  </PopoverTrigger>
+                  <PopoverContent align="start" sideOffset={6} className="w-64 p-3">
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs font-medium text-foreground">
+                          {t("notes.editor.recordedDate")}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {t("notes.editor.recordedDateDescription")}
+                        </p>
+                      </div>
+                      <input
+                        type="datetime-local"
+                        value={recordedDateInput}
+                        onChange={(event) => setRecordedDateInput(event.target.value)}
+                        className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs text-foreground outline-none focus:border-ring/50"
                       />
-                    )}
-                  </button>
-                )}
-              </div>
-              <input
-                ref={importInputRef}
-                type="file"
-                accept={
-                  queuedImportTarget === "transcript"
-                    ? ".txt,.md,.markdown,text/plain,text/markdown"
-                    : ".txt,.md,.markdown,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                }
-                className="hidden"
-                onChange={handleImportInput}
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    disabled={!canImportNoteFile}
-                    className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
-                    aria-label={t("notes.editor.importFile")}
-                    title={t("notes.editor.importFile")}
-                  >
-                    <FileUp size={11} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={4}>
-                  <DropdownMenuItem
-                    onClick={() => openImportFilePicker("transcript")}
-                    disabled={!canImportTranscriptFile}
-                    className="text-xs gap-2"
-                  >
-                    <MessageSquareText size={13} className="text-foreground/40" />
-                    {t("notes.editor.importToTranscript")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => openImportFilePicker("note")}
-                    className="text-xs gap-2"
-                  >
-                    <AlignLeft size={13} className="text-foreground/40" />
-                    {t("notes.editor.importToNote")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {hasTranscriptEditControls && isTranscriptEditing && (
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={handleSaveTranscriptEdit}
-                    disabled={isTranscriptSaving}
-                    className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/6 dark:bg-white/6 text-foreground/60 dark:text-foreground/50 hover:text-foreground/80 hover:bg-foreground/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
-                    aria-label={t("notes.editor.transcriptSave")}
-                    title={t("notes.editor.transcriptSave")}
-                  >
-                    {isTranscriptSaving ? (
-                      <Loader2 size={10} className="animate-spin" />
-                    ) : (
-                      <Check size={10} />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCancelTranscriptEdit}
-                    disabled={isTranscriptSaving}
-                    className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
-                    aria-label={t("notes.editor.transcriptCancel")}
-                    title={t("notes.editor.transcriptCancel")}
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
+                      <div className="flex justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setIsRecordedDateOpen(false)}
+                          className="h-7 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveRecordedDate}
+                          disabled={isSavingRecordedDate}
+                          className="h-7 rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                        >
+                          {isSavingRecordedDate ? t("common.saving") : t("common.save")}
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
-              {viewMode === "transcript" &&
-                !isTranscriptEditing &&
-                !isRecording &&
-                speakerFilterOptions.length > 1 && (
-                  <TranscriptSpeakerFilter
-                    options={speakerFilterOptions}
-                    selectedKeys={selectedSpeakerFilterKeys}
-                    onChange={setSelectedSpeakerFilterKeys}
-                    t={t}
-                  />
-                )}
-              {(onExportNote || onExportTranscript || onDownloadOriginalAudio) && (
-                <DropdownMenu>
+              <NoteParticipants noteId={note.id} participants={parsedParticipants} />
+              {folders && onMoveToFolder && (
+                <DropdownMenu
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setFolderSearch("");
+                      setIsCreatingFolder(false);
+                      setNewFolderName("");
+                    }
+                  }}
+                >
                   <DropdownMenuTrigger asChild>
-                    <button
-                      className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:text-foreground/60 dark:hover:bg-white/8 transition-colors duration-150"
-                      aria-label={t("notes.editor.export")}
-                    >
-                      <Download size={11} />
+                    <button className="inline-flex h-6 max-w-44 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-border/70 bg-background/75 px-2 text-[11px] font-medium text-muted-foreground transition-colors duration-150 hover:border-border hover:bg-muted/70 hover:text-foreground cursor-pointer outline-none">
+                      <FolderOpen size={11} className="shrink-0" />
+                      <span className="truncate">{folderName || t("notes.editor.noFolder")}</span>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" sideOffset={4}>
-                    {viewMode === "transcript" && onExportTranscript ? (
+                  <DropdownMenuContent align="start" sideOffset={6} className="min-w-44 p-1">
+                    {folders.length > 5 && (
                       <>
-                        <DropdownMenuItem
-                          onClick={() => onExportTranscript("txt")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asTranscriptText")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onExportTranscript("srt")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asSubtitles")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onExportTranscript("md")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asTranscriptMarkdown")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => onExportTranscript("json")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asJson")}
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() => handleExportCurrentNote("md")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asMarkdown")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleExportCurrentNote("txt")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asPlainText")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleExportCurrentNote("pdf")}
-                          className="text-xs gap-2"
-                        >
-                          <FileText size={13} className="text-foreground/40" />
-                          {t("notes.editor.asPdf")}
-                        </DropdownMenuItem>
+                        <div className="relative px-1.5 py-0.5">
+                          <Search
+                            size={9}
+                            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/15 pointer-events-none"
+                          />
+                          <input
+                            value={folderSearch}
+                            onChange={(e) => setFolderSearch(e.target.value)}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            placeholder={t("notes.context.searchFolders")}
+                            className="input-inline w-full pl-4.5 pr-1 py-0.5 text-xs text-foreground placeholder:text-foreground/15 outline-none border-none appearance-none"
+                          />
+                        </div>
+                        <DropdownMenuSeparator />
                       </>
                     )}
-                    {onDownloadOriginalAudio && (
+                    <div className="overflow-y-auto max-h-48">
+                      {filteredFolders.map((folder) => {
+                        const isCurrent = folder.id === note.folder_id;
+                        return (
+                          <DropdownMenuItem
+                            key={folder.id}
+                            disabled={isCurrent}
+                            onClick={() => onMoveToFolder(note.id, folder.id)}
+                            className="text-xs gap-2 rounded-md px-2 py-1.5"
+                          >
+                            <FolderOpen size={11} className="text-foreground/30 shrink-0" />
+                            <span className="truncate flex-1">{folder.name}</span>
+                            {isCurrent && (
+                              <Check size={9} className="text-foreground/65 shrink-0" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                      {folderSearch && filteredFolders.length === 0 && (
+                        <p className="text-xs text-foreground/20 text-center py-1.5">
+                          {t("notes.context.noResults")}
+                        </p>
+                      )}
+                    </div>
+                    {onCreateFolderAndMove && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onDownloadOriginalAudio()}
-                          disabled={!hasDownloadableAudio}
-                          className="text-xs gap-2"
-                        >
-                          <FileAudio size={13} className="text-foreground/40" />
-                          {isRecording
-                            ? t("notes.editor.downloadSavedAudio")
-                            : t("notes.editor.downloadOriginalAudio")}
-                        </DropdownMenuItem>
+                        {isCreatingFolder ? (
+                          <div className="px-1">
+                            <input
+                              autoFocus
+                              value={newFolderName}
+                              onChange={(e) => setNewFolderName(e.target.value)}
+                              onKeyDown={(e) => {
+                                e.stopPropagation();
+                                if (e.key === "Enter" && newFolderName.trim()) {
+                                  onCreateFolderAndMove(note.id, newFolderName.trim());
+                                  setNewFolderName("");
+                                  setIsCreatingFolder(false);
+                                }
+                                if (e.key === "Escape") {
+                                  setIsCreatingFolder(false);
+                                  setNewFolderName("");
+                                }
+                              }}
+                              placeholder={t("notes.folders.folderName")}
+                              className="input-inline w-full px-2 py-1.5 rounded-md bg-transparent text-xs text-foreground placeholder:text-foreground/20 outline-none border-none appearance-none"
+                            />
+                          </div>
+                        ) : (
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setIsCreatingFolder(true);
+                            }}
+                            className="text-xs gap-2 rounded-md px-2 py-1.5 text-foreground/40"
+                          >
+                            <Plus size={10} />
+                            {t("notes.context.newFolder")}
+                          </DropdownMenuItem>
+                        )}
                       </>
-                    )}
-                    {onShowOriginalAudioInFolder && (
-                      <DropdownMenuItem
-                        onClick={() => onShowOriginalAudioInFolder()}
-                        disabled={!hasDownloadableAudio}
-                        className="text-xs gap-2"
-                      >
-                        <FolderOpen size={13} className="text-foreground/40" />
-                        {t("notes.editor.showAudioInFolder")}
-                      </DropdownMenuItem>
-                    )}
-                    {onManageSavedAudio && (
-                      <DropdownMenuItem
-                        onClick={() => onManageSavedAudio()}
-                        disabled={!hasDownloadableAudio}
-                        className="text-xs gap-2"
-                      >
-                        <FileAudio size={13} className="text-foreground/40" />
-                        {t("notes.editor.manageSavedAudio")}
-                      </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+              {isSaving && (
+                <span className="inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap text-[11px] text-muted-foreground tabular-nums">
+                  <Loader2 size={8} className="animate-spin" />
+                  {t("notes.editor.saving")}
+                </span>
+              )}
+              <div className="flex min-w-0 flex-wrap items-center gap-1 pl-1">
+                <div className="ow-segmented flex shrink-0 items-center gap-0.5 shadow-none">
+                  <div
+                    className={cn(
+                      "flex h-6 shrink-0 items-center rounded-md",
+                      viewMode === "transcript" && "bg-background shadow-sm"
+                    )}
+                  >
+                    <button
+                      data-segment-button
+                      data-segment-value="transcript"
+                      onClick={() => setViewMode("transcript")}
+                      className={cn(
+                        "ow-segmented-item h-6 shrink-0 whitespace-nowrap rounded-r-none px-2 py-0 text-[11px]",
+                        viewMode === "transcript" && "bg-transparent text-foreground shadow-none"
+                      )}
+                    >
+                      <MessageSquareText size={10} />
+                      {t("notes.editor.transcript")}
+                    </button>
+                    {hasTranscriptEditControls && !isTranscriptEditing && (
+                      <button
+                        type="button"
+                        onClick={handleStartTranscriptEdit}
+                        disabled={!canEditTranscript}
+                        className={cn(
+                          "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-l transition-colors",
+                          viewMode === "transcript"
+                            ? "border-border/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            : "border-transparent text-muted-foreground/70 hover:bg-background/80 hover:text-foreground",
+                          "disabled:cursor-not-allowed disabled:opacity-40"
+                        )}
+                        aria-label={t("notes.editor.transcriptEdit")}
+                        title={
+                          isRecording
+                            ? t("notes.editor.transcriptEditDisabledRecording")
+                            : t("notes.editor.transcriptEdit")
+                        }
+                      >
+                        <Pencil size={10} />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    data-segment-button
+                    data-segment-value="raw"
+                    onClick={() => {
+                      if (!isTranscriptEditing) setViewMode("raw");
+                    }}
+                    className={cn(
+                      "ow-segmented-item h-6 shrink-0 whitespace-nowrap px-2 py-0 text-[11px]",
+                      viewMode === "raw" && "ow-segmented-item-active",
+                      isTranscriptEditing && viewMode !== "raw" && "cursor-not-allowed opacity-40"
+                    )}
+                  >
+                    <AlignLeft size={10} />
+                    {t("notes.editor.notes")}
+                  </button>
+                  {enhancement && (
+                    <button
+                      data-segment-button
+                      data-segment-value="enhanced"
+                      onClick={() => {
+                        if (!isTranscriptEditing) setViewMode("enhanced");
+                      }}
+                      className={cn(
+                        "ow-segmented-item h-6 shrink-0 whitespace-nowrap px-2 py-0 text-[11px]",
+                        viewMode === "enhanced" && "ow-segmented-item-active",
+                        isTranscriptEditing &&
+                          viewMode !== "enhanced" &&
+                          "cursor-not-allowed opacity-40"
+                      )}
+                    >
+                      <Sparkles size={9} />
+                      {t("notes.editor.enhanced")}
+                      {enhancement.isStale && (
+                        <span
+                          className="w-1 h-1 rounded-full bg-amber-400/60"
+                          title={t("notes.editor.staleIndicator")}
+                        />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept={
+                    queuedImportTarget === "transcript"
+                      ? ".txt,.md,.markdown,text/plain,text/markdown"
+                      : ".txt,.md,.markdown,.docx,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  }
+                  className="hidden"
+                  onChange={handleImportInput}
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={!canImportNoteFile}
+                      className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
+                      aria-label={t("notes.editor.importFile")}
+                      title={t("notes.editor.importFile")}
+                    >
+                      <FileUp size={11} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={4}>
+                    <DropdownMenuItem
+                      onClick={() => openImportFilePicker("transcript")}
+                      disabled={!canImportTranscriptFile}
+                      className="text-xs gap-2"
+                    >
+                      <MessageSquareText size={13} className="text-foreground/40" />
+                      {t("notes.editor.importToTranscript")}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => openImportFilePicker("note")}
+                      className="text-xs gap-2"
+                    >
+                      <AlignLeft size={13} className="text-foreground/40" />
+                      {t("notes.editor.importToNote")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {hasTranscriptEditControls && isTranscriptEditing && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={handleSaveTranscriptEdit}
+                      disabled={isTranscriptSaving}
+                      className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/6 dark:bg-white/6 text-foreground/60 dark:text-foreground/50 hover:text-foreground/80 hover:bg-foreground/10 dark:hover:bg-white/10 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
+                      aria-label={t("notes.editor.transcriptSave")}
+                      title={t("notes.editor.transcriptSave")}
+                    >
+                      {isTranscriptSaving ? (
+                        <Loader2 size={10} className="animate-spin" />
+                      ) : (
+                        <Check size={10} />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelTranscriptEdit}
+                      disabled={isTranscriptSaving}
+                      className="shrink-0 h-6 w-6 inline-flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/45 dark:text-foreground/35 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:bg-white/8 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-150"
+                      aria-label={t("notes.editor.transcriptCancel")}
+                      title={t("notes.editor.transcriptCancel")}
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                )}
+                {viewMode === "transcript" &&
+                  !isTranscriptEditing &&
+                  !isRecording &&
+                  speakerFilterOptions.length > 1 && (
+                    <TranscriptSpeakerFilter
+                      options={speakerFilterOptions}
+                      selectedKeys={selectedSpeakerFilterKeys}
+                      onChange={setSelectedSpeakerFilterKeys}
+                      t={t}
+                    />
+                  )}
+                {(onExportNote || onExportTranscript || onDownloadOriginalAudio) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:text-foreground/60 dark:hover:bg-white/8 transition-colors duration-150"
+                        aria-label={t("notes.editor.export")}
+                      >
+                        <Download size={11} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" sideOffset={4}>
+                      {viewMode === "transcript" && onExportTranscript ? (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => onExportTranscript("txt")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asTranscriptText")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onExportTranscript("srt")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asSubtitles")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onExportTranscript("md")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asTranscriptMarkdown")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => onExportTranscript("json")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asJson")}
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => handleExportCurrentNote("md")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asMarkdown")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleExportCurrentNote("txt")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asPlainText")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleExportCurrentNote("pdf")}
+                            className="text-xs gap-2"
+                          >
+                            <FileText size={13} className="text-foreground/40" />
+                            {t("notes.editor.asPdf")}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {onDownloadOriginalAudio && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => onDownloadOriginalAudio()}
+                            disabled={!hasDownloadableAudio}
+                            className="text-xs gap-2"
+                          >
+                            <FileAudio size={13} className="text-foreground/40" />
+                            {isRecording
+                              ? t("notes.editor.downloadSavedAudio")
+                              : t("notes.editor.downloadOriginalAudio")}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {onShowOriginalAudioInFolder && (
+                        <DropdownMenuItem
+                          onClick={() => onShowOriginalAudioInFolder()}
+                          disabled={!hasDownloadableAudio}
+                          className="text-xs gap-2"
+                        >
+                          <FolderOpen size={13} className="text-foreground/40" />
+                          {t("notes.editor.showAudioInFolder")}
+                        </DropdownMenuItem>
+                      )}
+                      {onManageSavedAudio && (
+                        <DropdownMenuItem
+                          onClick={() => onManageSavedAudio()}
+                          disabled={!hasDownloadableAudio}
+                          className="text-xs gap-2"
+                        >
+                          <FileAudio size={13} className="text-foreground/40" />
+                          {t("notes.editor.manageSavedAudio")}
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             </div>
-          </div>
           </div>
         </div>
 
         <div className="flex-1 relative min-w-0 min-h-0 flex flex-col overflow-hidden">
+          {viewMode === "transcript" && !isRecording && noteAudioFiles.length > 0 && (
+            <TranscriptAudioPlayer
+              noteId={note.id}
+              audioFiles={noteAudioFiles}
+              audioActionKey={audioActionKey}
+              seekSeconds={playbackSeekSeconds}
+              onMergeAudioFiles={onMergeAudioFiles}
+            />
+          )}
           {showFindBar && (
             <div className="shrink-0 border-b border-border/20 px-3 py-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -2082,21 +2310,15 @@ export default function NoteEditor({
                 searchTerm={findText}
                 ignoreCase={ignoreCase}
                 activeSearchIndex={activeFindIndex}
+                activeSegmentId={activePlaybackSegmentId}
                 onSearchMatchCountChange={handleTranscriptFindMatchCountChange}
                 micPartial={isRecording ? meetingMicPartial : undefined}
                 systemPartial={isRecording ? meetingSystemPartial : undefined}
-                systemPartialSpeakerId={isRecording ? meetingSystemPartialSpeakerId : undefined}
-                systemPartialSpeakerName={isRecording ? meetingSystemPartialSpeakerName : undefined}
                 speakerMappings={speakerMappings}
                 speakerProfiles={knownSpeakers}
                 participants={parsedParticipants}
                 isRecording={isRecording}
                 isDiarizing={isDiarizing}
-                sessionDiarizationEnabled={sessionDiarizationEnabled}
-                sessionExpectedCount={sessionExpectedCount}
-                userTouchedStepper={userTouchedStepper}
-                onSetSessionDiarizationEnabled={onSetSessionDiarizationEnabled}
-                onSetSessionExpectedCount={onSetSessionExpectedCount}
                 onMapSpeaker={isRecording ? handleMapSpeaker : handleAssignSpeakerGroupName}
                 onMapSegmentSpeaker={isRecording ? undefined : handleAssignSingleSegmentName}
                 onConfirmSuggestion={handleConfirmSuggestion}
@@ -2108,6 +2330,9 @@ export default function NoteEditor({
                 recordingStartedAt={recordingStartedAt}
                 onToggleSelect={
                   !isRecording && !isTranscriptEditing ? handleToggleSelect : undefined
+                }
+                onSeekToSegment={
+                  !isRecording && !isTranscriptEditing ? handleSeekToTranscriptSegment : undefined
                 }
                 emptyMessage={t("notes.speaker.filterEmpty")}
               />

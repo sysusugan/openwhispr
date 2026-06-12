@@ -103,6 +103,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   exportSelectedNotes: (noteIds, options) =>
     ipcRenderer.invoke("export-selected-notes", noteIds, options),
   getNoteAudioFiles: (noteId) => ipcRenderer.invoke("get-note-audio-files", noteId),
+  getNoteAudioPlaybackUrl: (noteId, audioFileId) =>
+    ipcRenderer.invoke("get-note-audio-playback-url", noteId, audioFileId),
   attachUploadAudioToNote: (noteId, filePath, options) =>
     ipcRenderer.invoke("attach-upload-audio-to-note", noteId, filePath, options),
   rediarizeNoteAudio: (noteId, audioFileId, options) =>

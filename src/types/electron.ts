@@ -590,6 +590,15 @@ declare global {
       getNoteAudioFiles: (
         noteId: number
       ) => Promise<{ success: boolean; files?: NoteAudioFile[]; error?: string }>;
+      getNoteAudioPlaybackUrl?: (
+        noteId: number,
+        audioFileId?: number | null
+      ) => Promise<{
+        success: boolean;
+        url?: string;
+        audioFile?: NoteAudioFile;
+        error?: string;
+      }>;
       attachUploadAudioToNote?: (
         noteId: number,
         filePath: string,

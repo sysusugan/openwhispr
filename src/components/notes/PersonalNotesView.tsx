@@ -82,6 +82,10 @@ import { buildNoteActionInput, makeActionContentHash } from "./noteActionInput";
 import { getAudioBulkAction, getAudioBulkAvailability } from "./audioManagement";
 import { serializeTranscriptSegments } from "../../utils/transcriptSpeakerState";
 import {
+  offsetAppendedTranscriptSegments,
+  resolveNoteActionTranscript,
+} from "../../utils/meetingTranscriptTimeline";
+import {
   useNotes,
   useActiveNoteId,
   useActiveFolderId,
@@ -98,8 +102,6 @@ import {
   startRecording as storeStartRecording,
   stopRecording as storeStopRecording,
   lockSpeaker,
-  setSessionDiarizationEnabled,
-  setSessionExpectedCount,
 } from "../../stores/meetingRecordingStore";
 import { useNotesOnboarding } from "../../hooks/useNotesOnboarding";
 import NotesOnboarding from "./NotesOnboarding";
@@ -251,12 +253,7 @@ export default function PersonalNotesView({
   const recordingStartedAt = useMeetingRecordingStore((s) => s.recordingStartedAt);
   const micPartial = useMeetingRecordingStore((s) => s.micPartial);
   const systemPartial = useMeetingRecordingStore((s) => s.systemPartial);
-  const systemPartialSpeakerId = useMeetingRecordingStore((s) => s.systemPartialSpeakerId);
-  const systemPartialSpeakerName = useMeetingRecordingStore((s) => s.systemPartialSpeakerName);
   const diarizationSessionId = useMeetingRecordingStore((s) => s.diarizationSessionId);
-  const sessionDiarizationEnabled = useMeetingRecordingStore((s) => s.sessionDiarizationEnabled);
-  const sessionExpectedCount = useMeetingRecordingStore((s) => s.sessionExpectedCount);
-  const userTouchedStepper = useMeetingRecordingStore((s) => s.userTouchedStepper);
   const recordingNoteId = useMeetingRecordingStore((s) => s.recordingNoteId);
   const recordingError = useMeetingRecordingStore((s) => s.error);
 
@@ -719,14 +716,17 @@ export default function PersonalNotesView({
   } = useActionProcessing(activeNoteId ?? null);
 
   const isActiveNoteRecording = isTranscribing && recordingNoteId === activeNote?.id;
+  const resolvedActiveTranscript = resolveNoteActionTranscript({
+    isActiveNoteRecording,
+    realtimeTranscript,
+    persistedTranscript: activeNote?.transcript,
+  });
 
   const isEnhancementStale = useMemo(() => {
     if (!activeNote?.enhanced_content || !activeNote?.enhanced_at_content_hash) return false;
-    const rawTranscript =
-      isActiveNoteRecording && realtimeTranscript ? realtimeTranscript : activeNote.transcript;
     const actionInput = buildNoteActionInput({
       noteContent: localContent,
-      rawTranscript,
+      rawTranscript: resolvedActiveTranscript,
       speakerLabels: {
         you: t("notes.speaker.you"),
         them: t("notes.speaker.them"),
@@ -737,10 +737,8 @@ export default function PersonalNotesView({
   }, [
     activeNote?.enhanced_content,
     activeNote?.enhanced_at_content_hash,
-    activeNote?.transcript,
-    isActiveNoteRecording,
     localContent,
-    realtimeTranscript,
+    resolvedActiveTranscript,
     t,
   ]);
 
@@ -851,7 +849,7 @@ export default function PersonalNotesView({
 
   const mergeAudioFiles = useCallback(
     async (options: { mergedAndCompressed?: boolean } = {}) => {
-      if (!activeNoteId) return;
+      if (!activeNoteId) return null;
       setAudioActionKey("merge");
       try {
         const result = await window.electronAPI.mergeNoteAudioFiles(activeNoteId);
@@ -861,9 +859,9 @@ export default function PersonalNotesView({
             description: result.error || t("notes.editor.audioUnavailableDescription"),
             variant: "destructive",
           });
-          return;
+          return null;
         }
-        await loadNoteAudioFiles(activeNoteId);
+        const files = await loadNoteAudioFiles(activeNoteId);
         toast({
           title: options.mergedAndCompressed
             ? t("notes.editor.audioMergedAndCompressed")
@@ -871,6 +869,7 @@ export default function PersonalNotesView({
           variant: "success",
           duration: 2000,
         });
+        return files[0] ?? null;
       } finally {
         setAudioActionKey(null);
       }
@@ -1018,9 +1017,15 @@ export default function PersonalNotesView({
       !isTranscribing &&
       (realtimeTranscript || realtimeSegments.length > 0)
     ) {
-      const transcript =
+      const note = recordingNoteId ? notes.find((n) => n.id === recordingNoteId) : null;
+      const seedSegments = note?.transcript ? parseTranscriptSegments(note.transcript) : [];
+      const persistedSegments =
         realtimeSegments.length > 0
-          ? serializeTranscriptSegments(realtimeSegments, { recordingStartedAt })
+          ? offsetAppendedTranscriptSegments(realtimeSegments, seedSegments, recordingStartedAt)
+          : [];
+      const transcript =
+        persistedSegments.length > 0
+          ? serializeTranscriptSegments(persistedSegments)
           : realtimeTranscript;
 
       if (recordingNoteId && transcript) {
@@ -1028,20 +1033,34 @@ export default function PersonalNotesView({
       }
     }
     prevTranscribingRef.current = isTranscribing;
-  }, [isTranscribing, realtimeTranscript, realtimeSegments, recordingNoteId, recordingStartedAt]);
+  }, [
+    isTranscribing,
+    realtimeTranscript,
+    realtimeSegments,
+    recordingNoteId,
+    recordingStartedAt,
+    notes,
+  ]);
 
   useEffect(() => {
     if (!isTranscribing) return;
 
     const interval = setInterval(() => {
       if (!recordingNoteId || realtimeSegments.length === 0) return;
+      const note = notes.find((n) => n.id === recordingNoteId);
+      const seedSegments = note?.transcript ? parseTranscriptSegments(note.transcript) : [];
+      const persistedSegments = offsetAppendedTranscriptSegments(
+        realtimeSegments,
+        seedSegments,
+        recordingStartedAt
+      );
       window.electronAPI.updateNote(recordingNoteId, {
-        transcript: serializeTranscriptSegments(realtimeSegments, { recordingStartedAt }),
+        transcript: serializeTranscriptSegments(persistedSegments),
       });
     }, 30_000);
 
     return () => clearInterval(interval);
-  }, [isTranscribing, realtimeSegments, recordingNoteId, recordingStartedAt]);
+  }, [isTranscribing, realtimeSegments, recordingNoteId, recordingStartedAt, notes]);
 
   const isLocalSynced = syncedNoteId === activeNote?.id;
   const editorNote = activeNote
@@ -1441,9 +1460,7 @@ export default function PersonalNotesView({
                   <div className="ow-empty-state-visual mb-3 h-12 w-12">
                     <SquarePen size={18} strokeWidth={1.7} />
                   </div>
-                  <p className="ow-empty-state-description mb-3">
-                    {t("notes.empty.emptyFolder")}
-                  </p>
+                  <p className="ow-empty-state-description mb-3">{t("notes.empty.emptyFolder")}</p>
                   <div className="flex flex-col gap-1.5 w-full max-w-36">
                     <button
                       onClick={handleNewNote}
@@ -1496,7 +1513,9 @@ export default function PersonalNotesView({
             type="button"
             className="ow-pane-toggle"
             onClick={() => setIsMiddlePaneCollapsed((value) => !value)}
-            aria-label={isMiddlePaneCollapsed ? t("notes.expandNoteList") : t("notes.collapseNoteList")}
+            aria-label={
+              isMiddlePaneCollapsed ? t("notes.expandNoteList") : t("notes.collapseNoteList")
+            }
             title={isMiddlePaneCollapsed ? t("notes.expandNoteList") : t("notes.collapseNoteList")}
           >
             {isMiddlePaneCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
@@ -1531,6 +1550,9 @@ export default function PersonalNotesView({
               onShowOriginalAudioInFolder={handleShowOriginalAudioInFolder}
               onManageSavedAudio={handleManageSavedAudio}
               hasDownloadableAudio={noteAudioFiles.length > 0}
+              noteAudioFiles={noteAudioFiles}
+              audioActionKey={audioActionKey}
+              onMergeAudioFiles={() => mergeAudioFiles()}
               enhancement={
                 localEnhancedContent
                   ? {
@@ -1546,19 +1568,8 @@ export default function PersonalNotesView({
               meetingSegments={isActiveNoteRecording ? realtimeSegments : []}
               meetingMicPartial={isActiveNoteRecording ? micPartial : ""}
               meetingSystemPartial={isActiveNoteRecording ? systemPartial : ""}
-              meetingSystemPartialSpeakerId={
-                isActiveNoteRecording ? systemPartialSpeakerId : undefined
-              }
-              meetingSystemPartialSpeakerName={
-                isActiveNoteRecording ? systemPartialSpeakerName : undefined
-              }
               onLiveSpeakerLock={lockSpeaker}
               liveTranscript={isActiveNoteRecording ? realtimeTranscript : ""}
-              sessionDiarizationEnabled={sessionDiarizationEnabled}
-              sessionExpectedCount={sessionExpectedCount}
-              userTouchedStepper={userTouchedStepper}
-              onSetSessionDiarizationEnabled={setSessionDiarizationEnabled}
-              onSetSessionExpectedCount={setSessionExpectedCount}
               folderName={activeFolderName}
               folders={folders}
               onMoveToFolder={handleMoveToFolder}
@@ -1572,7 +1583,11 @@ export default function PersonalNotesView({
                   onRunAction={async (action) => {
                     if (!editorNote) return;
                     await flushPendingNoteSaves(editorNote.id);
-                    const rawTranscript = realtimeTranscript || editorNote.transcript;
+                    const rawTranscript = resolveNoteActionTranscript({
+                      isActiveNoteRecording,
+                      realtimeTranscript,
+                      persistedTranscript: editorNote.transcript,
+                    });
                     const currentTitle = localTitleRef.current;
                     const currentContent = localContentRef.current;
                     const currentEnhancedContent = localEnhancedContentRef.current;
@@ -1605,7 +1620,7 @@ export default function PersonalNotesView({
                   onManageActions={() => setShowActionManager(true)}
                   disabled={
                     (!editorNote?.content?.trim() &&
-                      !realtimeTranscript &&
+                      !resolvedActiveTranscript &&
                       !activeNote?.transcript) ||
                     actionProcessingState === "processing"
                   }
@@ -1621,12 +1636,8 @@ export default function PersonalNotesView({
             </div>
             {notes.length === 0 ? (
               <>
-                <h3 className="ow-empty-state-title">
-                  {t("notes.empty.title")}
-                </h3>
-                <p className="ow-empty-state-description">
-                  {t("notes.empty.description")}
-                </p>
+                <h3 className="ow-empty-state-title">{t("notes.empty.title")}</h3>
+                <p className="ow-empty-state-description">{t("notes.empty.description")}</p>
                 <div className="ow-empty-state-actions">
                   <button
                     onClick={handleNewNote}
@@ -1645,12 +1656,8 @@ export default function PersonalNotesView({
               </>
             ) : (
               <>
-                <h3 className="ow-empty-state-title">
-                  {t("notes.empty.selectTitle")}
-                </h3>
-                <p className="ow-empty-state-description">
-                  {t("notes.empty.selectDescription")}
-                </p>
+                <h3 className="ow-empty-state-title">{t("notes.empty.selectTitle")}</h3>
+                <p className="ow-empty-state-description">{t("notes.empty.selectDescription")}</p>
               </>
             )}
           </div>

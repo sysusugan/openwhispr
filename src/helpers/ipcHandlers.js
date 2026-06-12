@@ -1,8 +1,17 @@
-const { ipcMain, app, shell, BrowserWindow, systemPreferences, net } = require("electron");
+const {
+  ipcMain,
+  app,
+  shell,
+  BrowserWindow,
+  systemPreferences,
+  net,
+  protocol,
+} = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const crypto = require("crypto");
+const { pathToFileURL } = require("url");
 const debugLogger = require("./debugLogger");
 const tokenStore = require("./tokenStore");
 const { classifyAndLog } = require("./networkErrors");
@@ -64,6 +73,7 @@ const ALLOWED_MEETING_PROVIDERS = new Set([
   "assemblyai-realtime",
   "deepgram-realtime",
 ]);
+const NOTE_AUDIO_PROTOCOL = "openwhispr-note-audio";
 
 function buildRuntimeDictionaryPrompt(words) {
   if (!Array.isArray(words) || words.length === 0) return null;
@@ -409,6 +419,7 @@ class IPCHandlers {
     this.audioStorageManager = new AudioStorageManager();
     this._audioCleanupInterval = null;
     this._noteFilesEnabled = false;
+    this._noteAudioProtocolTokens = new Map();
     require("./markdownMirror").setDatabaseManager(this.databaseManager);
     this.speakerDiarizationEnabled = true;
     this.activeMeetingSpeakerConfig = null;
@@ -419,6 +430,7 @@ class IPCHandlers {
       ...DEFAULT_WHISPER_VAD_CONFIG,
     };
     liveSpeakerIdentifier.setDiarizationManager(this.diarizationManager);
+    this._registerNoteAudioProtocol();
     this._setupTextEditMonitor();
     this._setupAudioCleanup();
     this._logDetectedGpus();
@@ -663,6 +675,44 @@ class IPCHandlers {
         );
       }
     }, SIX_HOURS_MS);
+  }
+
+  _registerNoteAudioProtocol() {
+    if (IPCHandlers._noteAudioProtocolRegistered) return;
+
+    protocol.handle(NOTE_AUDIO_PROTOCOL, async (request) => {
+      try {
+        const url = new URL(request.url);
+        const token = url.hostname || url.pathname.replace(/^\/+/, "");
+        const entry = this._noteAudioProtocolTokens.get(token);
+        if (!entry || entry.expiresAt < Date.now()) {
+          return new Response("Not found", { status: 404 });
+        }
+
+        const audioFile = this.databaseManager.getNoteAudioFile(entry.noteId, entry.audioFileId);
+        if (!audioFile) return new Response("Not found", { status: 404 });
+
+        const audioPath = this.audioStorageManager.getRetainedAudioPath(audioFile.filename);
+        if (!audioPath) return new Response("Not found", { status: 404 });
+
+        return net.fetch(pathToFileURL(audioPath).toString());
+      } catch (error) {
+        debugLogger.warn("Failed to serve note audio", { error: error.message }, "notes");
+        return new Response("Audio unavailable", { status: 500 });
+      }
+    });
+
+    IPCHandlers._noteAudioProtocolRegistered = true;
+  }
+
+  _buildNoteAudioPlaybackUrl(noteId, audioFileId) {
+    const token = crypto.randomUUID();
+    this._noteAudioProtocolTokens.set(token, {
+      noteId,
+      audioFileId,
+      expiresAt: Date.now() + 6 * 60 * 60 * 1000,
+    });
+    return `${NOTE_AUDIO_PROTOCOL}://${token}`;
   }
 
   _setupTextEditMonitor() {
@@ -2093,6 +2143,43 @@ class IPCHandlers {
         return { success: true, files };
       } catch (error) {
         debugLogger.error("Error getting note audio files", { error: error.message }, "notes");
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle("get-note-audio-playback-url", async (_event, noteId, audioFileId = null) => {
+      try {
+        const note = this.databaseManager.getNote(noteId);
+        if (!note) return { success: false, error: "Note not found" };
+
+        let audioFile = null;
+        if (audioFileId != null) {
+          audioFile = this.databaseManager.getNoteAudioFile(noteId, audioFileId);
+        } else {
+          const files = this.databaseManager.getNoteAudioFiles(noteId);
+          audioFile = [...files].reverse()[0] || null;
+        }
+
+        if (!audioFile) return { success: false, error: "Original audio is not available" };
+        const audioPath = this.audioStorageManager.getRetainedAudioPath(audioFile.filename);
+        if (!audioPath) {
+          return { success: false, error: "Audio file has been removed or is unavailable" };
+        }
+
+        return {
+          success: true,
+          url: this._buildNoteAudioPlaybackUrl(noteId, audioFile.id),
+          audioFile: {
+            ...audioFile,
+            extension: path.extname(audioFile.filename).slice(1) || "wav",
+          },
+        };
+      } catch (error) {
+        debugLogger.error(
+          "Error getting note audio playback URL",
+          { error: error.message },
+          "notes"
+        );
         return { success: false, error: error.message };
       }
     });
@@ -6304,7 +6391,6 @@ class IPCHandlers {
             attachMeetingStreamingHandlers(this._meetingSystemStreaming, win, "system");
           }
           await startMeetingAec(systemAudioMode);
-          await startLiveSpeakerIdentification(win, systemAudioMode);
           ({ systemAudioMode, systemAudioStrategy } = await startMeetingSystemAudio(
             event,
             systemAudioMode,
@@ -6328,7 +6414,6 @@ class IPCHandlers {
           meetingLocalBuffers = { mic: [], system: [] };
           meetingLocalTranscript = "";
 
-          await startLiveSpeakerIdentification(meetingLocalWin, systemAudioMode);
           await startMeetingAec(systemAudioMode);
 
           meetingLocalTimer = setInterval(() => {
@@ -6361,8 +6446,6 @@ class IPCHandlers {
         }
 
         await connectRealtimeStreaming(event, options);
-        const realtimeWin = BrowserWindow.fromWebContents(event.sender);
-        await startLiveSpeakerIdentification(realtimeWin, systemAudioMode);
         await startMeetingAec(systemAudioMode);
         ({ systemAudioMode, systemAudioStrategy } = await startMeetingSystemAudio(
           event,
@@ -6396,10 +6479,6 @@ class IPCHandlers {
           meetingAecEnabled = false;
         }
         flushPendingMeetingMicChunks();
-
-        if (meetingLiveSpeakerActive) {
-          void liveSpeakerIdentifier.feedAudio(outboundBuffer);
-        }
 
         if (!meetingDiarizationStream) {
           const os = require("os");

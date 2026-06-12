@@ -1,10 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Loader2, Sparkles, Users, X } from "lucide-react";
+import { Check, Loader2, Pencil, Users, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import { Toggle } from "../ui/toggle";
 import { cn } from "../lib/utils";
-import { MAX_SPEAKER_COUNT } from "../../constants/speakerDetection.json";
 import type { TranscriptSegment } from "../../stores/meetingRecordingStore";
 import {
   isTranscriptSpeakerLocked,
@@ -19,21 +17,6 @@ import {
 } from "../../utils/currentPageFind";
 import { formatTranscriptTimestamp } from "../../utils/recordingTime";
 
-const BUBBLE_STYLES = {
-  mic: {
-    align: "justify-start",
-    radius: "rounded-bl-md",
-    bg: "bg-white border border-slate-200 text-slate-900 shadow-sm",
-    cursor: "bg-slate-500/55",
-  },
-  system: {
-    align: "justify-end",
-    radius: "rounded-br-md",
-    bg: "bg-slate-50 border border-slate-200 text-slate-800 shadow-sm",
-    cursor: "bg-slate-500/45",
-  },
-} as const;
-
 const SPEAKER_COLORS = [
   "text-sky-500",
   "text-green-400",
@@ -45,20 +28,18 @@ const SPEAKER_COLORS = [
   "text-red-400",
 ];
 
-const SPEAKER_BORDER_COLORS = [
-  "border-l-blue-400/50",
-  "border-l-green-400/50",
-  "border-l-purple-400/50",
-  "border-l-orange-400/50",
-  "border-l-pink-400/50",
-  "border-l-cyan-400/50",
-  "border-l-yellow-400/50",
-  "border-l-red-400/50",
+const SPEAKER_BADGE_COLORS = [
+  "bg-indigo-400 text-white",
+  "bg-pink-300 text-white",
+  "bg-emerald-400 text-white",
+  "bg-amber-300 text-amber-950",
+  "bg-cyan-400 text-white",
+  "bg-violet-400 text-white",
+  "bg-rose-400 text-white",
+  "bg-lime-300 text-lime-950",
 ];
 
 const STICKY_SCROLL_THRESHOLD_PX = 80;
-
-const getSpeakerKey = (segment: TranscriptSegment) => segment.speaker || segment.source;
 
 const getEffectiveSpeakerKey = (
   segment: TranscriptSegment,
@@ -137,70 +118,6 @@ function ActiveFindPreview({ preview }: { preview: FindMatchPreview }) {
           <span className="text-amber-700/70 dark:text-amber-200/55">…</span>
         )}
       </span>
-    </div>
-  );
-}
-
-const getSpeakerStateLabel = (state: TranscriptSpeakerStatus, t: (key: string) => string) => {
-  switch (state) {
-    case "locked":
-      return t("notes.speaker.state.locked");
-    case "provisional":
-      return t("notes.speaker.state.provisional");
-    case "suggested":
-      return t("notes.speaker.state.suggested");
-    case "confirmed":
-    default:
-      return t("notes.speaker.state.confirmed");
-  }
-};
-
-function PartialBubble({
-  text,
-  source,
-  speakerLabel,
-  speakerState,
-  t,
-}: {
-  text: string;
-  source: "mic" | "system";
-  speakerLabel?: string;
-  speakerState?: TranscriptSpeakerStatus;
-  t: (key: string, opts?: Record<string, unknown>) => string;
-}) {
-  const s = BUBBLE_STYLES[source];
-  return (
-    <div
-      className={cn("flex", s.align)}
-      style={{ animation: "agent-message-in 150ms ease-out both" }}
-    >
-      <div className="max-w-[80%] flex flex-col">
-        {speakerLabel && (
-          <div className="mb-0.5 flex items-center gap-1 px-1">
-            <span className="text-[11px] font-medium text-muted-foreground/70">{speakerLabel}</span>
-            {speakerState === "provisional" && (
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground/40">
-                <Sparkles size={9} />
-                {getSpeakerStateLabel("provisional", t)}
-              </span>
-            )}
-          </div>
-        )}
-        <div
-          className={cn(
-            "px-3 py-1.5 rounded-xl",
-            s.radius,
-            s.bg,
-            "text-[13px] leading-relaxed italic"
-          )}
-        >
-          {text}
-          <span
-            className={cn("inline-block w-[2px] h-[13px] align-middle ml-0.5", s.cursor)}
-            style={{ animation: "agent-cursor-blink 800ms steps(1) infinite" }}
-          />
-        </div>
-      </div>
     </div>
   );
 }
@@ -492,6 +409,7 @@ function SpeakerLabel({
   onMapSegment,
   onConfirm,
   onDismiss,
+  variant = "compact",
   t,
 }: {
   speakerId: string;
@@ -516,6 +434,7 @@ function SpeakerLabel({
   ) => void;
   onConfirm?: (speakerId: string, name: string, profileId: number) => void;
   onDismiss?: (speakerId: string) => void;
+  variant?: "compact" | "inline";
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const [open, setOpen] = useState(false);
@@ -571,7 +490,10 @@ function SpeakerLabel({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "inline-flex items-center text-[11px] font-medium mb-0.5 px-1.5 py-0.5 rounded-md outline-none cursor-pointer",
+            "inline-flex items-center gap-1 font-medium outline-none cursor-pointer",
+            variant === "inline"
+              ? "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground hover:bg-foreground/6"
+              : "mb-0.5 rounded-md px-1.5 py-0.5 text-[11px]",
             "border border-border/60 dark:border-white/20",
             "hover:bg-foreground/5 hover:border-border/90 dark:hover:border-white/30",
             "transition-colors duration-150 focus-visible:ring-1 focus-visible:ring-ring",
@@ -581,6 +503,7 @@ function SpeakerLabel({
           )}
         >
           {displayLabel}
+          {variant === "inline" && <Pencil size={12} className="opacity-55" />}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0">
@@ -709,20 +632,14 @@ interface MeetingTranscriptChatProps {
   onSearchMatchCountChange?: (count: number) => void;
   micPartial?: string;
   systemPartial?: string;
-  systemPartialSpeakerId?: string | null;
-  systemPartialSpeakerName?: string | null;
   speakerMappings?: Record<string, string>;
   speakerProfiles?: SpeakerProfileLite[];
   participants?: Array<{ email: string; displayName: string | null }>;
   selectedSegmentIds?: Set<string>;
+  activeSegmentId?: string | null;
   isRecording?: boolean;
   isDiarizing?: boolean;
   recordingStartedAt?: number | null;
-  sessionDiarizationEnabled?: boolean;
-  sessionExpectedCount?: number;
-  userTouchedStepper?: boolean;
-  onSetSessionDiarizationEnabled?: (enabled: boolean) => void;
-  onSetSessionExpectedCount?: (count: number) => void;
   onMapSpeaker?: (
     speakerId: string,
     displayName: string,
@@ -739,6 +656,7 @@ interface MeetingTranscriptChatProps {
   onDismissSuggestion?: (speakerId: string) => void;
   onAttachSpeakerEmail?: (profileId: number, email: string | null) => void;
   onToggleSelect?: (segmentId: string) => void;
+  onSeekToSegment?: (segment: TranscriptSegment) => void;
   emptyMessage?: string;
 }
 
@@ -752,26 +670,21 @@ export function MeetingTranscriptChat({
   onSearchMatchCountChange,
   micPartial,
   systemPartial,
-  systemPartialSpeakerId,
-  systemPartialSpeakerName,
   speakerMappings,
   speakerProfiles,
   participants,
   selectedSegmentIds,
+  activeSegmentId,
   isRecording,
   isDiarizing,
   recordingStartedAt,
-  sessionDiarizationEnabled = true,
-  sessionExpectedCount = 2,
-  userTouchedStepper = false,
-  onSetSessionDiarizationEnabled,
-  onSetSessionExpectedCount,
   onMapSpeaker,
   onMapSegmentSpeaker,
   onConfirmSuggestion,
   onDismissSuggestion,
   onAttachSpeakerEmail,
   onToggleSelect,
+  onSeekToSegment,
   emptyMessage,
 }: MeetingTranscriptChatProps) {
   const { t } = useTranslation();
@@ -799,17 +712,6 @@ export function MeetingTranscriptChat({
   }, [segments, micPartial, systemPartial]);
 
   const hasContent = segments.length > 0 || micPartial || systemPartial;
-  const systemPartialSpeakerLabel =
-    systemPartialSpeakerName ||
-    (systemPartialSpeakerId
-      ? t("notes.speaker.label", { n: getSpeakerNumber(systemPartialSpeakerId) })
-      : undefined);
-  const systemPartialSpeakerState = systemPartialSpeakerId
-    ? systemPartialSpeakerName
-      ? "confirmed"
-      : "provisional"
-    : undefined;
-
   const colorByKey = useMemo(() => {
     const map = new Map<string, number>();
     let nextIdx = 0;
@@ -881,16 +783,6 @@ export function MeetingTranscriptChat({
     );
   }
 
-  const isSelfSide = (segment: TranscriptSegment): boolean => {
-    const mapped = segment.speaker ? speakerMappings?.[segment.speaker] : undefined;
-    if (segment.speakerName) return false;
-    if (mapped) return mapped.trim().toLowerCase() === t("notes.speaker.you").toLowerCase();
-    if (segment.speaker === "you") return true;
-    return segment.source === "mic";
-  };
-
-  const others = Math.max(0, sessionExpectedCount - 1);
-
   const updateSegmentText = (segmentId: string, text: string) => {
     onSegmentsChange?.(
       segments.map((segment) => (segment.id === segmentId ? { ...segment, text } : segment))
@@ -899,65 +791,10 @@ export function MeetingTranscriptChat({
 
   return (
     <div className="h-full relative">
-      {(isRecording || isDiarizing) && !hintDismissed && (
+      {isDiarizing && !hintDismissed && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 px-2.5 py-1 rounded-md border border-border bg-background/95 backdrop-blur shadow-sm text-xs text-foreground">
-          {isDiarizing ? (
-            <Loader2 size={12} className="animate-spin text-muted-foreground" />
-          ) : (
-            <Sparkles
-              size={12}
-              className={cn(
-                sessionDiarizationEnabled ? "text-foreground/70" : "text-muted-foreground"
-              )}
-            />
-          )}
-          <span>
-            {isDiarizing
-              ? t("notes.speaker.pill.finalizing")
-              : sessionDiarizationEnabled
-                ? others === 1 && !(participants && participants.length > 0) && !userTouchedStepper
-                  ? t("notes.speaker.pill.defaultingHint")
-                  : t("notes.speaker.pill.identifying")
-                : t("notes.speaker.pill.notLabeled")}
-          </span>
-          {!isDiarizing && sessionDiarizationEnabled && (
-            <>
-              <span className="text-muted-foreground">
-                {others === 0
-                  ? t("notes.speaker.pill.justYou")
-                  : t("notes.speaker.pill.othersInCall", { count: others })}
-              </span>
-              <div className="flex items-center gap-0.5 rounded-md border border-border bg-surface-2/60">
-                <button
-                  onClick={() => onSetSessionExpectedCount?.(sessionExpectedCount - 1)}
-                  disabled={others <= 0}
-                  className="px-1.5 py-0.5 rounded-l-md hover:bg-accent focus-visible:bg-accent focus-visible:outline-none disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                  aria-label={t("notes.speaker.pill.decAria")}
-                >
-                  −
-                </button>
-                <span className="px-1.5 tabular-nums" aria-live="polite">
-                  {others}
-                </span>
-                <button
-                  onClick={() => onSetSessionExpectedCount?.(sessionExpectedCount + 1)}
-                  disabled={others >= MAX_SPEAKER_COUNT - 1}
-                  className="px-1.5 py-0.5 rounded-r-md hover:bg-accent focus-visible:bg-accent focus-visible:outline-none disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                  aria-label={t("notes.speaker.pill.incAria")}
-                >
-                  +
-                </button>
-              </div>
-            </>
-          )}
-          {!isDiarizing && (
-            <div className="scale-75">
-              <Toggle
-                checked={sessionDiarizationEnabled}
-                onChange={(next) => onSetSessionDiarizationEnabled?.(next)}
-              />
-            </div>
-          )}
+          <Loader2 size={12} className="animate-spin text-muted-foreground" />
+          <span>{t("notes.speaker.pill.finalizing")}</span>
           <button
             onClick={() => setHintDismissed(true)}
             className="text-foreground/40 hover:text-foreground/70 transition-colors"
@@ -968,200 +805,189 @@ export function MeetingTranscriptChat({
       )}
       <div
         ref={scrollRef}
-        className="h-full overflow-y-auto bg-white px-5 pt-4 pb-24 flex flex-col gap-2 agent-chat-scroll"
+        className="h-full overflow-y-auto bg-white px-8 pt-6 pb-24 agent-chat-scroll"
       >
-        {segments.map((segment, i) => {
-          const searchMeta = segmentSearchMeta[i] ?? { start: 0, count: 0 };
-          const selfSide = isSelfSide(segment);
-          const prevSegment = i > 0 ? segments[i - 1] : null;
-          const sameSpeaker = prevSegment
-            ? getSpeakerKey(prevSegment) === getSpeakerKey(segment)
-            : false;
+        <div className="mx-auto flex max-w-5xl flex-col gap-7">
+          {segments.map((segment, i) => {
+            const searchMeta = segmentSearchMeta[i] ?? { start: 0, count: 0 };
+            const hasSpeaker = !!segment.speaker;
+            const isOriginallyYou = segment.speaker === "you";
+            const effectiveKey = getEffectiveSpeakerKey(segment, speakerMappings);
+            const colorIdx =
+              hasSpeaker && !isOriginallyYou ? (colorByKey.get(effectiveKey) ?? 0) : 0;
+            const isSelected = selectedSegmentIds?.has(segment.id) ?? false;
+            const selectable = !!onToggleSelect;
+            const hasSearchMatch =
+              isEditing &&
+              !!searchTerm &&
+              countMatches(segment.text, searchTerm, { ignoreCase }) > 0;
+            const hasActiveSearchMatch =
+              activeSearchIndex >= searchMeta.start &&
+              activeSearchIndex < searchMeta.start + searchMeta.count;
+            const activeSearchPreview =
+              isEditing && hasActiveSearchMatch && activeSegmentFindMatch?.segmentId === segment.id
+                ? getFindMatchPreview(
+                    segment.text,
+                    searchTerm || "",
+                    activeSegmentFindMatch.localMatchIndex,
+                    36,
+                    { ignoreCase }
+                  )
+                : null;
 
-          const hasSpeaker = !!segment.speaker;
-          const isOriginallyYou = segment.speaker === "you";
-          const isSystemSpeaker = hasSpeaker && !selfSide;
-          const effectiveKey = getEffectiveSpeakerKey(segment, speakerMappings);
-          const colorIdx = isSystemSpeaker ? (colorByKey.get(effectiveKey) ?? 0) : 0;
-          const isSelected = selectedSegmentIds?.has(segment.id) ?? false;
-          const selectable = !!onToggleSelect;
-          const hasSearchMatch =
-            isEditing && !!searchTerm && countMatches(segment.text, searchTerm, { ignoreCase }) > 0;
-          const hasActiveSearchMatch =
-            activeSearchIndex >= searchMeta.start &&
-            activeSearchIndex < searchMeta.start + searchMeta.count;
-          const activeSearchPreview =
-            isEditing && hasActiveSearchMatch && activeSegmentFindMatch?.segmentId === segment.id
-              ? getFindMatchPreview(
-                  segment.text,
-                  searchTerm || "",
-                  activeSegmentFindMatch.localMatchIndex,
-                  36,
-                  { ignoreCase }
-                )
-              : null;
+            const activeName = segment.speakerName || speakerMappings?.[segment.speaker!];
+            const matchedProfile =
+              activeName && speakerProfiles
+                ? speakerProfiles.find((p) => p.id != null && p.display_name === activeName)
+                : undefined;
+            const canAddContact =
+              !!matchedProfile &&
+              matchedProfile.id != null &&
+              !matchedProfile.email &&
+              !!onAttachSpeakerEmail;
+            const timestampLabel = formatTranscriptTimestamp(segment.timestamp, timelineStartedAt);
+            const fallbackSpeakerLabel =
+              segment.source === "mic" ? t("notes.speaker.you") : t("notes.speaker.them");
+            const badgeNumber = hasSpeaker
+              ? getSpeakerNumber(segment.speaker!)
+              : segment.source === "mic"
+                ? 1
+                : 2;
+            const isActiveSegment = activeSegmentId === segment.id;
 
-          const activeName = segment.speakerName || speakerMappings?.[segment.speaker!];
-          const matchedProfile =
-            activeName && speakerProfiles
-              ? speakerProfiles.find((p) => p.id != null && p.display_name === activeName)
-              : undefined;
-          const canAddContact =
-            !!matchedProfile &&
-            matchedProfile.id != null &&
-            !matchedProfile.email &&
-            !!onAttachSpeakerEmail;
-          const timestampLabel = formatTranscriptTimestamp(segment.timestamp, timelineStartedAt);
-          const showInlineLabel = !sameSpeaker || !!timestampLabel;
-          const fallbackSpeakerLabel =
-            segment.source === "mic" ? t("notes.speaker.you") : t("notes.speaker.them");
-
-          const labelElement = (
-            <div className="flex items-center gap-1">
-              {hasSpeaker ? (
-                <SpeakerLabel
-                  speakerId={segment.speaker!}
-                  segment={segment}
-                  mappedName={speakerMappings?.[segment.speaker!]}
-                  speakerProfiles={speakerProfiles}
-                  participants={participants}
-                  colorIdx={colorIdx}
-                  isOriginallyYou={isOriginallyYou}
-                  onMap={onMapSpeaker}
-                  onMapSegment={onMapSegmentSpeaker}
-                  onConfirm={onConfirmSuggestion}
-                  onDismiss={onDismissSuggestion}
-                  t={t}
-                />
-              ) : (
-                <span className="text-[11px] font-medium mb-0.5 px-1.5 py-0.5 text-muted-foreground/60">
-                  {fallbackSpeakerLabel}
-                </span>
-              )}
-              {timestampLabel && (
-                <span className="mb-0.5 text-[11px] tabular-nums text-muted-foreground/45">
-                  {timestampLabel}
-                </span>
-              )}
-              {canAddContact && matchedProfile && matchedProfile.id != null && (
-                <AddContactButton
-                  profile={{ id: matchedProfile.id, display_name: matchedProfile.display_name }}
-                  onAttachEmail={onAttachSpeakerEmail!}
-                  t={t}
-                />
-              )}
-            </div>
-          );
-
-          return (
-            <div
-              key={segment.id}
-              className={cn(
-                "group flex flex-col",
-                selfSide ? "items-start" : "items-end",
-                !sameSpeaker && i > 0 && "mt-2",
-                selectable && (selfSide ? "pl-6" : "pr-6")
-              )}
-              style={{ animation: "agent-message-in 200ms ease-out both" }}
-            >
-              {showInlineLabel && labelElement}
-              {!showInlineLabel && (
-                <div
-                  className={cn(
-                    "grid grid-rows-[0fr] opacity-0 pointer-events-none transition-[grid-template-rows,opacity] duration-150 ease-out",
-                    "group-hover:grid-rows-[1fr] group-hover:opacity-100 group-hover:pointer-events-auto"
-                  )}
-                >
-                  <div className="overflow-hidden">{labelElement}</div>
-                </div>
-              )}
-              <div className="relative max-w-[82%]">
-                {isEditing ? (
-                  <div>
-                    <textarea
-                      value={segment.text}
-                      onChange={(event) => updateSegmentText(segment.id, event.target.value)}
-                      rows={Math.max(
-                        1,
-                        Math.min(hasActiveSearchMatch ? 10 : 6, segment.text.split("\n").length)
-                      )}
-                      data-find-active={hasActiveSearchMatch ? "true" : undefined}
-                      className={cn(
-                        "min-w-56 max-w-full resize-y px-3 py-2 outline-none transition-colors",
-                        "text-[13px] leading-relaxed rounded-xl border shadow-sm",
-                        "focus-visible:ring-1 focus-visible:ring-ring/70",
-                        selfSide
-                          ? "bg-white text-slate-900 border-slate-200 placeholder:text-slate-400"
-                          : cn(
-                              "bg-slate-50 text-slate-900 border-slate-200",
-                              isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
-                            ),
-                        hasSearchMatch && "ring-1 ring-amber-300/70 dark:ring-amber-400/45",
-                        hasActiveSearchMatch &&
-                          "ring-2 ring-amber-400/85 shadow-[0_0_0_3px_rgba(251,191,36,0.18)] dark:ring-amber-300/65"
-                      )}
-                    />
-                    {activeSearchPreview && <ActiveFindPreview preview={activeSearchPreview} />}
-                  </div>
+            const labelElement = (
+              <div className="flex min-w-0 items-center gap-2">
+                {hasSpeaker ? (
+                  <SpeakerLabel
+                    speakerId={segment.speaker!}
+                    segment={segment}
+                    mappedName={speakerMappings?.[segment.speaker!]}
+                    speakerProfiles={speakerProfiles}
+                    participants={participants}
+                    colorIdx={colorIdx}
+                    isOriginallyYou={isOriginallyYou}
+                    onMap={onMapSpeaker}
+                    onMapSegment={onMapSegmentSpeaker}
+                    onConfirm={onConfirmSuggestion}
+                    onDismiss={onDismissSuggestion}
+                    variant="inline"
+                    t={t}
+                  />
                 ) : (
-                  <div
-                    className={cn(
-                      "px-3.5 py-2 cursor-default transition-colors shadow-sm",
-                      "text-[13px] leading-relaxed",
-                      selfSide
-                        ? cn(
-                            "bg-white border border-slate-200 text-slate-900",
-                            sameSpeaker ? "rounded-xl rounded-tl-md" : "rounded-xl rounded-bl-md"
-                          )
-                        : cn(
-                            "bg-slate-50 border border-slate-200 text-slate-900",
-                            sameSpeaker ? "rounded-xl rounded-tr-md" : "rounded-xl rounded-br-md",
-                            isSystemSpeaker && cn("border-l-2", SPEAKER_BORDER_COLORS[colorIdx])
-                          ),
-                      isSelected && "ring-2 ring-primary/60"
-                    )}
-                  >
-                    <HighlightedText
-                      text={segment.text}
-                      searchTerm={searchTerm}
-                      ignoreCase={ignoreCase}
-                      matchStartIndex={searchMeta.start}
-                      activeMatchIndex={activeSearchIndex}
-                    />
-                  </div>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {fallbackSpeakerLabel}
+                  </span>
                 )}
-                {selectable && (
-                  <SelectCheckbox
-                    isSelected={isSelected}
-                    onToggle={() => onToggleSelect?.(segment.id)}
-                    className={cn("absolute top-1.5", selfSide ? "-left-6" : "-right-6")}
+                {timestampLabel && (
+                  <span className="text-sm tabular-nums text-muted-foreground/55">
+                    {timestampLabel}
+                  </span>
+                )}
+                {canAddContact && matchedProfile && matchedProfile.id != null && (
+                  <AddContactButton
+                    profile={{ id: matchedProfile.id, display_name: matchedProfile.display_name }}
+                    onAttachEmail={onAttachSpeakerEmail!}
+                    t={t}
                   />
                 )}
               </div>
-            </div>
-          );
-        })}
+            );
 
-        {[
-          { text: micPartial, source: "mic" as const, speakerLabel: undefined },
-          {
-            text: systemPartial,
-            source: "system" as const,
-            speakerLabel: systemPartialSpeakerLabel,
-          },
-        ].map(
-          ({ text, source, speakerLabel }) =>
-            text && (
-              <PartialBubble
-                key={source}
-                text={text}
-                source={source}
-                speakerLabel={speakerLabel}
-                speakerState={source === "system" ? systemPartialSpeakerState : undefined}
-                t={t}
-              />
-            )
-        )}
+            return (
+              <div
+                key={segment.id}
+                data-segment-id={segment.id}
+                className={cn(
+                  "group grid grid-cols-[44px_minmax(0,1fr)] gap-4 rounded-lg px-2 py-1.5 transition-colors",
+                  onSeekToSegment && "cursor-pointer hover:bg-slate-50",
+                  isActiveSegment && "bg-indigo-50/80 ring-1 ring-indigo-200",
+                  selectable && "pl-8"
+                )}
+                onClick={() => onSeekToSegment?.(segment)}
+                style={{ animation: "agent-message-in 200ms ease-out both" }}
+              >
+                <div className="relative pt-0.5">
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold tabular-nums shadow-sm",
+                      SPEAKER_BADGE_COLORS[colorIdx % SPEAKER_BADGE_COLORS.length]
+                    )}
+                  >
+                    {badgeNumber}
+                  </span>
+                  {selectable && (
+                    <SelectCheckbox
+                      isSelected={isSelected}
+                      onToggle={() => onToggleSelect?.(segment.id)}
+                      className="absolute -left-6 top-2 opacity-100"
+                    />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  {labelElement}
+                  {isEditing ? (
+                    <div className="mt-2">
+                      <textarea
+                        value={segment.text}
+                        onChange={(event) => updateSegmentText(segment.id, event.target.value)}
+                        rows={Math.max(
+                          1,
+                          Math.min(hasActiveSearchMatch ? 10 : 6, segment.text.split("\n").length)
+                        )}
+                        data-find-active={hasActiveSearchMatch ? "true" : undefined}
+                        className={cn(
+                          "w-full min-w-56 resize-y px-3 py-2 outline-none transition-colors",
+                          "rounded-md border text-base leading-8 shadow-sm",
+                          "focus-visible:ring-1 focus-visible:ring-ring/70",
+                          "bg-white text-slate-950 border-slate-200 placeholder:text-slate-400",
+                          hasSearchMatch && "ring-1 ring-amber-300/70 dark:ring-amber-400/45",
+                          hasActiveSearchMatch &&
+                            "ring-2 ring-amber-400/85 shadow-[0_0_0_3px_rgba(251,191,36,0.18)] dark:ring-amber-300/65"
+                        )}
+                      />
+                      {activeSearchPreview && <ActiveFindPreview preview={activeSearchPreview} />}
+                    </div>
+                  ) : (
+                    <div
+                      className={cn(
+                        "mt-2 whitespace-pre-wrap text-base leading-8 text-slate-950 transition-colors",
+                        isSelected && "rounded-md bg-primary/5 ring-2 ring-primary/40"
+                      )}
+                    >
+                      <HighlightedText
+                        text={segment.text}
+                        searchTerm={searchTerm}
+                        ignoreCase={ignoreCase}
+                        matchStartIndex={searchMeta.start}
+                        activeMatchIndex={activeSearchIndex}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {[micPartial, systemPartial].filter(Boolean).map((text, index) => (
+            <div
+              key={`partial-${index}`}
+              className="grid grid-cols-[44px_minmax(0,1fr)] gap-4 rounded-lg px-2 py-1.5 opacity-70"
+            >
+              <div className="pt-0.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-200 text-sm font-semibold text-slate-600">
+                  {index + 1}
+                </span>
+              </div>
+              <p className="mt-2 text-base leading-8 text-slate-700">
+                {text}
+                <span
+                  className="ml-0.5 inline-block h-4 w-[2px] align-middle bg-slate-500/45"
+                  style={{ animation: "agent-cursor-blink 800ms steps(1) infinite" }}
+                />
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -96,6 +96,15 @@ protocol.registerSchemesAsPrivileged([
       supportFetchAPI: true,
     },
   },
+  {
+    scheme: "openwhispr-note-audio",
+    privileges: {
+      standard: true,
+      secure: true,
+      stream: true,
+      supportFetchAPI: true,
+    },
+  },
 ]);
 
 function configureChannelUserDataPath() {
@@ -481,12 +490,7 @@ function resolveAuthUrl() {
   try {
     if (fs.existsSync(envPath)) runtimeEnv = JSON.parse(fs.readFileSync(envPath, "utf8"));
   } catch {}
-  return (
-    process.env.AUTH_URL ||
-    process.env.VITE_AUTH_URL ||
-    runtimeEnv.VITE_AUTH_URL ||
-    ""
-  );
+  return process.env.AUTH_URL || process.env.VITE_AUTH_URL || runtimeEnv.VITE_AUTH_URL || "";
 }
 
 function getOauthCookieName() {
@@ -707,8 +711,7 @@ async function startApp() {
   // servers reject. Spoof Origin to the request's own URL for configured local
   // or self-hosted service endpoints.
   const authUrl = resolveAuthUrl();
-  const apiUrl =
-    process.env.OPENWHISPR_API_URL || process.env.VITE_OPENWHISPR_API_URL || "";
+  const apiUrl = process.env.OPENWHISPR_API_URL || process.env.VITE_OPENWHISPR_API_URL || "";
   const rewriteUrls = [authUrl, apiUrl, "http://localhost:3000", "http://127.0.0.1:3000"]
     .map((value) => String(value || "").replace(/\/+$/, ""))
     .filter(Boolean)
