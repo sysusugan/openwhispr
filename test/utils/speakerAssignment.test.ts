@@ -164,6 +164,86 @@ test("transcript speaker blocks merge adjacent segments from the same effective 
   );
 });
 
+test("transcript speaker blocks split same speaker by maximum block duration", () => {
+  const segments = [
+    { id: "seg-1", text: "第一段", source: "system" as const, speaker: "speaker_0", timestamp: 0 },
+    { id: "seg-2", text: "第二段", source: "system" as const, speaker: "speaker_0", timestamp: 45 },
+    { id: "seg-3", text: "第三段", source: "system" as const, speaker: "speaker_0", timestamp: 61 },
+    { id: "seg-4", text: "第四段", source: "system" as const, speaker: "speaker_0", timestamp: 110 },
+    { id: "seg-5", text: "第五段", source: "system" as const, speaker: "speaker_0", timestamp: 122 },
+  ];
+
+  const blocks = buildTranscriptSpeakerBlocks(segments, {}, labels, {
+    maxBlockDurationSeconds: 60,
+  });
+
+  assert.deepEqual(
+    blocks.map((block) => ({
+      text: block.text,
+      timestamp: block.timestamp,
+      segmentIds: block.segments.map((segment) => segment.id),
+    })),
+    [
+      { text: "第一段 第二段", timestamp: 0, segmentIds: ["seg-1", "seg-2"] },
+      { text: "第三段 第四段", timestamp: 61, segmentIds: ["seg-3", "seg-4"] },
+      { text: "第五段", timestamp: 122, segmentIds: ["seg-5"] },
+    ]
+  );
+});
+
+test("transcript speaker blocks support epoch millisecond timestamps for duration limits", () => {
+  const startedAt = 1_781_274_000_000;
+  const segments = [
+    {
+      id: "seg-1",
+      text: "第一段",
+      source: "system" as const,
+      speaker: "speaker_0",
+      timestamp: startedAt,
+    },
+    {
+      id: "seg-2",
+      text: "第二段",
+      source: "system" as const,
+      speaker: "speaker_0",
+      timestamp: startedAt + 45_000,
+    },
+    {
+      id: "seg-3",
+      text: "第三段",
+      source: "system" as const,
+      speaker: "speaker_0",
+      timestamp: startedAt + 61_000,
+    },
+  ];
+
+  const blocks = buildTranscriptSpeakerBlocks(segments, {}, labels, {
+    maxBlockDurationSeconds: 60,
+  });
+
+  assert.deepEqual(
+    blocks.map((block) => block.segments.map((segment) => segment.id)),
+    [["seg-1", "seg-2"], ["seg-3"]]
+  );
+});
+
+test("transcript speaker blocks keep speaker changes as boundaries even inside time window", () => {
+  const segments = [
+    { id: "seg-1", text: "第一句", source: "system" as const, speaker: "speaker_0", timestamp: 0 },
+    { id: "seg-2", text: "第二句", source: "system" as const, speaker: "speaker_1", timestamp: 20 },
+    { id: "seg-3", text: "第三句", source: "system" as const, speaker: "speaker_0", timestamp: 35 },
+  ];
+
+  const blocks = buildTranscriptSpeakerBlocks(segments, {}, labels, {
+    maxBlockDurationSeconds: 60,
+  });
+
+  assert.deepEqual(
+    blocks.map((block) => block.segments.map((segment) => segment.id)),
+    [["seg-1"], ["seg-2"], ["seg-3"]]
+  );
+});
+
 test("transcript speaker blocks recompute when speaker names change", () => {
   const segments = [
     { id: "seg-1", text: "第一句", source: "system" as const, speaker: "speaker_0" },
@@ -190,5 +270,43 @@ test("transcript speaker blocks recompute when speaker names change", () => {
       speakerLabel: block.speakerDisplay.label,
     })),
     [{ text: "第一句 第二句", segmentIds: ["seg-1", "seg-2"], speakerLabel: "苏金" }]
+  );
+});
+
+test("transcript speaker blocks obey time window after speaker names merge", () => {
+  const segments = [
+    { id: "seg-1", text: "第一句", source: "system" as const, speaker: "speaker_0", timestamp: 0 },
+    {
+      id: "seg-2",
+      text: "第二句",
+      source: "system" as const,
+      speaker: "speaker_1",
+      speakerName: "苏金",
+      timestamp: 30,
+    },
+    {
+      id: "seg-3",
+      text: "第三句",
+      source: "system" as const,
+      speaker: "speaker_1",
+      speakerName: "苏金",
+      timestamp: 75,
+    },
+  ];
+
+  const blocks = buildTranscriptSpeakerBlocks(segments, { speaker_0: "苏金" }, labels, {
+    maxBlockDurationSeconds: 60,
+  });
+
+  assert.deepEqual(
+    blocks.map((block) => ({
+      text: block.text,
+      segmentIds: block.segments.map((segment) => segment.id),
+      speakerLabel: block.speakerDisplay.label,
+    })),
+    [
+      { text: "第一句 第二句", segmentIds: ["seg-1", "seg-2"], speakerLabel: "苏金" },
+      { text: "第三句", segmentIds: ["seg-3"], speakerLabel: "苏金" },
+    ]
   );
 });

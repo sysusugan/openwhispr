@@ -657,10 +657,15 @@ export function MeetingTranscriptChat({
 
   const speakerBlocks = useMemo(
     () =>
-      buildTranscriptSpeakerBlocks(segments, speakerMappings, {
-        you: t("notes.speaker.you"),
-        speaker: (n) => t("notes.speaker.label", { n }),
-      }),
+      buildTranscriptSpeakerBlocks(
+        segments,
+        speakerMappings,
+        {
+          you: t("notes.speaker.you"),
+          speaker: (n) => t("notes.speaker.label", { n }),
+        },
+        { maxBlockDurationSeconds: 60 }
+      ),
     [segments, speakerMappings, t]
   );
   const renderedSearchItems = isEditing ? segments : speakerBlocks;

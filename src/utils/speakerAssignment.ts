@@ -35,6 +35,10 @@ export interface TranscriptSpeakerBlock<T extends AssignableTranscriptSegment> {
   segments: T[];
 }
 
+interface TranscriptSpeakerBlockOptions {
+  maxBlockDurationSeconds?: number;
+}
+
 const getSpeakerNumber = (speakerId: string) => {
   const match = speakerId.match(/speaker_(\d+)/);
   return match ? Number(match[1]) + 1 : 1;
@@ -52,6 +56,11 @@ const getTranscriptSpeakerBlockKey = (
   if (mapped) return `name:${mapped.toLowerCase()}`;
   if (segment.speaker) return `speaker:${segment.speaker}`;
   return `source:${segment.source}`;
+};
+
+const getTranscriptTimestampDeltaSeconds = (from: number, to: number) => {
+  const delta = to - from;
+  return from > 1_000_000_000 || to > 1_000_000_000 ? delta / 1000 : delta;
 };
 
 const isUnresolvedProvisionalPlaceholder = (segment: AssignableTranscriptSegment) =>
@@ -161,15 +170,44 @@ export function filterTranscriptSegmentsBySpeaker<T extends AssignableTranscript
 export function buildTranscriptSpeakerBlocks<T extends AssignableTranscriptSegment>(
   segments: T[],
   speakerMappings: Record<string, string> = {},
-  labels: SpeakerDisplayLabels
+  labels: SpeakerDisplayLabels,
+  options: TranscriptSpeakerBlockOptions = {}
 ): TranscriptSpeakerBlock<T>[] {
   const blocks: TranscriptSpeakerBlock<T>[] = [];
+  const maxBlockDurationSeconds =
+    typeof options.maxBlockDurationSeconds === "number" &&
+    Number.isFinite(options.maxBlockDurationSeconds) &&
+    options.maxBlockDurationSeconds > 0
+      ? options.maxBlockDurationSeconds
+      : null;
+
+  const canMergeIntoPreviousBlock = (
+    previous: TranscriptSpeakerBlock<T> | undefined,
+    segment: T,
+    key: string
+  ) => {
+    if (!previous) return false;
+    if (getTranscriptSpeakerBlockKey(previous.segments[0], speakerMappings) !== key) return false;
+    if (maxBlockDurationSeconds == null) return true;
+    if (
+      typeof previous.timestamp !== "number" ||
+      !Number.isFinite(previous.timestamp) ||
+      typeof segment.timestamp !== "number" ||
+      !Number.isFinite(segment.timestamp)
+    ) {
+      return true;
+    }
+    return (
+      getTranscriptTimestampDeltaSeconds(previous.timestamp, segment.timestamp) <=
+      maxBlockDurationSeconds
+    );
+  };
 
   for (const segment of segments) {
     const key = getTranscriptSpeakerBlockKey(segment, speakerMappings);
     const previous = blocks[blocks.length - 1];
 
-    if (previous && getTranscriptSpeakerBlockKey(previous.segments[0], speakerMappings) === key) {
+    if (canMergeIntoPreviousBlock(previous, segment, key)) {
       previous.segments.push(segment);
       previous.text = previous.segments
         .map((item) => item.text.trim())
