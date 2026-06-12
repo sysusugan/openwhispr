@@ -113,6 +113,88 @@ test("mergeWithTranscript can consume already stabilized diarization without col
   );
 });
 
+test("mergeWithTranscript returns diarization match diagnostics when requested", () => {
+  const manager = new DiarizationManager();
+  const result = manager.mergeWithTranscript(
+    [
+      { id: "seg-1", text: "first", source: "system", timestamp: 0, endTime: 1 },
+      { id: "seg-2", text: "second", source: "system", timestamp: 2, endTime: 3 },
+    ],
+    [
+      { start: 0, end: 1.5, speaker: "external_0" },
+      { start: 2, end: 3.5, speaker: "external_1" },
+    ],
+    { includeDiagnostics: true, diarizationAlreadyStabilized: true }
+  );
+
+  assert.deepEqual(
+    result.segments.map((segment) => segment.speaker),
+    ["speaker_0", "speaker_1"]
+  );
+  assert.equal(result.diagnostics.diarizationSegmentCount, 2);
+  assert.equal(result.diagnostics.speakerCount, 2);
+  assert.equal(result.diagnostics.matchedSegmentCount, 2);
+  assert.equal(result.diagnostics.fallbackMatchedSegmentCount, 0);
+  assert.equal(result.diagnostics.unmatchedSegmentCount, 0);
+  assert.equal(result.diagnostics.missingTimestampCount, 0);
+});
+
+test("mergeWithTranscript counts missing timestamps as unmatched without assigning fake speakers", () => {
+  const manager = new DiarizationManager();
+  const result = manager.mergeWithTranscript(
+    [{ id: "seg-1", text: "no timestamp", source: "system" }],
+    [{ start: 0, end: 5, speaker: "external_0" }],
+    { includeDiagnostics: true, diarizationAlreadyStabilized: true }
+  );
+
+  assert.equal(result.segments[0].speaker, undefined);
+  assert.equal(result.segments[0].speakerMatchStatus, "unmatched");
+  assert.equal(result.diagnostics.matchedSegmentCount, 0);
+  assert.equal(result.diagnostics.unmatchedSegmentCount, 1);
+  assert.equal(result.diagnostics.missingTimestampCount, 1);
+});
+
+test("mergeWithTranscript falls back to nearest diarization segment when overlap is zero", () => {
+  const manager = new DiarizationManager();
+  const result = manager.mergeWithTranscript(
+    [{ id: "seg-1", text: "near speaker", source: "system", timestamp: 5, endTime: 5.5 }],
+    [{ start: 7, end: 8, speaker: "external_0" }],
+    { includeDiagnostics: true, diarizationAlreadyStabilized: true }
+  );
+
+  assert.equal(result.segments[0].speaker, "speaker_0");
+  assert.equal(result.segments[0].speakerMatchMethod, "nearest");
+  assert.equal(result.diagnostics.matchedSegmentCount, 1);
+  assert.equal(result.diagnostics.fallbackMatchedSegmentCount, 1);
+  assert.equal(result.diagnostics.unmatchedSegmentCount, 0);
+});
+
+test("mergeWithTranscript does not overwrite user locked speaker assignments", () => {
+  const manager = new DiarizationManager();
+  const result = manager.mergeWithTranscript(
+    [
+      {
+        id: "seg-1",
+        text: "locked",
+        source: "system",
+        timestamp: 0,
+        speaker: "manual_1",
+        speakerName: "Alice",
+        speakerLocked: true,
+        speakerLockSource: "user",
+      },
+    ],
+    [{ start: 0, end: 3, speaker: "external_0" }],
+    { includeDiagnostics: true, diarizationAlreadyStabilized: true }
+  );
+
+  assert.equal(result.segments[0].speaker, "manual_1");
+  assert.equal(result.segments[0].speakerName, "Alice");
+  assert.equal(result.diagnostics.lockedSegmentCount, 1);
+  assert.equal(result.diagnostics.matchedSegmentCount, 0);
+  assert.equal(result.diagnostics.unmatchedSegmentCount, 0);
+});
+
 test("stabilizeSpeakerClusters merges isolated short speakers into the nearest stable speaker", () => {
   const manager = new DiarizationManager();
   const stabilized = manager.stabilizeSpeakerClusters([

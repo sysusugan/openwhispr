@@ -156,6 +156,49 @@ function formatAudioDate(dateStr: string): string {
   return `${datePart} \u00b7 ${timePart}`;
 }
 
+type RediarizeDiagnostics = {
+  speakerCount?: number;
+  matchedSegmentCount?: number;
+  fallbackMatchedSegmentCount?: number;
+  unmatchedSegmentCount?: number;
+  missingTimestampCount?: number;
+  diarizationSegmentCount?: number;
+  lockedSegmentCount?: number;
+};
+
+function formatRediarizeDiagnostics(
+  stats: RediarizeDiagnostics | null | undefined,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
+  if (!stats) return undefined;
+  const parts = [
+    t("notes.editor.audioRediarizeStatsSpeakers", { count: stats.speakerCount ?? 0 }),
+    t("notes.editor.audioRediarizeStatsMatched", { count: stats.matchedSegmentCount ?? 0 }),
+  ];
+  if ((stats.fallbackMatchedSegmentCount ?? 0) > 0) {
+    parts.push(
+      t("notes.editor.audioRediarizeStatsFallback", {
+        count: stats.fallbackMatchedSegmentCount ?? 0,
+      })
+    );
+  }
+  if ((stats.unmatchedSegmentCount ?? 0) > 0) {
+    parts.push(
+      t("notes.editor.audioRediarizeStatsUnmatched", {
+        count: stats.unmatchedSegmentCount ?? 0,
+      })
+    );
+  }
+  if ((stats.missingTimestampCount ?? 0) > 0) {
+    parts.push(
+      t("notes.editor.audioRediarizeStatsMissingTimestamp", {
+        count: stats.missingTimestampCount ?? 0,
+      })
+    );
+  }
+  return parts.join(" · ");
+}
+
 interface PersonalNotesViewProps {
   onOpenSettings?: (section: string) => void;
   onOpenSearch?: () => void;
@@ -839,10 +882,16 @@ export default function PersonalNotesView({
           updateNoteInStore(result.note);
         }
         await loadNoteAudioFiles(activeNoteId);
+        const diagnosticsDescription = formatRediarizeDiagnostics(result, t);
+        const hasUnmatched =
+          (result.unmatchedSegmentCount ?? 0) > 0 || (result.missingTimestampCount ?? 0) > 0;
         toast({
-          title: t("notes.editor.audioRediarized"),
+          title: hasUnmatched
+            ? t("notes.editor.audioRediarizedWithUnmatched")
+            : t("notes.editor.audioRediarized"),
+          description: diagnosticsDescription,
           variant: "success",
-          duration: 2000,
+          duration: hasUnmatched ? 6000 : 3500,
         });
       } finally {
         setAudioActionKey(null);
@@ -969,24 +1018,27 @@ export default function PersonalNotesView({
     setShowAudioDownloadDialog(true);
   }, [activeNoteId, loadNoteAudioFiles, noteAudioFiles, t, toast]);
 
-  const handleRediarizeSavedAudio = useCallback(async (options?: RediarizeAudioOptions) => {
-    if (!activeNoteId) return;
-    const files =
-      noteAudioFiles.length > 0 ? noteAudioFiles : await loadNoteAudioFiles(activeNoteId);
-    if (files.length === 0) {
-      toast({
-        title: t("notes.editor.originalAudioUnavailable"),
-        description: t("notes.editor.audioUnavailableDescription"),
-        variant: "destructive",
-      });
-      return;
-    }
-    if (files.length === 1) {
-      await rediarizeAudioFile(files[0].id, options);
-      return;
-    }
-    setShowAudioDownloadDialog(true);
-  }, [activeNoteId, loadNoteAudioFiles, noteAudioFiles, rediarizeAudioFile, t, toast]);
+  const handleRediarizeSavedAudio = useCallback(
+    async (options?: RediarizeAudioOptions) => {
+      if (!activeNoteId) return;
+      const files =
+        noteAudioFiles.length > 0 ? noteAudioFiles : await loadNoteAudioFiles(activeNoteId);
+      if (files.length === 0) {
+        toast({
+          title: t("notes.editor.originalAudioUnavailable"),
+          description: t("notes.editor.audioUnavailableDescription"),
+          variant: "destructive",
+        });
+        return;
+      }
+      if (files.length === 1) {
+        await rediarizeAudioFile(files[0].id, options);
+        return;
+      }
+      setShowAudioDownloadDialog(true);
+    },
+    [activeNoteId, loadNoteAudioFiles, noteAudioFiles, rediarizeAudioFile, t, toast]
+  );
 
   const handleShowOriginalAudioInFolder = useCallback(async () => {
     if (!activeNoteId) return;
@@ -1809,6 +1861,9 @@ export default function PersonalNotesView({
               const isCompressing = audioActionKey === `compress-${file.id}`;
               const isRediarizing = audioActionKey === `rediarize-${file.id}`;
               const isWebm = file.extension?.toLowerCase() === "webm";
+              const rediarizeTitle = isRediarizing
+                ? t("notes.editor.rediarizingAudio")
+                : t("notes.editor.rediarizeAudio");
               return (
                 <div
                   key={file.id}
@@ -1820,7 +1875,9 @@ export default function PersonalNotesView({
                       {dateLabel}
                     </span>
                     <span className="block text-xs text-muted-foreground truncate">
-                      {details.join(" \u00b7 ") || file.filename}
+                      {isRediarizing
+                        ? t("notes.editor.rediarizingAudio")
+                        : details.join(" \u00b7 ") || file.filename}
                     </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-1">
@@ -1849,7 +1906,8 @@ export default function PersonalNotesView({
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7 rounded-sm"
-                      title={t("notes.editor.rediarizeAudio")}
+                      title={rediarizeTitle}
+                      aria-label={rediarizeTitle}
                       disabled={isRediarizing || audioActionKey !== null}
                       onClick={() => rediarizeAudioFile(file.id)}
                     >

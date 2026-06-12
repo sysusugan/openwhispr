@@ -11,12 +11,14 @@ interface AssignableTranscriptSegment {
   speakerStatus?: "provisional" | "confirmed" | "suggested" | "locked";
   speakerLocked?: boolean;
   speakerLockSource?: "user" | "diarization" | "suggestion";
+  speakerMatchStatus?: "matched" | "unmatched";
 }
 
 interface SpeakerDisplayLabels {
   you: string;
   speaker: (n: number) => string;
   unknownTrack?: string;
+  unmatchedSpeaker?: string;
 }
 
 interface SpeakerDisplayOptions {
@@ -174,16 +176,19 @@ export function getTranscriptSpeakerDisplay<T extends AssignableTranscriptSegmen
 ) {
   const mapped = segment.speaker ? speakerMappings[segment.speaker] : undefined;
   const useSelfFallback = options.selfFallback !== false;
+  const isUnmatchedSpeaker = segment.speakerMatchStatus === "unmatched" && !segment.speaker;
   const label =
     segment.speakerName ||
     mapped ||
-    (useSelfFallback && segment.speaker === "you"
-      ? labels.you
-      : segment.speaker
-        ? labels.speaker(getSpeakerNumber(segment.speaker))
-        : useSelfFallback && segment.source === "mic"
-          ? labels.you
-          : (labels.unknownTrack ?? labels.speaker(1)));
+    (isUnmatchedSpeaker && labels.unmatchedSpeaker
+      ? labels.unmatchedSpeaker
+      : useSelfFallback && segment.speaker === "you"
+        ? labels.you
+        : segment.speaker
+          ? labels.speaker(getSpeakerNumber(segment.speaker))
+          : useSelfFallback && segment.source === "mic"
+            ? labels.you
+            : labels.speaker(1));
 
   return {
     label,
@@ -297,8 +302,7 @@ export function buildTranscriptSpeakerBlocks<T extends AssignableTranscriptSegme
         previous.timestamp,
         segment.timestamp,
         timelineDurationSeconds
-      ) <=
-      maxBlockDurationSeconds
+      ) <= maxBlockDurationSeconds
     );
   };
 

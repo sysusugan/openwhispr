@@ -9,7 +9,12 @@ import {
   getTranscriptSpeakerFilterOptions,
 } from "../../src/utils/speakerAssignment.ts";
 
-const labels = { you: "你", speaker: (n: number) => `发言者 ${n}`, unknownTrack: "未知音轨" };
+const labels = {
+  you: "你",
+  speaker: (n: number) => `发言者 ${n}`,
+  unknownTrack: "未知音轨",
+  unmatchedSpeaker: "未匹配说话人",
+};
 
 test("manual speaker names override the default self label", () => {
   const display = getTranscriptSpeakerDisplay(
@@ -28,7 +33,7 @@ test("manual speaker names override the default self label", () => {
   assert.equal(display.isSelf, false);
 });
 
-test("final transcript display does not label unresolved mic segments as self", () => {
+test("final transcript display falls back to a numbered speaker for unresolved mic segments", () => {
   const display = getTranscriptSpeakerDisplay(
     {
       id: "seg-1",
@@ -40,7 +45,24 @@ test("final transcript display does not label unresolved mic segments as self", 
     { selfFallback: false }
   );
 
-  assert.equal(display.label, "未知音轨");
+  assert.equal(display.label, "发言者 1");
+  assert.equal(display.isSelf, false);
+});
+
+test("final transcript display labels unmatched diarization segments explicitly", () => {
+  const display = getTranscriptSpeakerDisplay(
+    {
+      id: "seg-1",
+      text: "hello",
+      source: "system",
+      speakerMatchStatus: "unmatched",
+    },
+    {},
+    labels,
+    { selfFallback: false }
+  );
+
+  assert.equal(display.label, "未匹配说话人");
   assert.equal(display.isSelf, false);
 });
 
@@ -185,8 +207,20 @@ test("transcript speaker blocks split same speaker by maximum block duration", (
     { id: "seg-1", text: "第一段", source: "system" as const, speaker: "speaker_0", timestamp: 0 },
     { id: "seg-2", text: "第二段", source: "system" as const, speaker: "speaker_0", timestamp: 45 },
     { id: "seg-3", text: "第三段", source: "system" as const, speaker: "speaker_0", timestamp: 61 },
-    { id: "seg-4", text: "第四段", source: "system" as const, speaker: "speaker_0", timestamp: 110 },
-    { id: "seg-5", text: "第五段", source: "system" as const, speaker: "speaker_0", timestamp: 122 },
+    {
+      id: "seg-4",
+      text: "第四段",
+      source: "system" as const,
+      speaker: "speaker_0",
+      timestamp: 110,
+    },
+    {
+      id: "seg-5",
+      text: "第五段",
+      source: "system" as const,
+      speaker: "speaker_0",
+      timestamp: 122,
+    },
   ];
 
   const blocks = buildTranscriptSpeakerBlocks(segments, {}, labels, {

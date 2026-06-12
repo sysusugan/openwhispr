@@ -1660,6 +1660,8 @@
       "rediarizeAudio": "Повторно определить говорящих",
       "audioRediarizeFailed": "Не удалось повторно определить говорящих",
       "audioRediarized": "Говорящие повторно определены",
+      "audioRediarizedWithUnmatched": "Говорящие определены, но некоторые сегменты не сопоставлены",
+      "rediarizingAudio": "Определение говорящих...",
       "rediarizeDialogTitle": "Re-identify speakers",
       "rediarizeDialogDescription": "By default OpenWhispr detects the number of speakers automatically. Use advanced options only when the result is clearly too few or too many speakers.",
       "rediarizeModeAuto": "Auto-detect speakers",
@@ -1675,7 +1677,12 @@
       "audioPlayerForward15": "Вперёд на 15 секунд",
       "audioPlayerPlay": "Воспроизвести",
       "audioPlayerPause": "Пауза",
-      "audioPlayerRate": "Скорость: {{rate}}"
+      "audioPlayerRate": "Скорость: {{rate}}",
+      "audioRediarizeStatsSpeakers": "{{count}} speakers",
+      "audioRediarizeStatsMatched": "{{count}} segments matched",
+      "audioRediarizeStatsFallback": "{{count}} nearest-time fallback matches",
+      "audioRediarizeStatsUnmatched": "{{count}} segments unmatched",
+      "audioRediarizeStatsMissingTimestamp": "{{count}} segments missing timestamps"
     },
     "bulkExport": {
       "select": "Select",
@@ -1890,7 +1897,8 @@
       "filterEmpty": "Нет содержимого для выбранных говорящих",
       "filterAria": "Фильтровать говорящих в расшифровке",
       "currentSessionSpeakers": "Текущая сессия",
-      "unknownTrack": "Unknown track"
+      "unknownTrack": "Unknown track",
+      "unmatchedSpeaker": "Unmatched speaker"
     },
     "collapseNoteList": "Свернуть список заметок",
     "expandNoteList": "Развернуть список заметок"

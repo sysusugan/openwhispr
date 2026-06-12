@@ -1664,6 +1664,8 @@
       "rediarizeAudio": "重新识别说话人",
       "audioRediarizeFailed": "重新识别说话人失败",
       "audioRediarized": "说话人已重新识别",
+      "audioRediarizedWithUnmatched": "识别完成，但部分片段未匹配到说话人",
+      "rediarizingAudio": "正在识别说话人...",
       "rediarizeDialogTitle": "重新识别说话人",
       "rediarizeDialogDescription": "默认由系统自动判断发言者人数。只有结果明显过少或过多时，再使用高级选项。",
       "rediarizeModeAuto": "自动识别人数",
@@ -1679,7 +1681,12 @@
       "audioPlayerForward15": "前进 15 秒",
       "audioPlayerPlay": "播放",
       "audioPlayerPause": "暂停",
-      "audioPlayerRate": "播放速度：{{rate}}"
+      "audioPlayerRate": "播放速度：{{rate}}",
+      "audioRediarizeStatsSpeakers": "识别到 {{count}} 位说话人",
+      "audioRediarizeStatsMatched": "匹配 {{count}} 个片段",
+      "audioRediarizeStatsFallback": "{{count}} 个片段使用最近时间匹配",
+      "audioRediarizeStatsUnmatched": "{{count}} 个片段未匹配",
+      "audioRediarizeStatsMissingTimestamp": "{{count}} 个片段缺少时间戳"
     },
     "bulkExport": {
       "select": "选择",
@@ -1892,7 +1899,8 @@
       "filterEmpty": "没有匹配的发言人内容",
       "filterAria": "筛选转录发言人",
       "currentSessionSpeakers": "当前会话",
-      "unknownTrack": "未知音轨"
+      "unknownTrack": "未知音轨",
+      "unmatchedSpeaker": "未匹配说话人"
     },
     "collapseNoteList": "收起笔记列表",
     "expandNoteList": "展开笔记列表"

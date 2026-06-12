@@ -1120,12 +1120,16 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
     });
 
     if (useReasoning) {
+      let failureProvider = cleanupProvider;
+      let failureModel = cleanupModel || undefined;
       try {
         const route = resolveReasoningRoute(normalizedText, getSettings(), agentName);
         if (route.kind === "skip") return normalizedText;
 
         const targetModel = route.kind === "agent" ? route.model : cleanupModel;
         const reasoningConfig = route.config;
+        failureProvider = route.config?.provider || cleanupProvider;
+        failureModel = targetModel || undefined;
 
         logger.logReasoning("SENDING_TO_REASONING", {
           preparedTextLength: normalizedText.length,
@@ -1160,8 +1164,8 @@ registerProcessor("pcm-streaming-processor", PCMStreamingProcessor);
         this.lastProcessingCleanupError = {
           message: error.message || "Cleanup failed",
           code: typeof error.code === "string" ? error.code : undefined,
-          provider: route.config?.provider || cleanupProvider,
-          model: targetModel || undefined,
+          provider: failureProvider,
+          model: failureModel,
           stage: "cleanup",
         };
       }

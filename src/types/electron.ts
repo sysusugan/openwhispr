@@ -631,6 +631,13 @@ declare global {
         segments?: unknown[];
         audioFile?: NoteAudioFile;
         error?: string;
+        speakerCount?: number;
+        matchedSegmentCount?: number;
+        fallbackMatchedSegmentCount?: number;
+        unmatchedSegmentCount?: number;
+        missingTimestampCount?: number;
+        diarizationSegmentCount?: number;
+        lockedSegmentCount?: number;
       }>;
       downloadNoteAudio: (
         noteId: number,
@@ -1481,6 +1488,9 @@ declare global {
             speakerStatus?: "provisional" | "confirmed" | "suggested" | "locked";
             speakerLocked?: boolean;
             speakerLockSource?: "user" | "diarization" | "suggestion";
+            speakerMatchStatus?: "matched" | "unmatched";
+            speakerMatchMethod?: "overlap" | "nearest";
+            speakerMatchReason?: "missing_timestamp" | "no_diarization" | "no_overlap";
           }>;
           speakerEmbeddings?: Record<string, number[]> | null;
         }) => void

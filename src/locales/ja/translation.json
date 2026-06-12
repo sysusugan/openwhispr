@@ -1632,6 +1632,8 @@
       "rediarizeAudio": "話者を再識別",
       "audioRediarizeFailed": "話者を再識別できませんでした",
       "audioRediarized": "話者を再識別しました",
+      "audioRediarizedWithUnmatched": "話者を再識別しましたが、一部のセグメントは一致しませんでした",
+      "rediarizingAudio": "話者を識別中...",
       "rediarizeDialogTitle": "Re-identify speakers",
       "rediarizeDialogDescription": "By default OpenWhispr detects the number of speakers automatically. Use advanced options only when the result is clearly too few or too many speakers.",
       "rediarizeModeAuto": "Auto-detect speakers",
@@ -1647,7 +1649,12 @@
       "audioPlayerForward15": "15 秒進む",
       "audioPlayerPlay": "再生",
       "audioPlayerPause": "一時停止",
-      "audioPlayerRate": "再生速度: {{rate}}"
+      "audioPlayerRate": "再生速度: {{rate}}",
+      "audioRediarizeStatsSpeakers": "{{count}} speakers",
+      "audioRediarizeStatsMatched": "{{count}} segments matched",
+      "audioRediarizeStatsFallback": "{{count}} nearest-time fallback matches",
+      "audioRediarizeStatsUnmatched": "{{count}} segments unmatched",
+      "audioRediarizeStatsMissingTimestamp": "{{count}} segments missing timestamps"
     },
     "bulkExport": {
       "select": "Select",
@@ -1888,7 +1895,8 @@
       "filterEmpty": "選択した話者の内容はありません",
       "filterAria": "文字起こしの話者を絞り込む",
       "currentSessionSpeakers": "現在のセッション",
-      "unknownTrack": "Unknown track"
+      "unknownTrack": "Unknown track",
+      "unmatchedSpeaker": "Unmatched speaker"
     },
     "collapseNoteList": "ノートリストを折りたたむ",
     "expandNoteList": "ノートリストを展開"

@@ -36,6 +36,9 @@ export interface TranscriptSegment {
   speakerStatus?: TranscriptSpeakerStatus;
   speakerLocked?: boolean;
   speakerLockSource?: TranscriptSpeakerLockSource;
+  speakerMatchStatus?: "matched" | "unmatched";
+  speakerMatchMethod?: "overlap" | "nearest";
+  speakerMatchReason?: "missing_timestamp" | "no_diarization" | "no_overlap";
 }
 
 export const SIDE_PANEL_BREAKPOINT_PX = 1024;

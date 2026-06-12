@@ -614,8 +614,8 @@ export function MeetingTranscriptChat({
     if (!activeSegmentId) return;
     const container = scrollRef.current;
     if (!container) return;
-    const target = Array.from(container.querySelectorAll<HTMLElement>("[data-segment-id]")).find(
-      (element) => element.dataset.segmentId === activeSegmentId
+    const target = Array.from(container.querySelectorAll<HTMLElement>("[data-segment-ids]")).find(
+      (element) => (element.dataset.segmentIds || "").split(" ").includes(activeSegmentId)
     );
     target?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [activeSegmentId]);
@@ -676,6 +676,7 @@ export function MeetingTranscriptChat({
           you: t("notes.speaker.you"),
           speaker: (n) => t("notes.speaker.label", { n }),
           unknownTrack: t("notes.speaker.unknownTrack"),
+          unmatchedSpeaker: t("notes.speaker.unmatchedSpeaker"),
         },
         {
           maxBlockDurationSeconds: 60,
@@ -861,10 +862,20 @@ export function MeetingTranscriptChat({
               timelineDurationSeconds
             );
             const fallbackSpeakerLabel =
-              segment.source === "mic" ? t("notes.speaker.unknownTrack") : t("notes.speaker.them");
+              segment.speakerMatchStatus === "unmatched"
+                ? t("notes.speaker.unmatchedSpeaker")
+                : segment.source === "mic"
+                  ? t("notes.speaker.label", { n: 1 })
+                  : t("notes.speaker.them");
             const isActiveSegment = blockSegments.some(
               (blockSegment) => activeSegmentId === blockSegment.id
             );
+            const seekSegment =
+              blockSegments.find(
+                (blockSegment) =>
+                  typeof blockSegment.timestamp === "number" &&
+                  Number.isFinite(blockSegment.timestamp)
+              ) || segment;
 
             const labelElement = (
               <div className="flex min-w-0 items-center gap-2">
@@ -908,12 +919,13 @@ export function MeetingTranscriptChat({
               <div
                 key={"segments" in item ? `block-${item.id}` : segment.id}
                 data-segment-id={segment.id}
+                data-segment-ids={blockSegments.map((blockSegment) => blockSegment.id).join(" ")}
                 className={cn(
                   "group grid grid-cols-[10px_minmax(0,1fr)] gap-3 border-l-2 border-transparent px-2 py-1.5 transition-colors",
                   onSeekToSegment && "cursor-pointer hover:bg-slate-50/80",
                   isActiveSegment && "border-l-indigo-500 bg-indigo-50/70"
                 )}
-                onClick={() => onSeekToSegment?.(segment)}
+                onClick={() => onSeekToSegment?.(seekSegment)}
                 style={{ animation: "agent-message-in 200ms ease-out both" }}
               >
                 <div className="relative pt-1.5">

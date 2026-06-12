@@ -1701,6 +1701,8 @@
       "rediarizeAudio": "Réidentifier les intervenants",
       "audioRediarizeFailed": "Impossible de réidentifier les intervenants",
       "audioRediarized": "Intervenants réidentifiés",
+      "audioRediarizedWithUnmatched": "Intervenants réidentifiés, mais certains segments ne sont pas associés",
+      "rediarizingAudio": "Identification des intervenants...",
       "rediarizeDialogTitle": "Re-identify speakers",
       "rediarizeDialogDescription": "By default OpenWhispr detects the number of speakers automatically. Use advanced options only when the result is clearly too few or too many speakers.",
       "rediarizeModeAuto": "Auto-detect speakers",
@@ -1716,7 +1718,12 @@
       "audioPlayerForward15": "Avancer de 15 secondes",
       "audioPlayerPlay": "Lire",
       "audioPlayerPause": "Mettre en pause",
-      "audioPlayerRate": "Vitesse : {{rate}}"
+      "audioPlayerRate": "Vitesse : {{rate}}",
+      "audioRediarizeStatsSpeakers": "{{count}} speakers",
+      "audioRediarizeStatsMatched": "{{count}} segments matched",
+      "audioRediarizeStatsFallback": "{{count}} nearest-time fallback matches",
+      "audioRediarizeStatsUnmatched": "{{count}} segments unmatched",
+      "audioRediarizeStatsMissingTimestamp": "{{count}} segments missing timestamps"
     },
     "bulkExport": {
       "select": "Select",
@@ -1929,7 +1936,8 @@
       "filterEmpty": "Aucun contenu pour les intervenants sélectionnés",
       "filterAria": "Filtrer les intervenants de la transcription",
       "currentSessionSpeakers": "Session actuelle",
-      "unknownTrack": "Unknown track"
+      "unknownTrack": "Unknown track",
+      "unmatchedSpeaker": "Unmatched speaker"
     },
     "collapseNoteList": "Réduire la liste des notes",
     "expandNoteList": "Développer la liste des notes"

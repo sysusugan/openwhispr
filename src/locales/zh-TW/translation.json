@@ -1660,6 +1660,8 @@
       "rediarizeAudio": "重新識別說話人",
       "audioRediarizeFailed": "重新識別說話人失敗",
       "audioRediarized": "說話人已重新識別",
+      "audioRediarizedWithUnmatched": "識別完成，但部分片段未匹配到說話人",
+      "rediarizingAudio": "正在識別說話人...",
       "rediarizeDialogTitle": "重新識別說話人",
       "rediarizeDialogDescription": "預設由系統自動判斷發言者人數。只有結果明顯過少或過多時，再使用進階選項。",
       "rediarizeModeAuto": "自動識別人數",
@@ -1675,7 +1677,12 @@
       "audioPlayerForward15": "前進 15 秒",
       "audioPlayerPlay": "播放",
       "audioPlayerPause": "暫停",
-      "audioPlayerRate": "播放速度：{{rate}}"
+      "audioPlayerRate": "播放速度：{{rate}}",
+      "audioRediarizeStatsSpeakers": "識別到 {{count}} 位說話人",
+      "audioRediarizeStatsMatched": "匹配 {{count}} 個片段",
+      "audioRediarizeStatsFallback": "{{count}} 個片段使用最近時間匹配",
+      "audioRediarizeStatsUnmatched": "{{count}} 個片段未匹配",
+      "audioRediarizeStatsMissingTimestamp": "{{count}} 個片段缺少時間戳"
     },
     "bulkExport": {
       "select": "選擇",
@@ -1888,7 +1895,8 @@
       "filterEmpty": "沒有符合的發言者內容",
       "filterAria": "篩選轉錄發言者",
       "currentSessionSpeakers": "目前會話",
-      "unknownTrack": "未知音軌"
+      "unknownTrack": "未知音軌",
+      "unmatchedSpeaker": "未匹配說話人"
     },
     "collapseNoteList": "收合筆記列表",
     "expandNoteList": "展開筆記列表"

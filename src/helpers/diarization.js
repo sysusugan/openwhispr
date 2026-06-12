@@ -8,7 +8,7 @@ const { resolveBinaryPath, gracefulStopProcess } = require("../utils/serverUtils
 const { getModelsDirForService } = require("./modelDirUtils");
 const { convertToWav } = require("./ffmpegUtils");
 const { getSafeTempDir } = require("./safeTempDir");
-const { applyProvisionalSpeaker, applyConfirmedSpeaker } = require("./speakerAssignmentPolicy");
+const { applyConfirmedSpeaker, isSpeakerLocked } = require("./speakerAssignmentPolicy");
 const sidecarPidFile = require("./sidecarPidFile");
 const { MAX_SPEAKER_COUNT } = require("../constants/speakerDetection.json");
 const {
@@ -551,19 +551,68 @@ class DiarizationManager {
 
   mergeWithTranscript(transcriptSegments, diarizationSegments, options = {}) {
     const assignMicSegments = options.assignMicSegments === true;
-    if (!transcriptSegments || transcriptSegments.length === 0) return [];
+    const includeDiagnostics = options.includeDiagnostics === true;
+    const emptyResult = includeDiagnostics
+      ? {
+          segments: [],
+          diagnostics: {
+            speakerCount: 0,
+            matchedSegmentCount: 0,
+            fallbackMatchedSegmentCount: 0,
+            unmatchedSegmentCount: 0,
+            missingTimestampCount: 0,
+            diarizationSegmentCount: 0,
+            lockedSegmentCount: 0,
+          },
+        }
+      : [];
+    if (!transcriptSegments || transcriptSegments.length === 0) return emptyResult;
     const deduped = dedupeMicAgainstSystem(transcriptSegments);
+    const diagnostics = {
+      speakerCount: 0,
+      matchedSegmentCount: 0,
+      fallbackMatchedSegmentCount: 0,
+      unmatchedSegmentCount: 0,
+      missingTimestampCount: 0,
+      diarizationSegmentCount: 0,
+      lockedSegmentCount: 0,
+    };
+
+    const finalize = (segments) => {
+      const sanitized = this.sanitizeTranscriptSegments(segments);
+      return includeDiagnostics ? { segments: sanitized, diagnostics } : sanitized;
+    };
+
     if (!diarizationSegments || diarizationSegments.length === 0) {
-      return this.sanitizeTranscriptSegments(deduped.map((seg) => ({ ...seg })));
+      const copied = deduped.map((seg) => {
+        const enriched = { ...seg };
+        if (isSpeakerLocked(enriched)) {
+          diagnostics.lockedSegmentCount += 1;
+          return enriched;
+        }
+        const shouldDiagnose =
+          seg?.source === "system" || (assignMicSegments && seg?.source === "mic");
+        if (shouldDiagnose) {
+          if (seg.timestamp == null) diagnostics.missingTimestampCount += 1;
+          diagnostics.unmatchedSegmentCount += 1;
+          enriched.speakerMatchStatus = "unmatched";
+          enriched.speakerMatchReason =
+            seg.timestamp == null ? "missing_timestamp" : "no_diarization";
+        }
+        return enriched;
+      });
+      return finalize(copied);
     }
 
     const cappedDiarizationSegments =
       options.diarizationAlreadyStabilized === true
         ? diarizationSegments.map((segment) => ({ ...segment }))
         : this.stabilizeSpeakerClusters(diarizationSegments, options.stabilizeOptions || {});
+    diagnostics.diarizationSegmentCount = cappedDiarizationSegments.length;
 
     // Build speaker renumbering map (e.g., speaker_00 → speaker_0)
     const speakerSet = new Set(cappedDiarizationSegments.map((d) => d.speaker));
+    diagnostics.speakerCount = speakerSet.size;
     const speakerMap = new Map();
     let idx = 0;
     for (const sp of speakerSet) {
@@ -584,10 +633,13 @@ class DiarizationManager {
       return null;
     };
 
-    let fallbackSpeakerIndex = speakerSet.size;
-
     const merged = deduped.map((seg, index) => {
       const enriched = { ...seg };
+
+      if (isSpeakerLocked(enriched)) {
+        diagnostics.lockedSegmentCount += 1;
+        return enriched;
+      }
 
       if (seg.source === "mic" && !assignMicSegments) {
         applyConfirmedSpeaker(enriched, {
@@ -597,12 +649,23 @@ class DiarizationManager {
         return enriched;
       }
 
-      if (isAssignableSegment(seg) && seg.timestamp != null) {
+      if (isAssignableSegment(seg)) {
+        if (seg.timestamp == null) {
+          diagnostics.missingTimestampCount += 1;
+          diagnostics.unmatchedSegmentCount += 1;
+          enriched.speakerMatchStatus = "unmatched";
+          enriched.speakerMatchReason = "missing_timestamp";
+          return enriched;
+        }
+
         const segStart = seg.timestamp;
-        const segEnd = nextAssignableTimestampAt(index) ?? segStart + 2.5;
+        const explicitEnd =
+          Number.isFinite(seg.endTime) && seg.endTime > segStart ? seg.endTime : null;
+        const segEnd = explicitEnd ?? nextAssignableTimestampAt(index) ?? segStart + 2.5;
         const midpoint = segStart + (segEnd - segStart) / 2;
         let bestSpeaker = null;
         let bestOverlap = 0;
+        let nearestSpeaker = null;
         let bestDistance = Number.POSITIVE_INFINITY;
 
         for (const dSeg of cappedDiarizationSegments) {
@@ -619,33 +682,43 @@ class DiarizationManager {
                 ? midpoint - dSeg.end
                 : 0;
 
-          if (!bestSpeaker && distance < bestDistance) {
+          if (distance < bestDistance) {
             bestDistance = distance;
-            bestSpeaker = dSeg.speaker;
+            nearestSpeaker = dSeg.speaker;
           }
         }
 
-        if (bestSpeaker) {
+        const matchMethod = bestSpeaker ? "overlap" : nearestSpeaker ? "nearest" : null;
+        const matchedSpeaker = bestSpeaker || nearestSpeaker;
+
+        if (matchedSpeaker) {
           applyConfirmedSpeaker(enriched, {
-            speaker: speakerMap.get(bestSpeaker) || bestSpeaker,
+            speaker: speakerMap.get(matchedSpeaker) || matchedSpeaker,
             speakerIsPlaceholder: false,
           });
+          enriched.speakerMatchStatus = "matched";
+          enriched.speakerMatchMethod = matchMethod;
+          diagnostics.matchedSegmentCount += 1;
+          if (matchMethod === "nearest") {
+            diagnostics.fallbackMatchedSegmentCount += 1;
+          }
           if (assignMicSegments && enriched.source === "mic") {
             enriched.source = "system";
           }
-        } else if (!enriched.speaker) {
-          applyProvisionalSpeaker(enriched, {
-            speaker: `speaker_${fallbackSpeakerIndex}`,
-            speakerIsPlaceholder: true,
-          });
-          fallbackSpeakerIndex += 1;
+        } else {
+          diagnostics.unmatchedSegmentCount += 1;
+          enriched.speakerMatchStatus = "unmatched";
+          enriched.speakerMatchReason = "no_overlap";
+          if (!enriched.speaker) {
+            delete enriched.speakerIsPlaceholder;
+          }
         }
       }
 
       return enriched;
     });
 
-    return this.sanitizeTranscriptSegments(merged);
+    return finalize(merged);
   }
 
   async convertRawPcmToWav(rawPcmPath, inputSampleRate) {

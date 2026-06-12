@@ -682,6 +682,9 @@ export default function NoteEditor({
 
   const hasMeetingTranscript = !isRecording && !!effectiveTranscript;
   const isRediarizingAudio = audioActionKey?.startsWith("rediarize-") ?? false;
+  const rediarizeButtonLabel = isRediarizingAudio
+    ? t("notes.editor.rediarizingAudio")
+    : t("notes.editor.rediarizeAudio");
   const transcriptAudioDurationSeconds = useMemo(() => {
     const total = noteAudioFiles.reduce((sum, file) => {
       const duration = Number(file.duration_seconds);
@@ -720,6 +723,7 @@ export default function NoteEditor({
         you: t("notes.speaker.you"),
         speaker: (n) => t("notes.speaker.label", { n }),
         unknownTrack: t("notes.speaker.unknownTrack"),
+        unmatchedSpeaker: t("notes.speaker.unmatchedSpeaker"),
       }),
     [displaySegments, speakerMappings, t]
   );
@@ -2223,8 +2227,8 @@ export default function NoteEditor({
                     onClick={() => setIsRediarizeDialogOpen(true)}
                     disabled={!hasDownloadableAudio || audioActionKey !== null}
                     className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md bg-foreground/4 dark:bg-white/5 text-foreground/50 dark:text-foreground/40 hover:text-foreground/70 hover:bg-foreground/8 dark:hover:text-foreground/60 dark:hover:bg-white/8 disabled:pointer-events-none disabled:opacity-40 transition-colors duration-150"
-                    aria-label={t("notes.editor.rediarizeAudio")}
-                    title={t("notes.editor.rediarizeAudio")}
+                    aria-label={rediarizeButtonLabel}
+                    title={rediarizeButtonLabel}
                   >
                     {isRediarizingAudio ? (
                       <Loader2 size={11} className="animate-spin" />

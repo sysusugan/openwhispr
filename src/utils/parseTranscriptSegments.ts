@@ -16,6 +16,9 @@ export function parseTranscriptSegments(raw: string): TranscriptSegment[] {
       speakerStatus?: TranscriptSegment["speakerStatus"];
       speakerLocked?: TranscriptSegment["speakerLocked"];
       speakerLockSource?: TranscriptSegment["speakerLockSource"];
+      speakerMatchStatus?: TranscriptSegment["speakerMatchStatus"];
+      speakerMatchMethod?: TranscriptSegment["speakerMatchMethod"];
+      speakerMatchReason?: TranscriptSegment["speakerMatchReason"];
     }>;
     return normalizeTranscriptSegments(
       parsed.map((s, i) => ({
@@ -31,6 +34,9 @@ export function parseTranscriptSegments(raw: string): TranscriptSegment[] {
         speakerStatus: s.speakerStatus,
         speakerLocked: s.speakerLocked,
         speakerLockSource: s.speakerLockSource,
+        speakerMatchStatus: s.speakerMatchStatus,
+        speakerMatchMethod: s.speakerMatchMethod,
+        speakerMatchReason: s.speakerMatchReason,
       }))
     );
   } catch (e) {

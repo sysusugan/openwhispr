@@ -115,6 +115,28 @@ function clampExpectedSpeakerCount(value) {
   return Math.max(1, Math.min(MAX_SPEAKER_COUNT, Math.floor(n)));
 }
 
+function createEmptyDiarizationDiagnostics(overrides = {}) {
+  return {
+    speakerCount: 0,
+    matchedSegmentCount: 0,
+    fallbackMatchedSegmentCount: 0,
+    unmatchedSegmentCount: 0,
+    missingTimestampCount: 0,
+    diarizationSegmentCount: 0,
+    lockedSegmentCount: 0,
+    ...overrides,
+  };
+}
+
+function createRediarizeFailure(error, diagnostics = {}) {
+  const safeError = error instanceof Error ? error.message : String(error || "Unknown error");
+  return {
+    success: false,
+    error: safeError,
+    ...createEmptyDiarizationDiagnostics(diagnostics),
+  };
+}
+
 function resolveSpeakerExpectation({
   sessionConfig,
   attendees = [],
@@ -659,7 +681,11 @@ class IPCHandlers {
       }
       this.audioStorageManager.cleanupPendingDeleteAudio();
     } catch (error) {
-      debugLogger.error("Initial audio maintenance failed", { error: error.message }, "audio-storage");
+      debugLogger.error(
+        "Initial audio maintenance failed",
+        { error: error.message },
+        "audio-storage"
+      );
     }
 
     // Set up periodic cleanup every 6 hours
@@ -5672,7 +5698,10 @@ class IPCHandlers {
 
     const resolveSessionMaxSpeakers = () => {
       if (this.activeMeetingSpeakerConfig?.expectedCountLocked === true) {
-        return Math.max(1, clampExpectedSpeakerCount(this.activeMeetingSpeakerConfig.expectedCount));
+        return Math.max(
+          1,
+          clampExpectedSpeakerCount(this.activeMeetingSpeakerConfig.expectedCount)
+        );
       }
       return MAX_SPEAKER_COUNT;
     };
@@ -8402,18 +8431,18 @@ class IPCHandlers {
 
   async _rediarizeNoteAudio(noteId, audioFileId = null, options = {}) {
     const note = this.databaseManager.getNote(noteId);
-    if (!note) return { success: false, error: "Note not found" };
+    if (!note) return createRediarizeFailure("Note not found");
 
     if (note.diarization_enabled === 0 || options?.enabled === false) {
-      return { success: false, error: "Speaker diarization is disabled for this note" };
+      return createRediarizeFailure("Speaker diarization is disabled for this note");
     }
     if (!this.diarizationManager?.isAvailable()) {
-      return { success: false, error: "Speaker diarization model is not available" };
+      return createRediarizeFailure("Speaker diarization model is not available");
     }
 
     const transcriptSegments = this._parseNoteTranscriptSegments(note);
     if (transcriptSegments.length === 0) {
-      return { success: false, error: "Transcript is empty" };
+      return createRediarizeFailure("Transcript is empty");
     }
 
     let audioFile = null;
@@ -8422,11 +8451,11 @@ class IPCHandlers {
     } else {
       audioFile = this.databaseManager.getNoteAudioFiles(noteId)?.[0] || null;
     }
-    if (!audioFile) return { success: false, error: "Audio file not found for this note" };
+    if (!audioFile) return createRediarizeFailure("Audio file not found for this note");
 
     const audioPath = this.audioStorageManager.getRetainedAudioPath(audioFile.filename);
     if (!audioPath) {
-      return { success: false, error: "Audio file has been removed or is unavailable" };
+      return createRediarizeFailure("Audio file has been removed or is unavailable");
     }
 
     let tmpWav = null;
@@ -8459,6 +8488,12 @@ class IPCHandlers {
         tmpWav,
         numSpeakers > 0 ? { numSpeakers } : {}
       );
+      if (!Array.isArray(diarizationSegments) || diarizationSegments.length === 0) {
+        return {
+          ...createRediarizeFailure("Speaker diarization did not detect any speaker segments"),
+          audioFile,
+        };
+      }
       const stabilizeOptions =
         speakerMode === "more" ? { cap, minNoiseDuration: 0, minNoiseSegments: 1 } : { cap };
       diarizationSegments = this.diarizationManager.stabilizeSpeakerClusters(
@@ -8479,28 +8514,50 @@ class IPCHandlers {
               ? (segment.timestamp - startMs) / 1000
               : segment.timestamp
             : undefined,
+        endTime:
+          segment.endTime != null
+            ? isEpochMs
+              ? (segment.endTime - startMs) / 1000
+              : segment.endTime
+            : segment.endTime,
       }));
-      const enrichedSegments = this.diarizationManager.mergeWithTranscript(
+      const mergeResult = this.diarizationManager.mergeWithTranscript(
         normalized,
         diarizationSegments,
-        { assignMicSegments: true, diarizationAlreadyStabilized: true }
+        {
+          assignMicSegments: true,
+          diarizationAlreadyStabilized: true,
+          includeDiagnostics: true,
+        }
       );
+      const enrichedSegments = mergeResult.segments;
+      const diagnostics = mergeResult.diagnostics || createEmptyDiarizationDiagnostics();
 
       const result = this.databaseManager.updateNote(noteId, {
         transcript: JSON.stringify(enrichedSegments),
       });
-      if (result?.success && result?.note) {
-        setImmediate(() => this.broadcastToWindows("note-updated", result.note));
-        this._asyncVectorUpsert(result.note);
-        this._asyncMirrorWrite(result.note);
+      if (!result?.success) {
+        return {
+          ...createRediarizeFailure("Failed to save diarized transcript", diagnostics),
+          audioFile,
+        };
       }
 
+      const updatedNote = result?.note || this.databaseManager.getNote(noteId);
+      if (updatedNote) {
+        setImmediate(() => this.broadcastToWindows("note-updated", updatedNote));
+        this._asyncVectorUpsert(updatedNote);
+        this._asyncMirrorWrite(updatedNote);
+      }
       return {
         success: true,
-        note: result?.note || this.databaseManager.getNote(noteId),
+        note: updatedNote,
         segments: enrichedSegments,
         audioFile,
+        ...diagnostics,
       };
+    } catch (error) {
+      return { ...createRediarizeFailure(error), audioFile };
     } finally {
       if (tmpWav) {
         try {

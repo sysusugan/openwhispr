@@ -13,6 +13,9 @@ const SPEAKER_STATE_FIELDS = [
   "speakerStatus",
   "speakerLocked",
   "speakerLockSource",
+  "speakerMatchStatus",
+  "speakerMatchMethod",
+  "speakerMatchReason",
 ] as const;
 
 type SpeakerStateField = (typeof SPEAKER_STATE_FIELDS)[number];
