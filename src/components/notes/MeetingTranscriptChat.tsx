@@ -17,6 +17,7 @@ import {
 } from "../../utils/currentPageFind";
 import { formatTranscriptTimestamp } from "../../utils/recordingTime";
 import { buildLiveTranscriptItems } from "../../utils/liveTranscriptStream";
+import { buildTranscriptSpeakerBlocks } from "../../utils/speakerAssignment";
 
 const SPEAKER_COLORS = [
   "text-sky-500",
@@ -654,15 +655,25 @@ export function MeetingTranscriptChat({
     );
   }, [recordingStartedAt, segments]);
 
+  const speakerBlocks = useMemo(
+    () =>
+      buildTranscriptSpeakerBlocks(segments, speakerMappings, {
+        you: t("notes.speaker.you"),
+        speaker: (n) => t("notes.speaker.label", { n }),
+      }),
+    [segments, speakerMappings, t]
+  );
+  const renderedSearchItems = isEditing ? segments : speakerBlocks;
+
   const segmentSearchMeta = useMemo(() => {
     let running = 0;
-    return segments.map((segment) => {
-      const count = countFindMatches(segment.text, searchTerm || "", { ignoreCase });
+    return renderedSearchItems.map((item) => {
+      const count = countFindMatches(item.text, searchTerm || "", { ignoreCase });
       const start = running;
       running += count;
       return { start, count };
     });
-  }, [ignoreCase, searchTerm, segments]);
+  }, [ignoreCase, renderedSearchItems, searchTerm]);
 
   const totalSearchMatches = useMemo(() => {
     if (segmentSearchMeta.length === 0) return 0;
@@ -671,8 +682,11 @@ export function MeetingTranscriptChat({
   }, [segmentSearchMeta]);
 
   const activeSegmentFindMatch = useMemo(
-    () => getActiveSegmentFindMatch(segments, searchTerm || "", activeSearchIndex, { ignoreCase }),
-    [activeSearchIndex, ignoreCase, searchTerm, segments]
+    () =>
+      getActiveSegmentFindMatch(renderedSearchItems, searchTerm || "", activeSearchIndex, {
+        ignoreCase,
+      }),
+    [activeSearchIndex, ignoreCase, renderedSearchItems, searchTerm]
   );
 
   useEffect(() => {
@@ -776,7 +790,10 @@ export function MeetingTranscriptChat({
         data-transcript-mode="final"
       >
         <div className="mx-auto flex max-w-5xl flex-col gap-3">
-          {segments.map((segment, i) => {
+          {(isEditing ? segments : speakerBlocks).map((item, i) => {
+            const blockSegments = "segments" in item ? item.segments : [item];
+            const segment = blockSegments[0];
+            const itemText = "segments" in item ? item.text : item.text;
             const searchMeta = segmentSearchMeta[i] ?? { start: 0, count: 0 };
             const hasSpeaker = !!segment.speaker;
             const isOriginallyYou = segment.speaker === "you";
@@ -814,7 +831,9 @@ export function MeetingTranscriptChat({
             const timestampLabel = formatTranscriptTimestamp(segment.timestamp, timelineStartedAt);
             const fallbackSpeakerLabel =
               segment.source === "mic" ? t("notes.speaker.you") : t("notes.speaker.them");
-            const isActiveSegment = activeSegmentId === segment.id;
+            const isActiveSegment = blockSegments.some(
+              (blockSegment) => activeSegmentId === blockSegment.id
+            );
 
             const labelElement = (
               <div className="flex min-w-0 items-center gap-2">
@@ -856,7 +875,7 @@ export function MeetingTranscriptChat({
 
             return (
               <div
-                key={segment.id}
+                key={"segments" in item ? `block-${item.id}` : segment.id}
                 data-segment-id={segment.id}
                 className={cn(
                   "group grid grid-cols-[10px_minmax(0,1fr)] gap-3 border-l-2 border-transparent px-2 py-1.5 transition-colors",
@@ -907,7 +926,7 @@ export function MeetingTranscriptChat({
                       )}
                     >
                       <HighlightedText
-                        text={segment.text}
+                        text={itemText}
                         searchTerm={searchTerm}
                         ignoreCase={ignoreCase}
                         matchStartIndex={searchMeta.start}

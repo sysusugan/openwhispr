@@ -2,6 +2,7 @@ interface AssignableTranscriptSegment {
   id: string;
   text: string;
   source: "mic" | "system";
+  timestamp?: number;
   speaker?: string;
   speakerName?: string;
   speakerIsPlaceholder?: boolean;
@@ -23,6 +24,17 @@ export interface TranscriptSpeakerFilterOption {
   colorKey: string;
 }
 
+export interface TranscriptSpeakerBlock<T extends AssignableTranscriptSegment> {
+  id: string;
+  text: string;
+  source: T["source"];
+  timestamp?: number;
+  speaker?: string;
+  speakerName?: string;
+  speakerDisplay: ReturnType<typeof getTranscriptSpeakerDisplay<T>>;
+  segments: T[];
+}
+
 const getSpeakerNumber = (speakerId: string) => {
   const match = speakerId.match(/speaker_(\d+)/);
   return match ? Number(match[1]) + 1 : 1;
@@ -30,6 +42,17 @@ const getSpeakerNumber = (speakerId: string) => {
 
 const getTranscriptSpeakerFilterKey = (segment: AssignableTranscriptSegment) =>
   segment.speaker ? `speaker:${segment.speaker}` : `source:${segment.source}`;
+
+const getTranscriptSpeakerBlockKey = (
+  segment: AssignableTranscriptSegment,
+  speakerMappings: Record<string, string> = {}
+) => {
+  const mapped = segment.speaker ? speakerMappings[segment.speaker] : undefined;
+  if (segment.speakerName) return `name:${segment.speakerName.toLowerCase()}`;
+  if (mapped) return `name:${mapped.toLowerCase()}`;
+  if (segment.speaker) return `speaker:${segment.speaker}`;
+  return `source:${segment.source}`;
+};
 
 const isUnresolvedProvisionalPlaceholder = (segment: AssignableTranscriptSegment) =>
   segment.speakerIsPlaceholder === true &&
@@ -133,4 +156,39 @@ export function filterTranscriptSegmentsBySpeaker<T extends AssignableTranscript
   return segments.filter((segment) =>
     selectedSpeakerKeys.has(getTranscriptSpeakerFilterKey(segment))
   );
+}
+
+export function buildTranscriptSpeakerBlocks<T extends AssignableTranscriptSegment>(
+  segments: T[],
+  speakerMappings: Record<string, string> = {},
+  labels: SpeakerDisplayLabels
+): TranscriptSpeakerBlock<T>[] {
+  const blocks: TranscriptSpeakerBlock<T>[] = [];
+
+  for (const segment of segments) {
+    const key = getTranscriptSpeakerBlockKey(segment, speakerMappings);
+    const previous = blocks[blocks.length - 1];
+
+    if (previous && getTranscriptSpeakerBlockKey(previous.segments[0], speakerMappings) === key) {
+      previous.segments.push(segment);
+      previous.text = previous.segments
+        .map((item) => item.text.trim())
+        .filter(Boolean)
+        .join(" ");
+      continue;
+    }
+
+    blocks.push({
+      id: segment.id,
+      text: segment.text.trim(),
+      source: segment.source,
+      timestamp: segment.timestamp,
+      speaker: segment.speaker,
+      speakerName: segment.speakerName,
+      speakerDisplay: getTranscriptSpeakerDisplay(segment, speakerMappings, labels),
+      segments: [segment],
+    });
+  }
+
+  return blocks;
 }

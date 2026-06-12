@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   assignSpeakerGroupName,
+  buildTranscriptSpeakerBlocks,
   filterTranscriptSegmentsBySpeaker,
   getTranscriptSpeakerDisplay,
   getTranscriptSpeakerFilterOptions,
@@ -116,5 +117,78 @@ test("speaker filtering only keeps selected effective speakers", () => {
   assert.deepEqual(
     all.map((segment) => segment.id),
     ["seg-1", "seg-2", "seg-3"]
+  );
+});
+
+test("transcript speaker blocks merge adjacent segments from the same effective speaker", () => {
+  const segments = [
+    { id: "seg-1", text: "第一句", source: "system" as const, speaker: "speaker_0", timestamp: 10 },
+    { id: "seg-2", text: "第二句", source: "system" as const, speaker: "speaker_0", timestamp: 15 },
+    { id: "seg-3", text: "第三句", source: "system" as const, speaker: "speaker_1", timestamp: 20 },
+    { id: "seg-4", text: "第四句", source: "system" as const, speaker: "speaker_0", timestamp: 25 },
+  ];
+
+  const blocks = buildTranscriptSpeakerBlocks(segments, {}, labels);
+
+  assert.deepEqual(
+    blocks.map((block) => ({
+      id: block.id,
+      text: block.text,
+      timestamp: block.timestamp,
+      segmentIds: block.segments.map((segment) => segment.id),
+      speakerLabel: block.speakerDisplay.label,
+    })),
+    [
+      {
+        id: "seg-1",
+        text: "第一句 第二句",
+        timestamp: 10,
+        segmentIds: ["seg-1", "seg-2"],
+        speakerLabel: "发言人 1",
+      },
+      {
+        id: "seg-3",
+        text: "第三句",
+        timestamp: 20,
+        segmentIds: ["seg-3"],
+        speakerLabel: "发言人 2",
+      },
+      {
+        id: "seg-4",
+        text: "第四句",
+        timestamp: 25,
+        segmentIds: ["seg-4"],
+        speakerLabel: "发言人 1",
+      },
+    ]
+  );
+});
+
+test("transcript speaker blocks recompute when speaker names change", () => {
+  const segments = [
+    { id: "seg-1", text: "第一句", source: "system" as const, speaker: "speaker_0" },
+    {
+      id: "seg-2",
+      text: "第二句",
+      source: "system" as const,
+      speaker: "speaker_1",
+      speakerName: "苏金",
+    },
+  ];
+
+  const before = buildTranscriptSpeakerBlocks(segments, {}, labels);
+  const after = buildTranscriptSpeakerBlocks(segments, { speaker_0: "苏金" }, labels);
+
+  assert.deepEqual(
+    before.map((block) => block.text),
+    ["第一句", "第二句"]
+  );
+  assert.deepEqual(
+    after.map((block) => ({
+      text: block.text,
+      segmentIds: block.segments.map((segment) => segment.id),
+      speakerLabel: block.speakerDisplay.label,
+    })),
+    [{ text: "第一句 第二句", segmentIds: ["seg-1", "seg-2"], speakerLabel: "苏金" }]
   );
 });
