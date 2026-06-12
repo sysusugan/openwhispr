@@ -4,6 +4,7 @@ export interface LiveTranscriptItem {
   id: string;
   text: string;
   pending: boolean;
+  timestamp?: number;
 }
 
 export function stripRealtimeSpeakerMetadata(segment: TranscriptSegment): TranscriptSegment {
@@ -32,6 +33,7 @@ export function buildLiveTranscriptItems(
       id: segment.id,
       text: segment.text,
       pending: false,
+      timestamp: segment.timestamp,
     }));
 
   [micPartial, systemPartial].forEach((text, index) => {

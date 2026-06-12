@@ -711,28 +711,45 @@ export function MeetingTranscriptChat({
       <div className="h-full relative">
         <div
           ref={scrollRef}
-          className="h-full overflow-y-auto bg-white px-8 pt-4 pb-20 agent-chat-scroll"
+          className="h-full overflow-y-auto bg-slate-50/40 px-8 pt-6 pb-24 agent-chat-scroll"
           data-transcript-mode="live"
         >
-          <div className="mx-auto flex max-w-5xl flex-col gap-2.5">
-            {liveItems.map((item) => (
-              <p
-                key={item.id}
-                className={cn(
-                  "whitespace-pre-wrap text-sm leading-6 text-slate-900",
-                  item.pending && "text-slate-600"
-                )}
-                data-live-transcript-item="true"
-              >
-                {item.text}
-                {item.pending && (
-                  <span
-                    className="ml-0.5 inline-block h-3.5 w-[2px] align-middle bg-slate-500/45"
-                    style={{ animation: "agent-cursor-blink 800ms steps(1) infinite" }}
-                  />
-                )}
-              </p>
-            ))}
+          <div className="mx-auto flex max-w-5xl flex-col gap-7">
+            {liveItems.map((item) => {
+              const timestampLabel =
+                !item.pending && item.timestamp != null
+                  ? formatTranscriptTimestamp(item.timestamp, timelineStartedAt)
+                  : null;
+
+              return (
+                <section
+                  key={item.id}
+                  className="min-w-0"
+                  data-live-transcript-item="true"
+                  data-live-transcript-pending={item.pending ? "true" : undefined}
+                >
+                  {timestampLabel && (
+                    <div className="mb-3 text-xs tabular-nums leading-none text-slate-400">
+                      {timestampLabel}
+                    </div>
+                  )}
+                  <p
+                    className={cn(
+                      "whitespace-pre-wrap text-sm leading-7 tracking-normal text-slate-900",
+                      item.pending && "text-slate-500"
+                    )}
+                  >
+                    {item.text}
+                    {item.pending && (
+                      <span
+                        className="ml-1 inline-block h-3.5 w-[2px] align-middle bg-slate-500/45"
+                        style={{ animation: "agent-cursor-blink 800ms steps(1) infinite" }}
+                      />
+                    )}
+                  </p>
+                </section>
+              );
+            })}
           </div>
         </div>
       </div>

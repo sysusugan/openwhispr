@@ -6,7 +6,7 @@ import {
   stripRealtimeSpeakerMetadata,
 } from "../../src/utils/liveTranscriptStream.ts";
 
-test("live transcript items only expose text and pending state", () => {
+test("live transcript items expose final timestamps without speaker metadata", () => {
   const items = buildLiveTranscriptItems(
     [
       {
@@ -23,12 +23,13 @@ test("live transcript items only expose text and pending state", () => {
   );
 
   assert.deepEqual(items, [
-    { id: "seg-1", text: "第一句已经识别", pending: false },
+    { id: "seg-1", text: "第一句已经识别", pending: false, timestamp: 14 },
     { id: "partial-0", text: "麦克风实时片段", pending: true },
     { id: "partial-1", text: "系统实时片段", pending: true },
   ]);
   assert.equal("speaker" in items[0], false);
   assert.equal("speakerName" in items[0], false);
+  assert.equal("timestamp" in items[1], false);
 });
 
 test("realtime transcript segments strip speaker metadata until final diarization", () => {
