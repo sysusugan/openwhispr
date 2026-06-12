@@ -16,6 +16,7 @@ import {
   type FindMatchPreview,
 } from "../../utils/currentPageFind";
 import { formatTranscriptTimestamp } from "../../utils/recordingTime";
+import { buildLiveTranscriptItems } from "../../utils/liveTranscriptStream";
 
 const SPEAKER_COLORS = [
   "text-sky-500",
@@ -28,15 +29,15 @@ const SPEAKER_COLORS = [
   "text-red-400",
 ];
 
-const SPEAKER_BADGE_COLORS = [
-  "bg-indigo-400 text-white",
-  "bg-pink-300 text-white",
-  "bg-emerald-400 text-white",
-  "bg-amber-300 text-amber-950",
-  "bg-cyan-400 text-white",
-  "bg-violet-400 text-white",
-  "bg-rose-400 text-white",
-  "bg-lime-300 text-lime-950",
+const SPEAKER_SWATCH_COLORS = [
+  "bg-indigo-400",
+  "bg-pink-300",
+  "bg-emerald-400",
+  "bg-amber-300",
+  "bg-cyan-400",
+  "bg-violet-400",
+  "bg-rose-400",
+  "bg-lime-300",
 ];
 
 const STICKY_SCROLL_THRESHOLD_PX = 80;
@@ -492,7 +493,7 @@ function SpeakerLabel({
           className={cn(
             "inline-flex items-center gap-1 font-medium outline-none cursor-pointer",
             variant === "inline"
-              ? "rounded-md px-1.5 py-0.5 text-sm text-muted-foreground hover:bg-foreground/6"
+              ? "rounded px-1 py-0.5 text-xs text-muted-foreground hover:bg-foreground/6"
               : "mb-0.5 rounded-md px-1.5 py-0.5 text-[11px]",
             "border border-border/60 dark:border-white/20",
             "hover:bg-foreground/5 hover:border-border/90 dark:hover:border-white/30",
@@ -789,6 +790,41 @@ export function MeetingTranscriptChat({
     );
   };
 
+  if (isRecording) {
+    const liveItems = buildLiveTranscriptItems(segments, micPartial, systemPartial);
+
+    return (
+      <div className="h-full relative">
+        <div
+          ref={scrollRef}
+          className="h-full overflow-y-auto bg-white px-8 pt-4 pb-20 agent-chat-scroll"
+          data-transcript-mode="live"
+        >
+          <div className="mx-auto flex max-w-5xl flex-col gap-2.5">
+            {liveItems.map((item) => (
+              <p
+                key={item.id}
+                className={cn(
+                  "whitespace-pre-wrap text-sm leading-6 text-slate-900",
+                  item.pending && "text-slate-600"
+                )}
+                data-live-transcript-item="true"
+              >
+                {item.text}
+                {item.pending && (
+                  <span
+                    className="ml-0.5 inline-block h-3.5 w-[2px] align-middle bg-slate-500/45"
+                    style={{ animation: "agent-cursor-blink 800ms steps(1) infinite" }}
+                  />
+                )}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full relative">
       {isDiarizing && !hintDismissed && (
@@ -805,9 +841,10 @@ export function MeetingTranscriptChat({
       )}
       <div
         ref={scrollRef}
-        className="h-full overflow-y-auto bg-white px-8 pt-6 pb-24 agent-chat-scroll"
+        className="h-full overflow-y-auto bg-white px-8 pt-4 pb-20 agent-chat-scroll"
+        data-transcript-mode="final"
       >
-        <div className="mx-auto flex max-w-5xl flex-col gap-7">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3">
           {segments.map((segment, i) => {
             const searchMeta = segmentSearchMeta[i] ?? { start: 0, count: 0 };
             const hasSpeaker = !!segment.speaker;
@@ -848,11 +885,6 @@ export function MeetingTranscriptChat({
             const timestampLabel = formatTranscriptTimestamp(segment.timestamp, timelineStartedAt);
             const fallbackSpeakerLabel =
               segment.source === "mic" ? t("notes.speaker.you") : t("notes.speaker.them");
-            const badgeNumber = hasSpeaker
-              ? getSpeakerNumber(segment.speaker!)
-              : segment.source === "mic"
-                ? 1
-                : 2;
             const isActiveSegment = activeSegmentId === segment.id;
 
             const labelElement = (
@@ -898,28 +930,27 @@ export function MeetingTranscriptChat({
                 key={segment.id}
                 data-segment-id={segment.id}
                 className={cn(
-                  "group grid grid-cols-[44px_minmax(0,1fr)] gap-4 rounded-lg px-2 py-1.5 transition-colors",
-                  onSeekToSegment && "cursor-pointer hover:bg-slate-50",
-                  isActiveSegment && "bg-indigo-50/80 ring-1 ring-indigo-200",
-                  selectable && "pl-8"
+                  "group grid grid-cols-[10px_minmax(0,1fr)] gap-3 border-l-2 border-transparent px-2 py-1.5 transition-colors",
+                  onSeekToSegment && "cursor-pointer hover:bg-slate-50/80",
+                  isActiveSegment && "border-l-indigo-500 bg-indigo-50/70",
+                  selectable && "pl-7"
                 )}
                 onClick={() => onSeekToSegment?.(segment)}
                 style={{ animation: "agent-message-in 200ms ease-out both" }}
               >
-                <div className="relative pt-0.5">
+                <div className="relative pt-1.5">
                   <span
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold tabular-nums shadow-sm",
-                      SPEAKER_BADGE_COLORS[colorIdx % SPEAKER_BADGE_COLORS.length]
+                      "block h-2.5 w-2.5 rounded-full",
+                      SPEAKER_SWATCH_COLORS[colorIdx % SPEAKER_SWATCH_COLORS.length]
                     )}
-                  >
-                    {badgeNumber}
-                  </span>
+                    aria-hidden="true"
+                  />
                   {selectable && (
                     <SelectCheckbox
                       isSelected={isSelected}
                       onToggle={() => onToggleSelect?.(segment.id)}
-                      className="absolute -left-6 top-2 opacity-100"
+                      className="absolute -left-6 top-0.5 opacity-100"
                     />
                   )}
                 </div>
@@ -937,7 +968,7 @@ export function MeetingTranscriptChat({
                         data-find-active={hasActiveSearchMatch ? "true" : undefined}
                         className={cn(
                           "w-full min-w-56 resize-y px-3 py-2 outline-none transition-colors",
-                          "rounded-md border text-base leading-8 shadow-sm",
+                          "rounded-md border text-sm leading-6 shadow-sm",
                           "focus-visible:ring-1 focus-visible:ring-ring/70",
                           "bg-white text-slate-950 border-slate-200 placeholder:text-slate-400",
                           hasSearchMatch && "ring-1 ring-amber-300/70 dark:ring-amber-400/45",
@@ -950,8 +981,8 @@ export function MeetingTranscriptChat({
                   ) : (
                     <div
                       className={cn(
-                        "mt-2 whitespace-pre-wrap text-base leading-8 text-slate-950 transition-colors",
-                        isSelected && "rounded-md bg-primary/5 ring-2 ring-primary/40"
+                        "mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-950 transition-colors",
+                        isSelected && "bg-primary/5 ring-1 ring-primary/30"
                       )}
                     >
                       <HighlightedText
@@ -968,25 +999,6 @@ export function MeetingTranscriptChat({
             );
           })}
 
-          {[micPartial, systemPartial].filter(Boolean).map((text, index) => (
-            <div
-              key={`partial-${index}`}
-              className="grid grid-cols-[44px_minmax(0,1fr)] gap-4 rounded-lg px-2 py-1.5 opacity-70"
-            >
-              <div className="pt-0.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-200 text-sm font-semibold text-slate-600">
-                  {index + 1}
-                </span>
-              </div>
-              <p className="mt-2 text-base leading-8 text-slate-700">
-                {text}
-                <span
-                  className="ml-0.5 inline-block h-4 w-[2px] align-middle bg-slate-500/45"
-                  style={{ animation: "agent-cursor-blink 800ms steps(1) infinite" }}
-                />
-              </p>
-            </div>
-          ))}
         </div>
       </div>
     </div>

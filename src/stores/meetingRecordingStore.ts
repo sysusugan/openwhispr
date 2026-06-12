@@ -21,6 +21,7 @@ import {
   type TranscriptSpeakerLockSource,
   type TranscriptSpeakerStatus,
 } from "../utils/transcriptSpeakerState";
+import { stripRealtimeSpeakerMetadata } from "../utils/liveTranscriptStream";
 
 export interface TranscriptSegment {
   id: string;
@@ -84,7 +85,6 @@ const MEETING_MIC_PRIMARY_AUDIO_CONSTRAINTS = {
 } as const;
 
 const SPEAKER_IDENTIFICATION_RETENTION_MS = 30_000;
-const SYSTEM_SPEAKER_CARRY_FORWARD_MS = 8_000;
 
 const buildTranscriptText = (segments: TranscriptSegment[]) =>
   segments
@@ -96,16 +96,6 @@ const getSpeakerNumericIndex = (speakerId?: string): number | null => {
   if (!speakerId) return null;
   const match = speakerId.match(/speaker_(\d+)/);
   return match ? Number(match[1]) : null;
-};
-
-const isSegmentWithinIdentificationWindow = (
-  segment: TranscriptSegment,
-  identification: SpeakerIdentification
-) => {
-  if (segment.source !== "system" || segment.timestamp == null) return false;
-  return (
-    segment.timestamp >= identification.startTime && segment.timestamp <= identification.endTime
-  );
 };
 
 const getMeetingTranscriptionOptions = () => {
@@ -494,28 +484,6 @@ function setSystemPartialSpeakerIdentity(speakerId: string | null, speakerName: 
   });
 }
 
-function applySpeakerIdentification(
-  segment: TranscriptSegment,
-  identification: SpeakerIdentification
-): TranscriptSegment {
-  if (
-    segment.source !== "system" ||
-    !isSegmentWithinIdentificationWindow(segment, identification) ||
-    (segment.speaker && !segment.speakerIsPlaceholder && segment.speakerStatus !== "provisional") ||
-    segment.speakerLocked
-  ) {
-    return segment;
-  }
-
-  return normalizeTranscriptSegment({
-    ...segment,
-    speaker: identification.speakerId,
-    speakerName: identification.displayName ?? segment.speakerName,
-    speakerIsPlaceholder: false,
-    speakerStatus: "confirmed",
-  });
-}
-
 function rememberSystemSpeaker(
   speakerId: string | null,
   speakerName: string | null,
@@ -532,109 +500,10 @@ function rememberSystemSpeaker(
     : null;
 }
 
-function getRecentSystemSpeaker(nowMs: number) {
-  if (!recentSystemSpeaker) return null;
-  return nowMs - recentSystemSpeaker.updatedAt <= SYSTEM_SPEAKER_CARRY_FORWARD_MS
-    ? recentSystemSpeaker
-    : null;
-}
-
 function reserveSpeakerIndex(speakerId?: string) {
   const idx = getSpeakerNumericIndex(speakerId);
   if (idx == null) return;
   nextPlaceholderSpeakerIndex = Math.max(nextPlaceholderSpeakerIndex, idx + 1);
-}
-
-function assignSystemPartialSpeakerIdentity(nowMs = Date.now()) {
-  if (systemPartialSpeakerIdValue) return;
-
-  const recent = getRecentSystemSpeaker(nowMs);
-  if (recent?.speakerId) {
-    reserveSpeakerIndex(recent.speakerId);
-    setSystemPartialSpeakerIdentity(recent.speakerId, recent.speakerName);
-    return;
-  }
-
-  const previousSystemSegment = [...segmentsRefValue]
-    .reverse()
-    .find(
-      (candidate) =>
-        candidate.source === "system" &&
-        candidate.speaker &&
-        candidate.timestamp != null &&
-        nowMs - candidate.timestamp <= SYSTEM_SPEAKER_CARRY_FORWARD_MS
-    );
-
-  if (previousSystemSegment?.speaker) {
-    reserveSpeakerIndex(previousSystemSegment.speaker);
-    setSystemPartialSpeakerIdentity(
-      previousSystemSegment.speaker,
-      previousSystemSegment.speakerName ?? null
-    );
-    return;
-  }
-
-  const speakerId = `speaker_${nextPlaceholderSpeakerIndex}`;
-  nextPlaceholderSpeakerIndex += 1;
-  setSystemPartialSpeakerIdentity(speakerId, null);
-}
-
-function assignProvisionalSpeaker(segment: TranscriptSegment): TranscriptSegment {
-  if (segment.source !== "system" || segment.speaker) return segment;
-
-  const nowMs = segment.timestamp ?? Date.now();
-  if (systemPartialSpeakerIdValue) {
-    reserveSpeakerIndex(systemPartialSpeakerIdValue);
-    return normalizeTranscriptSegment({
-      ...segment,
-      speaker: systemPartialSpeakerIdValue,
-      speakerIsPlaceholder: true,
-      speakerStatus: "provisional",
-    });
-  }
-
-  const recent = getRecentSystemSpeaker(nowMs);
-  if (recent?.speakerId) {
-    reserveSpeakerIndex(recent.speakerId);
-    return normalizeTranscriptSegment({
-      ...segment,
-      speaker: recent.speakerId,
-      speakerName: recent.speakerName ?? undefined,
-      speakerIsPlaceholder: recent.speakerIsPlaceholder,
-      speakerStatus: "provisional",
-    });
-  }
-
-  const previousSystemSegment = [...segmentsRefValue]
-    .reverse()
-    .find(
-      (candidate) =>
-        candidate.source === "system" &&
-        candidate.speaker &&
-        candidate.timestamp != null &&
-        nowMs - candidate.timestamp <= SYSTEM_SPEAKER_CARRY_FORWARD_MS
-    );
-
-  if (previousSystemSegment?.speaker) {
-    reserveSpeakerIndex(previousSystemSegment.speaker);
-    return normalizeTranscriptSegment({
-      ...segment,
-      speaker: previousSystemSegment.speaker,
-      speakerName: previousSystemSegment.speakerName,
-      speakerIsPlaceholder: true,
-      speakerStatus: "provisional",
-    });
-  }
-
-  const speakerId = `speaker_${nextPlaceholderSpeakerIndex}`;
-  nextPlaceholderSpeakerIndex += 1;
-
-  return normalizeTranscriptSegment({
-    ...segment,
-    speaker: speakerId,
-    speakerIsPlaceholder: true,
-    speakerStatus: "provisional",
-  });
 }
 
 async function cleanup(): Promise<void> {
@@ -932,33 +801,18 @@ export async function startRecording(args: StartRecordingArgs): Promise<void> {
             useMeetingRecordingStore.setState({ micPartial: data.text });
           } else {
             useMeetingRecordingStore.setState({ systemPartial: data.text });
-            assignSystemPartialSpeakerIdentity(data.timestamp ?? Date.now());
           }
           return;
         }
 
-        let rawSegment: TranscriptSegment = normalizeTranscriptSegment({
-          id: `seg-${++segmentCounter}`,
-          text: data.text,
-          source: data.source,
-          timestamp: data.timestamp,
-        });
-
-        for (let i = speakerIdentifications.length - 1; i >= 0; i -= 1) {
-          rawSegment = applySpeakerIdentification(rawSegment, speakerIdentifications[i]);
-        }
-
-        const provisional = assignProvisionalSpeaker(rawSegment);
-        reserveSpeakerIndex(provisional.speaker);
-        const lockedName = provisional.speaker ? speakerLocks.get(provisional.speaker) : undefined;
-        const seg = lockedName
-          ? lockTranscriptSpeaker(provisional, {
-              speakerName: lockedName,
-              speakerIsPlaceholder: false,
-              suggestedName: undefined,
-              suggestedProfileId: undefined,
-            })
-          : provisional;
+        const seg = stripRealtimeSpeakerMetadata(
+          normalizeTranscriptSegment({
+            id: `seg-${++segmentCounter}`,
+            text: data.text,
+            source: data.source,
+            timestamp: data.timestamp,
+          })
+        );
 
         const prev = useMeetingRecordingStore.getState().segments;
         const ts = seg.timestamp ?? Infinity;
@@ -974,14 +828,6 @@ export async function startRecording(args: StartRecordingArgs): Promise<void> {
           transcript: buildTranscriptText(next),
           ...partialPatch,
         });
-        if (data.source === "system" && seg.speaker) {
-          rememberSystemSpeaker(
-            seg.speaker,
-            seg.speakerName ?? null,
-            !!seg.speakerIsPlaceholder,
-            seg.timestamp ?? Date.now()
-          );
-        }
         if (data.source === "system") {
           setSystemPartialSpeakerIdentity(null, null);
         }
@@ -991,7 +837,6 @@ export async function startRecording(args: StartRecordingArgs): Promise<void> {
 
     const speakerCleanup = window.electronAPI?.onMeetingSpeakerIdentified?.((data) => {
       reserveSpeakerIndex(data.speakerId);
-      setSystemPartialSpeakerIdentity(data.speakerId, data.displayName ?? null);
       rememberSystemSpeaker(data.speakerId, data.displayName ?? null, false, data.endTime);
       speakerIdentifications = [
         ...speakerIdentifications.filter(
@@ -999,29 +844,10 @@ export async function startRecording(args: StartRecordingArgs): Promise<void> {
         ),
         data,
       ];
-      const next = useMeetingRecordingStore
-        .getState()
-        .segments.map((segment) => applySpeakerIdentification(segment, data));
-      segmentsRefValue = next;
-      useMeetingRecordingStore.setState({ segments: next });
     });
     if (speakerCleanup) ipcCleanups.push(speakerCleanup);
 
     const mergeCleanup = window.electronAPI?.onMeetingSpeakersMerged?.((merges) => {
-      let next = useMeetingRecordingStore.getState().segments;
-      for (const { keep, remove, displayName } of merges) {
-        next = next.map((seg) => {
-          if (seg.speaker !== remove || seg.speakerLocked) return seg;
-          return normalizeTranscriptSegment({
-            ...seg,
-            speaker: keep,
-            speakerName: displayName ?? seg.speakerName,
-          });
-        });
-      }
-      segmentsRefValue = next;
-      useMeetingRecordingStore.setState({ segments: next });
-
       for (const { keep, remove, displayName } of merges) {
         if (recentSystemSpeaker?.speakerId === remove) {
           recentSystemSpeaker.speakerId = keep;

@@ -238,7 +238,7 @@ function TranscriptAudioPlayer({
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="border-b border-border/50 bg-white px-8 py-5">
+    <div className="border-b border-border/50 bg-white px-8 py-3">
       <div className="mx-auto max-w-5xl">
         <audio
           ref={audioRef}
@@ -268,9 +268,9 @@ function TranscriptAudioPlayer({
             background: `linear-gradient(to right, #6366f1 ${progress}%, #e5e7eb ${progress}%)`,
           }}
         />
-        <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-4 text-sm text-muted-foreground">
+        <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-xs text-muted-foreground">
           <span className="tabular-nums">{formatPlaybackTime(currentTime)}</span>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             <button
               type="button"
               onClick={() => preparePlayback()}
@@ -279,9 +279,9 @@ function TranscriptAudioPlayer({
               aria-label={t("notes.editor.mergeAudio")}
             >
               {isPreparing || isMerging ? (
-                <Loader2 size={22} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin" />
               ) : (
-                <ListMusic size={22} />
+                <ListMusic size={18} />
               )}
             </button>
             <button
@@ -289,18 +289,18 @@ function TranscriptAudioPlayer({
               onClick={() => jumpBy(-15)}
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
-              <RotateCcw size={24} />
+              <RotateCcw size={20} />
             </button>
             <button
               type="button"
               onClick={togglePlayback}
               disabled={isPreparing || isMerging}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-colors hover:bg-indigo-200 disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 transition-colors hover:bg-indigo-200 disabled:opacity-50"
             >
               {isPlaying ? (
-                <Pause size={22} fill="currentColor" />
+                <Pause size={18} fill="currentColor" />
               ) : (
-                <Play size={22} fill="currentColor" />
+                <Play size={18} fill="currentColor" />
               )}
             </button>
             <button
@@ -308,12 +308,12 @@ function TranscriptAudioPlayer({
               onClick={() => jumpBy(15)}
               className="text-muted-foreground transition-colors hover:text-foreground"
             >
-              <RotateCw size={24} />
+              <RotateCw size={20} />
             </button>
             <button
               type="button"
               onClick={toggleRate}
-              className="min-w-10 text-left text-lg text-muted-foreground transition-colors hover:text-foreground"
+              className="min-w-8 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
               {rate}x
             </button>
